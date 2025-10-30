@@ -1,0 +1,38 @@
+<div class="home-container">
+
+  <!-- Banner -->
+  <section class="banner">
+    <div class="banner-content">
+      <h1>Đặt sân bóng đá nhanh chóng & tiện lợi</h1>
+      <p>Tìm sân gần bạn, đặt lịch dễ dàng, theo dõi giờ chơi và chi phí chỉ trong vài bước.</p>
+      <a routerLink="/booking" class="btn-book">Đặt sân ngay</a>
+    </div>
+  </section>
+
+  <!-- Giới thiệu -->
+  <section class="intro">
+    <h2>Vì sao chọn chúng tôi?</h2>
+    <p>
+      Chúng tôi cung cấp hệ thống đặt sân trực tuyến tiện lợi, giúp bạn tiết kiệm thời gian.
+      Dễ dàng tìm kiếm, so sánh và đặt sân phù hợp nhất cho đội bóng của bạn.
+    </p>
+  </section>
+
+  <!-- Danh sách sân nổi bật -->
+  <section class="featured-fields">
+    <h2>Sân bóng nổi bật</h2>
+    
+    <div class="field-list">
+      <div class="field-card" *ngFor="let field of fields">
+        	<!-- Property Binding -->
+        <img [src]="field.image" alt="{{field.name}}">
+        <h3>{{ field.name }}</h3>
+        <p>Giá: {{ field.price }} / giờ</p>
+        <a routerLink="#" class="btn-small">Đặt ngay</a>
+      </div>
+    </div>
+  </section>
+
+  
+
+</div>
