@@ -25,10 +25,13 @@
     <div class="field-list">
       <div class="field-card" *ngFor="let field of fields">
         	<!-- Property Binding -->
-        <img [src]="field.image" alt="{{field.name}}">
+        <img src="{{ field.image }}" alt="{{field.name}}">
         <h3>{{ field.name }}</h3>
         <p>Giá: {{ field.price }} / giờ</p>
-        <a routerLink="#" class="btn-small">Đặt ngay</a>
+        <!-- routerLink -->
+        <!-- <a [routerlink]="['/detail,field.id']" class="btn-small" >Đặt ngay</a> -->
+        <!-- nagative() -->
+  <button (click)="goToDetail(field.id)" class="btn-small">Đặt ngay</button>
       </div>
     </div>
   </section>
