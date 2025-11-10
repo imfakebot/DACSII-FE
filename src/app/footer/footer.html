@@ -1,32 +1,37 @@
 <footer class="footer">
   <div class="footer-container">
-    <div class="footer-section">
-      <h3>⚽ Đặt Sân Bóng Đá</h3>
-      <p>Hệ thống đặt sân bóng trực tuyến giúp bạn tìm sân dễ dàng, nhanh chóng và tiện lợi.</p>
+    <!-- Cột 1: Logo + thông tin liên hệ -->
+    <div class="footer-column">
+      <img src="logo.png" alt=" Logo" class="footer-logo" />
+      <p>
+        {{ dress }}
+      </p>
+      <p>{{ hotline }}</p>
+      <p>{{ email }}</p>
     </div>
 
-    <div class="footer-section">
-      <h4>Liên hệ</h4>
+    <!-- Cột 2: Quy định & chính sách -->
+    <div class="footer-column">
+      <h3>Quy định và chính sách</h3>
       <ul>
-        binding interpolation
-        <li>📍 Địa chỉ: {{ location}}</li> 
-        <li>📞 Hotline: {{hotline}}</li>
-        <li>📧 Email: {{email}}</li>
+        <li>Hướng dẫn sử dụng</li>
+        <li>Quy chế Hoạt động ứng dụng</li>
+        <li>Thông tin về thanh toán</li>
+        <li>Chính sách bảo mật thông tin cá nhân</li>
+        <li>Thông tin chăm sóc khách hàng</li>
       </ul>
     </div>
 
-    <div class="footer-section">
-      <h4>Theo dõi chúng tôi</h4>
-      <div class="social-icons">
-        <a href="#"><img src="assets/icons/facebook.svg" alt="Facebook"></a>
-        <a href="#"><img src="assets/icons/ins.svg" alt="Instagram"></a>
-        <a href="#"><img src="assets/icons/youtube.svg" alt="YouTube"></a>
-        
-      </div>
+    <!-- Cột 3: Liên kết nhanh -->
+    <div class="footer-column">
+      <h3>Liên kết nhanh</h3>
+      <ul>
+        <li>Trang chủ</li>
+        <li>Dành cho đối tác</li>
+        <li>Tin tức</li>
+      </ul>
     </div>
-  </div>
 
-  <div class="footer-bottom">
-    <p>© {{ currentYear }} Đặt Sân Bóng Đá. All rights reserved.</p>
+    
   </div>
 </footer>

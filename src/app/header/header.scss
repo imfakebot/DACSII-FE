@@ -1,111 +1,83 @@
-body {
+* {
   margin: 0;
   padding: 0;
-  background-color: #000;
+  box-sizing: border-box;
   font-family: 'Segoe UI', sans-serif;
 }
 
-.menu {
-  background-color: #111;
+body {
+  background: #fff;
+}
+
+.navbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 15px 60px;
-  height: 60px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  padding: 8px 40px;
+  border-bottom: 1px solid #eee;
+  background-color: #fff;
 }
 
-.logo {
-  color: #fff;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 1px;
+.logo img {
+  height: 45px;
 }
 
-.logo .highlight {
-  color: #ff3c1f;
-}
-
-.nav-links a {
-  position: relative;
-  text-decoration: none;
-  color: #fff;
-  margin-left: 40px;
-  font-size: 18px;
-  font-weight: 600;
-  transition: color 0.3s ease;
-}
-
-.nav-links a::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  bottom: -5px;
-  width: 0%;
-  height: 2px;
-  background-color: #ff3c1f;
-  transition: width 0.3s ease;
-}
-
-.nav-links a:hover {
-  color: #ff3c1f;
-}
-
-.nav-links a:hover::after {
-  width: 100%;
-}
-
-.nav-links a.active {
-  color: #ff3c1f;
-}
-
-.nav-links a.active::after {
-  width: 100%;
-}
-
-.nav-links a {
-font-family: "Arial", sans-serif; /* Chọn font chữ */
-  font-size: 16px; /* Cỡ chữ */
-  font-weight: bold; /* In đậm */
-  font-style: italic; /* In nghiêng */
-  
-}
-
-/* --- ACTION BUTTONS --- */
-.actions {
+.main-menu {
   display: flex;
-  gap: 15px;
+  align-items: center;
+  gap: 25px;
+  flex: 1;
+  justify-content: center;
 }
 
-.actions a {
+.main-menu a {
   text-decoration: none;
-  padding: 8px 20px;
-  border-radius: 30px;
-  font-weight: 600;
-  transition: all 0.3s ease;
+  color: #1c1c1c;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: color 0.3s;
 }
 
-/* Nút Đăng nhập */
-.login-btn {
-  border: 2px solid #ff3c1f;
-  color: #ff3c1f;
+.main-menu a.active {
+  color: #ff004c;
+  font-weight: 700;
 }
 
-.login-btn:hover {
-  background-color: #ff3c1f;
-  color: #fff;
-  transform: scale(1.05);
+.main-menu a:hover {
+  color: #ff004c;
 }
 
-/* Nút Đăng ký */
-.register-btn {
-  background-color: #ff3c1f;
-  color: #fff;
-  border: 2px solid #ff3c1f;
+.right-section {
+  display: flex;
+  align-items: center;
+  gap: 35px;
 }
 
-.register-btn:hover {
-  background-color: transparent;
-  color: #ff3c1f;
-  transform: scale(1.05);
+.location, .language {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.location .label,
+.language .label {
+  font-size: 12px;
+  color: #555;
+}
+
+.location .value,
+.language .value {
+  font-size: 13px;
+  color: #1c1c1c;
+  font-weight: 500;
+}
+
+.language img {
+  width: 26px;
+  height: 18px;
+  border-radius: 3px;
+  object-fit: cover;
 }

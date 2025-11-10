@@ -1,15 +1,39 @@
-<div class="menu">
-  <div class="logo">
-    <span class="highlight">V</span>KU Football
-  </div>
-  <nav class="nav-links">
-    <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}">Home</a>
-    <a routerLink="#" routerLinkActive="active">About Us</a>
-    <a routerLink="#" routerLinkActive="active">Blog</a>
-  </nav>
 
-  <div class="actions">
-    <a routerLink="#" class="login-btn">Đăng nhập</a>
-    <a routerLink="#" class="register-btn">Đăng ký</a>
-  </div>
-</div>
+
+  <header class="navbar">
+    <!-- Logo -->
+    <div class="logo">
+      <!-- Dùng logo SVG mặc định trong assets; bạn có thể thay bằng PNG cùng tên nếu muốn -->
+      <img src="/assets/logoHaiAnhEm.png" alt="Hai Anh Em - Logo" style="border-radius: 60px; width: 70px; height: 60px;">
+    </div>
+
+    <!-- Menu chính -->
+    <nav class="main-menu">
+  <a [routerLink]="['/']">Trang chủ</a>
+  <a [routerLink]="['/fields']"><i class="fa-solid fa-futbol"></i> Bóng đá</a>
+      <a href="#"><i class="fa-solid fa-stopwatch"></i> Tennis</a>
+      <a href="#"><i class="fa-solid fa-badminton"></i> Cầu lông</a>
+      <a href="#"><i class="fa-solid fa-table-tennis-paddle-ball"></i> Bóng bàn</a>
+    </nav>
+
+    <!-- Khu vực và ngôn ngữ -->
+    <div class="right-section">
+      <div class="location">
+        <i class="fa-solid fa-location-dot"></i>
+        <div>
+          <span class="label">KHU VỰC</span><br>
+          <!-- <span class="value">Thanh Xuân, Hà Nội <i class="fa-solid fa-chevron-down"></i></span> -->
+        </div>
+      </div>
+
+      <!-- <div class="language">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg" alt="VN">
+        <div>
+          <span class="label">Ngôn ngữ</span><br>
+          <span class="value">Tiếng Việt <i class="fa-solid fa-chevron-down"></i></span>
+        </div>
+      </div> -->
+    </div>
+  </header>
+
+

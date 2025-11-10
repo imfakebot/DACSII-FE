@@ -1,41 +1,119 @@
-<div class="home-container">
+
 
   <!-- Banner -->
   <section class="banner">
     <div class="banner-content">
-      <h1>Đặt sân bóng đá nhanh chóng & tiện lợi</h1>
-      <p>Tìm sân gần bạn, đặt lịch dễ dàng, theo dõi giờ chơi và chi phí chỉ trong vài bước.</p>
-      <a routerLink="/booking" class="btn-book">Đặt sân ngay</a>
+      <h1><span>Sport</span> - Trang web đặt sân tập thể thao </h1>
+      <p>Mang đến trải nghiệm đặt sân trực tuyến thuận tiện và linh hoạt cho người chơi thể thao.</p>
+      <!-- <div class="app-buttons">
+        <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="App Store">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/c/cd/Get_it_on_Google_play.svg" alt="Google Play">
+      </div> -->
+    </div>
+    <img class="banner-phone" src="https://cdn-icons-png.flaticon.com/512/295/295128.png" alt="Phone App">
+  </section>
+
+  <!-- Khung tìm kiếm -->
+  <section class="search-section">
+    <div class="search-box">
+      <input type="text" placeholder="Tìm kiếm sân thể thao, tên địa điểm, khu vực...">
+      <select>
+        <option>Chọn môn thể thao</option>
+        <option>Bóng đá</option>
+        <option>Tennis</option>
+        <option>Cầu lông</option>
+        <option>Bóng bàn</option>
+      </select>
+      <select>
+        <option>Tỉnh/Thành phố</option>
+        <option>Hà Nội</option>
+        <option>Đà Nẵng</option>
+        <option>TP. Hồ Chí Minh</option>
+      </select>
+      <button class="btn-search"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm ngay</button>
     </div>
   </section>
 
-  <!-- Giới thiệu -->
-  <section class="intro">
-    <h2>Vì sao chọn chúng tôi?</h2>
-    <p>
-      Chúng tôi cung cấp hệ thống đặt sân trực tuyến tiện lợi, giúp bạn tiết kiệm thời gian.
-      Dễ dàng tìm kiếm, so sánh và đặt sân phù hợp nhất cho đội bóng của bạn.
-    </p>
-  </section>
-
-  <!-- Danh sách sân nổi bật -->
-  <section class="featured-fields">
-    <h2>Sân bóng nổi bật</h2>
-    
-    <div class="field-list">
-      <div class="field-card" *ngFor="let field of fields">
-        	<!-- Property Binding -->
-        <img src="{{ field.image }}" alt="{{field.name}}">
-        <h3>{{ field.name }}</h3>
-        <p>Giá: {{ field.price }} / giờ</p>
-        <!-- routerLink -->
-        <!-- <a [routerlink]="['/detail,field.id']" class="btn-small" >Đặt ngay</a> -->
-        <!-- nagative() -->
-  <button (click)="goToDetail(field.id)" class="btn-small">Đặt ngay</button>
+  <!-- Ưu đãi -->
+  <section class="section">
+    <h2>🎁 Ưu đãi</h2>
+    <div class="promo-banner">
+      <img src="https://images.unsplash.com/photo-1508780709619-79562169bc64?w=1000" alt="Ưu đãi">
+      <div class="promo-text">
+        <h3>Tặng 1 giờ đá free</h3>
+        <p>Áp dụng cho khách hàng mới khi đặt sân lần đầu.</p>
       </div>
     </div>
   </section>
 
-  
+  <!-- Sân tập gần bạn -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Sân tập gần bạn</h2>
+      <div class="tags">
+        <span class="active">Bóng đá</span>
+        <span>Tennis</span>
+        <span>Cầu lông</span>
+        <span>Bóng bàn</span>
+      </div>
+    </div>
+    <div class="card-list">
+      <div class="card" *ngFor="let f of fields | slice:0:4">
+        <a [routerLink]="['/detail', f.id]">
+          <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}">
+        </a>
+        <h3>{{ f.name }}</h3>
+        <p><i class="fa-solid fa-location-dot"></i> {{ f.city || 'Địa điểm chưa rõ' }}</p>
+      </div>
+      <div *ngIf="fields.length === 0" class="empty">Đang tải sân...</div>
+    </div>
+  </section>
 
-</div>
+  <!-- Đề xuất cho bạn -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Đề xuất cho bạn</h2>
+      <div class="tags">
+        <span class="active">Bóng đá</span>
+        <span>Tennis</span>
+        <span>Cầu lông</span>
+        <span>Bóng bàn</span>
+      </div>
+    </div>
+    <div class="card-list">
+      <div class="card" *ngFor="let f of recommendedFields">
+        <a [routerLink]="['/detail', f.id]">
+          <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}">
+        </a>
+        <h3>{{ f.name }}</h3>
+        <p><i class="fa-solid fa-location-dot"></i> {{ f.city || 'Địa điểm chưa rõ' }}</p>
+      </div>
+      <div *ngIf="recommendedFields.length === 0" class="empty">Không có đề xuất.</div>
+    </div>
+  </section>
+
+  <!-- Sân hàng đầu -->
+  <section class="section">
+    <div class="section-header">
+      <h2>Sân hàng đầu</h2>
+      <div class="tags">
+        <span class="active">Bóng đá</span>
+        <span>Tennis</span>
+        <span>Cầu lông</span>
+        <span>Bóng bàn</span>
+      </div>
+    </div>
+    <div class="card-list">
+      <div class="card top-card" *ngFor="let f of topFields; let i = index">
+        <div class="top-badge">Top {{ i + 1 }}</div>
+        <a [routerLink]="['/detail', f.id]">
+          <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}">
+        </a>
+        <h3>{{ f.name }}</h3>
+        <p><i class="fa-solid fa-location-dot"></i> {{ f.city || 'Địa điểm chưa rõ' }}</p>
+      </div>
+      <div *ngIf="topFields.length === 0" class="empty">Không có dữ liệu top.</div>
+    </div>
+  </section>
+
+

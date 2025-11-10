@@ -1,17 +1,18 @@
-import { Component } from "@angular/core";
-import { RouterModule } from "@angular/router";
+import { Component } from '@angular/core';
 
+/*
+  Footer component (Tiếng Việt):
+  - Hiển thị thông tin bản quyền
+  - Styling sử dụng class `.site-footer` trong `app.scss`
+*/
 @Component({
-  selector: "app-footer",
+  selector: 'app-footer',
   standalone: true,
-  imports: [RouterModule],
-  templateUrl: "./footer.html",
-    styleUrl: './footer.scss'
+  templateUrl: './footer.html',
+  styleUrls: ['./footer.scss']
 })
 export class FooterComponent {
-    footerText = "© 2024 DACSII-FE. All rights reserved.";  
-    currentYear: number = new Date().getFullYear(); 
-    location: string = 'Trần Đại Nghĩa, Đà Nẵng';
-    hotline: string = '0765.539.316';
-    email: string = 'linhtvt.24it@vku.udn.vn';
+  hotline: string = '📞 0765539316';
+  email: string = '✉ linhtvt24it@vku.udn.vn';
+  dress: string = 'Thành phố Đà Nẵng 🏠';
 }

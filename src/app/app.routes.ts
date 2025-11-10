@@ -1,10 +1,16 @@
 import { Routes } from '@angular/router';
-import { BodyComponent } from './body/body';
-import { DetailComponent } from './field-details/detail';
 
 
+// Định nghĩa routes chính (Tiếng Việt):
+// - '' hiển thị trang chủ (BodyComponent)
+// - 'fields' hiển thị danh sách sân
+// - 'detail/:id' hiển thị chi tiết 1 sân
 export const routes: Routes = [
-    { path: '', component: BodyComponent },
-    { path: 'detail/:id', component: DetailComponent }
-    
+	{ path: '', loadComponent: () => import('./body/body').then(m => m.BodyComponent) },
+	{ path: 'fields', loadComponent: () => import('./fields/fields-list').then(m => m.FieldsListComponent) },
+	{ path: 'detail/:id', loadComponent: () => import('./field-details/detail').then(m => m.DetailComponent) },
+	// legacy alias (kept for compatibility)
+	{ path: 'fields-list', redirectTo: 'fields' },
+	// fallback
+	{ path: '**', redirectTo: '' }
 ];

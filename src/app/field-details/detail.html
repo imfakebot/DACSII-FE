@@ -1,71 +1,24 @@
-<div class="field-detail-container" *ngIf="field">
-    <!-- Phần header -->
-    <div class="field-header">
-        <h1>{{ field.name }}</h1>
-        <p class="address">
-            <i class="fas fa-map-marker-alt"></i> 
-            {{ field.address }}
-        </p>
+<div class="detail container" *ngIf="field; else loading">
+  <div class="gallery">
+    <img [src]="(field.images && field.images.length>0) ? field.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{field.name}}" />
+  </div>
+  <div class="info">
+    <h1>{{ field.name }}</h1>
+    <div class="meta">
+      <span>{{ field.fieldType || field.type || 'Loại: ?' }}</span>
+      <span>{{ field.city || 'Địa điểm chưa rõ' }}</span>
+      <span *ngIf="field.avgRating">⭐ {{ (field.avgRating | number:'1.1-1') }}</span>
     </div>
+    <p class="price">{{ field.pricePerHour ? (field.pricePerHour | number) + ' đ/giờ' : 'Liên hệ' }}</p>
+    <p class="desc">{{ field.description }}</p>
 
-    <!-- Phần hình ảnh và thông tin cơ bản -->
-    <div class="field-main-info">
-        <div class="field-image">
-            <img [src]="field.image" [alt]="field.name">
-        </div>
-        <div class="field-quick-info">
-            <div class="info-item">
-                <h3>Giá thuê</h3>
-                <p>{{ field.price }}đ/giờ</p>
-            </div>
-            <div class="info-item">
-                <h3>Kích thước</h3>
-                <p>{{ field.size }}</p>
-            </div>
-            <div class="info-item">
-                <h3>Sức chứa</h3>
-                <p>{{ field.capacity }}</p>
-            </div>
-            <div class="info-item">
-                <h3>Giờ mở cửa</h3>
-                <p>{{ field.openHours }}</p>
-            </div>
-            <button class="booking-button" (click)="bookField()">Đặt sân ngay</button>
-        </div>
+    <div class="actions">
+      <button class="btn" (click)="goBack()">Quay lại</button>
+      <button class="btn primary" (click)="book(field.id)">Đặt ngay</button>
     </div>
-
-    <!-- Phần mô tả chi tiết -->
-    <div class="field-description">
-        <h2>Mô tả</h2>
-        <p>{{ field.description }}</p>
-    </div>
-
-    <!-- Phần tiện ích -->
-    <div class="field-facilities">
-        <h2>Tiện ích</h2>
-        <div class="facilities-list">
-            <div class="facility-item" *ngFor="let facility of field.facilities">
-                <span class="facility-icon">✓</span>
-                {{ facility }}
-            </div>
-        </div>
-    </div>
-
-    <!-- Phần thông tin bổ sung -->
-    <div class="additional-info">
-        <h2>Thông tin bổ sung</h2>
-        <div class="info-grid">
-            <div class="info-item">
-                <h3>Loại mặt sân</h3>
-                <p>{{ field.surface }}</p>
-            </div>
-        </div>
-    </div>
+  </div>
 </div>
 
-<!-- Thông báo khi không tìm thấy sân -->
-<div class="not-found" *ngIf="!field">
-    <h2>Không tìm thấy thông tin sân bóng</h2>
-    <p>Xin lỗi, chúng tôi không tìm thấy thông tin sân bóng bạn đang tìm kiếm.</p>
-    <a (click)="goHome()" class="back-button">Quay lại trang chủ</a>
-</div>
+<ng-template #loading>
+  <div class="container">Đang tải chi tiết sân...</div>
+</ng-template>

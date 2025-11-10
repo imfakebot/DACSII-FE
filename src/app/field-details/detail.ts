@@ -1,41 +1,27 @@
-import { Component, OnInit } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import { FieldService } from "../field-service/field.service";
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { getFieldById } from '../services/fields.service';
 
+/*
+  DetailComponent (Tiếng Việt):
+  - Hiển thị thông tin chi tiết một sân
+  - Dùng layout `.container` và `.actions` đã có trong `app.scss`
+*/
 @Component({
-  selector: "app-detail",
+  selector: 'field-detail',
   standalone: true,
-  imports: [RouterModule, CommonModule],
-  templateUrl: "./detail.html",
-  styleUrl: './detail.scss'
+  imports: [CommonModule, RouterModule],
+  templateUrl: './detail.html',
+  styleUrls: ['./detail.scss']
 })
 export class DetailComponent implements OnInit {
-    id = '';
-    field: any;
-    
-    constructor(
-        private route: ActivatedRoute,
-        private fieldService: FieldService,
-        private router: Router
-    ) {}
-
-    ngOnInit() {
-        this.id = this.route.snapshot.paramMap.get('id') || '';
-        this.field = this.fieldService.getFieldById(Number(this.id));
-    }
-
-    // Navigate to booking page (programmatic)
-    bookField() {
-        if (!this.field) return;
-        // navigate to booking route and pass the field id as query param
-        this.router.navigate(['/booking'], { queryParams: { fieldId: this.field.id } });
-    }
-
-    // go to home
-    goHome() {
-        this.router.navigate(['/']);
-    }
-
-    
+  field: any = null;
+  constructor(private route: ActivatedRoute, private router: Router) {}
+  async ngOnInit(){
+    const id = this.route.snapshot.paramMap.get('id');
+    this.field = await getFieldById(Number(id));
+  }
+  goBack(){ this.router.navigate(['/']); }
+  book(id: any){ this.router.navigate(['/booking'], { queryParams: { fieldId: id } }); }
 }
