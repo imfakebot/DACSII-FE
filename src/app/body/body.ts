@@ -1,8 +1,8 @@
 import { Component, OnInit } from "@angular/core";
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
-import { getFields } from '../services/fields.service';
-
+import { FieldsService, Field } from '../services/fields.service';
+ 
 @Component({
   selector: "app-body",
   standalone: true,
@@ -11,11 +11,13 @@ import { getFields } from '../services/fields.service';
   styleUrls: ["./body.scss"]
 })
 export class BodyComponent implements OnInit {
-  fields: any[] = [];
+  fields: Field[] = [];
+
+  constructor(private fieldsService: FieldsService) {}
 
   async ngOnInit() {
     // Lấy dữ liệu sân từ service (gọi backend /api/fields qua proxy)
-    this.fields = await getFields();
+    this.fields = await this.fieldsService.getFields();
   }
   
   // 4 sân đầu làm 'Sân tập gần bạn'

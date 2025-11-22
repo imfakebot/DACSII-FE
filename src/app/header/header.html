@@ -18,12 +18,21 @@
 
     <!-- Khu vực và ngôn ngữ -->
     <div class="right-section">
-      <div class="location">
+      <!-- <div class="location">
         <i class="fa-solid fa-location-dot"></i>
         <div>
           <span class="label">KHU VỰC</span><br>
-          <!-- <span class="value">Thanh Xuân, Hà Nội <i class="fa-solid fa-chevron-down"></i></span> -->
-        </div>
+          <span class="value">Thanh Xuân, Hà Nội <i class="fa-solid fa-chevron-down"></i></span> -->
+        <!-- </div>
+      </div> --> 
+
+      <div class="btn-login-logout" [class.register-active]="isRegister" *ngIf="!userName">
+        <a class="btn-login"  (click)="onLogin($event)">Đăng nhập</a>
+        <a class="btn-logout"  (click)="onRegister($event)">Đăng ký</a>
+      </div>
+      <div class="greeting" *ngIf="userName">
+        <span>Xin chào, {{ userName }}!</span>
+        <a class="btn-logout" (click)="onLogout($event)">Đăng xuất</a>
       </div>
 
       <!-- <div class="language">

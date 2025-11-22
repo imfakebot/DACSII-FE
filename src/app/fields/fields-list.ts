@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { getFields } from '../services/fields.service';
+import { FieldsService, Field } from '../services/fields.service';
 
 /*
   FieldsListComponent (Tiếng Việt):
@@ -18,16 +18,16 @@ import { getFields } from '../services/fields.service';
 })
 export class FieldsListComponent implements OnInit {
   // Dữ liệu sân
-  fields: any[] = [];
+  fields: Field[] = [];
   // Trường dùng cho tìm kiếm và lọc (client-side)
   query = '';
   selectedType: string | null = null;
   selectedCity: string | null = null;
 
-  constructor(private router: Router, private route: ActivatedRoute) {}
+  constructor(private router: Router, private route: ActivatedRoute, private fieldsService: FieldsService) {}
 
   async ngOnInit(){
-    this.fields = await getFields();
+    this.fields = await this.fieldsService.getFields();
     // Nếu có query param 'type' (ví dụ click từ header), tự động set filter
     const typeParam = this.route.snapshot.queryParamMap.get('type');
     if(typeParam){

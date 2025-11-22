@@ -11,6 +11,8 @@ export const routes: Routes = [
 	{ path: 'detail/:id', loadComponent: () => import('./field-details/detail').then(m => m.DetailComponent) },
 	// legacy alias (kept for compatibility)
 	{ path: 'fields-list', redirectTo: 'fields' },
+	{ path: 'Login/login', loadComponent: () => import('./Login/login').then(m => m.LoginComponent) },
+	{ path: 'Register/register', loadComponent: () => import('./Register/register').then(m => m.RegisterComponent) },
 	// fallback
 	{ path: '**', redirectTo: '' }
 ];

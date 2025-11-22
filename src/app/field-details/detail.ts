@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
-import { getFieldById } from '../services/fields.service';
+import { FieldsService, Field } from '../services/fields.service';
 
 /*
   DetailComponent (Tiếng Việt):
@@ -16,12 +16,13 @@ import { getFieldById } from '../services/fields.service';
   styleUrls: ['./detail.scss']
 })
 export class DetailComponent implements OnInit {
-  field: any = null;
-  constructor(private route: ActivatedRoute, private router: Router) {}
+  field: Field | null = null;
+  constructor(private route: ActivatedRoute, private router: Router, private fieldsService: FieldsService) {}
   async ngOnInit(){
     const id = this.route.snapshot.paramMap.get('id');
-    this.field = await getFieldById(Number(id));
+    if(!id) return;
+    this.field = await this.fieldsService.getFieldById(id);
   }
-  goBack(){ this.router.navigate(['/']); }
-  book(id: any){ this.router.navigate(['/booking'], { queryParams: { fieldId: id } }); }
+  goBack(){ this.router.navigate(['/fields']); }
+  book(id: string){ this.router.navigate(['/booking'], { queryParams: { fieldId: id } }); }
 }
