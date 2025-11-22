@@ -1,3 +1,4 @@
+<script src="https://cdn.tailwindcss.com"></script>
 
 
   <header class="navbar">
@@ -32,7 +33,12 @@
       </div>
       <div class="greeting" *ngIf="userName">
         <span>Xin chào, {{ userName }}!</span>
-        <a class="btn-logout" (click)="onLogout($event)">Đăng xuất</a>
+        <!-- <a class="btn-logout" (click)="onLogout($event)">Đăng xuất</a> -->
+
+        <button class="btn-logout relative font-semibold border-2 px-6 py-2 border-brand overflow-hidden group rounded-full cursor-pointer" (click)="onLogout($event)">
+          <span class="absolute inset-0 bg-brand -translate-x-full rounded-full transition-transform duration-300 group-hover:translate-x-0 group-focus:translate-x-0"></span>
+          <span class="relative z-10 transition-colors duration-300 text-brand group-hover:text-white group-focus:text-white">Đăng xuất</span>
+        </button>
       </div>
 
       <!-- <div class="language">

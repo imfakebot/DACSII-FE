@@ -13,6 +13,8 @@ export const routes: Routes = [
 	{ path: 'fields-list', redirectTo: 'fields' },
 	{ path: 'Login/login', loadComponent: () => import('./Login/login').then(m => m.LoginComponent) },
 	{ path: 'Register/register', loadComponent: () => import('./Register/register').then(m => m.RegisterComponent) },
+	{ path: 'forgot-password', loadComponent: () => import('./ForgotPassword/forgot-password').then(m => m.ForgotPasswordComponent) },
+	{ path: 'reset-password', loadComponent: () => import('./ResetPassword/reset-password').then(m => m.ResetPasswordComponent) },
 	// fallback
 	{ path: '**', redirectTo: '' }
 ];

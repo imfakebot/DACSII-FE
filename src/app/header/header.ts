@@ -24,7 +24,8 @@ export class HeaderComponent implements OnDestroy {
 
   constructor(private router: Router, private authState: AuthStateService) {
     this.sub = this.authState.user$.subscribe(u => {
-      this.userName = u ? (u.full_name || u.email) : null;
+      // Chỉ hiển thị tên đầy đủ; nếu chưa có thì để null (có thể thêm placeholder sau)
+      this.userName = u?.full_name || null;
     });
   }
 

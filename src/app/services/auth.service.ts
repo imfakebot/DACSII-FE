@@ -41,15 +41,28 @@ export class AuthService {
     // Sau đó gọi /users/me để lấy full_name
     try {
       const me: any = await firstValueFrom(this.http.get<any>('http://localhost:3000/users/me'));
-      this.authState.setUser({ id: me.id || me.accountId || '', email: me.email, full_name: me.full_name, role: me.role });
+      // Backend trả về Account với quan hệ userProfile (nếu đã có). Lấy full_name từ userProfile.
+      const fullName = me?.userProfile?.full_name || me?.full_name || res?.user?.full_name;
+      this.authState.setUser({ id: me.id || me.accountId || res?.user?.id || '', email: me.email || res?.user?.email, full_name: fullName, role: me?.role?.name || me?.role || res?.user?.role });
     } catch {
-      // Fallback chỉ lưu email
-      this.authState.setUser({ id: res?.user?.id || '', email: res?.user?.email, role: res?.user?.role });
+      // Fallback chỉ lưu thông tin có sẵn từ login response
+      const fullName = res?.user?.full_name; // nếu sau này backend thêm
+      this.authState.setUser({ id: res?.user?.id || '', email: res?.user?.email, full_name: fullName, role: res?.user?.role });
     }
     return res;
   }
 
   logout() {
     this.authState.setUser(null);
+  }
+
+  async forgotPassword(email: string): Promise<{ message: string }> {
+    const url = `${this.baseUrl.getAuthBaseUrl()}/forgot-password`;
+    return firstValueFrom(this.http.post<{ message: string }>(url, { email }));
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<{ message: string }> {
+    const url = `${this.baseUrl.getAuthBaseUrl()}/reset-password`;
+    return firstValueFrom(this.http.post<{ message: string }>(url, { token, newPassword }));
   }
 }

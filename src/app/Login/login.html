@@ -3,12 +3,14 @@
     <div class="heading">Sign In</div>
     <form class="form" *ngIf="!awaitingVerification" (ngSubmit)="submit()" #f="ngForm" novalidate>
       <input class="input" type="email"  name="email" id="email" placeholder="E-mail" required email [(ngModel)]="email" #emailModel="ngModel">
-      <div class="field-error" *ngIf="emailModel.invalid && emailModel.touched">Email không hợp lệ</div>
+      <!-- <div class="field-error" *ngIf="emailModel.invalid && emailModel.touched">Email không hợp lệ</div> -->
+       <small class="field-error" *ngIf="emailModel.invalid && emailModel.touched">Email không hợp lệ</small>
       <input class="input" type="password" name="password" id="password" placeholder="Password" required minlength="8" [(ngModel)]="password" #pwModel="ngModel">
-      <div class="field-error" *ngIf="pwModel.invalid && pwModel.touched">Mật khẩu tối thiểu 8 ký tự</div>
-      <span class="forgot-password"><a href="#">Forgot Password ?</a></span>
+      <!-- <div class="field-error" *ngIf="pwModel.invalid && pwModel.touched">Mật khẩu tối thiểu 8 ký tự</div> -->
+       <small class="field-error" *ngIf="pwModel.invalid && pwModel.touched">Mật khẩu tối thiểu 8 ký tự</small>
+      <span class="forgot-password"><a [routerLink]="['/forgot-password']">Forgot Password ?</a></span>
       <div class="error" *ngIf="error">{{ error }}</div>
-      <div class="loading" *ngIf="loading">Đang xử lý...</div>
+      <!-- <div class="loading" *ngIf="loading">Đang xử lý...</div> -->
       <input class="login-button" type="submit" [disabled]="loading || f.invalid" value="Sign In">
     </form>
 
