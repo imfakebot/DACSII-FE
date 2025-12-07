@@ -10,11 +10,44 @@
 
     <!-- Menu chính -->
     <nav class="main-menu">
-  <a [routerLink]="['/']">Trang chủ</a>
-  <a [routerLink]="['/fields']"><i class="fa-solid fa-futbol"></i> Bóng đá</a>
-      <a href="#"><i class="fa-solid fa-stopwatch"></i> Tennis</a>
-      <a href="#"><i class="fa-solid fa-badminton"></i> Cầu lông</a>
-      <a href="#"><i class="fa-solid fa-table-tennis-paddle-ball"></i> Bóng bàn</a>
+    <a [routerLink]="['/']">Trang chủ</a>
+    <a [routerLink]="['/football']"><i class="fa-solid fa-futbol"></i> Bóng đá</a>
+      <a [routerLink]="['/tennis']"><i class="fa-solid fa-stopwatch"></i> Tennis</a>
+      <a [routerLink]="['/badminton']"><i class="fa-solid fa-badminton"></i> Cầu lông</a>
+      <a [routerLink]="['/table-tennis']"><i class="fa-solid fa-table-tennis-paddle-ball"></i> Bóng bàn</a>
+      <a [routerLink]="['/voucher']">Mã giảm giá</a>
+      <a *ngIf="userName" [routerLink]="['/bookings']"><i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đặt sân</a>
+      
+      <!-- Admin Dropdown Menu -->
+      <div *ngIf="isAdmin" class="admin-dropdown" (mouseenter)="showAdminDropdown = true" (mouseleave)="showAdminDropdown = false">
+        <a class="admin-toggle" (click)="toggleAdminDropdown()">
+          <i class="fa-solid fa-user-shield"></i> Quản lý
+          <i class="fa-solid fa-chevron-down" [class.rotate]="showAdminDropdown"></i>
+        </a>
+        <div class="dropdown-menu" [class.show]="showAdminDropdown">
+          <a [routerLink]="['/admin/bookings']" (click)="closeAdminDropdown()">
+            <i class="fa-solid fa-calendar-check"></i> Quản lý booking
+          </a>
+          <a [routerLink]="['/admin/users']" (click)="closeAdminDropdown()">
+            <i class="fa-solid fa-users"></i> Quản lý người dùng
+          </a>
+          <a [routerLink]="['/admin/fields']" (click)="closeAdminDropdown()">
+            <i class="fa-solid fa-futbol"></i> Quản lý sân
+          </a>
+          <a [routerLink]="['/admin/vouchers']" (click)="closeAdminDropdown()">
+            <i class="fa-solid fa-ticket"></i> Quản lý voucher
+          </a>
+          <a [routerLink]="['/admin/utilities']" (click)="closeAdminDropdown()">
+            <i class="fa-solid fa-wrench"></i> Quản lý tiện ích
+          </a>
+          <a [routerLink]="['/admin/reviews']" (click)="closeAdminDropdown()">
+            <i class="fa-solid fa-star"></i> Quản lý đánh giá
+          </a>
+          <a [routerLink]="['/admin/feedbacks']" (click)="closeAdminDropdown()">
+            <i class="fa-solid fa-comments"></i> Quản lý phản hồi
+          </a>
+        </div>
+      </div>
     </nav>
 
     <!-- Khu vực và ngôn ngữ -->
@@ -31,15 +64,20 @@
         <a class="btn-login"  (click)="onLogin($event)">Đăng nhập</a>
         <a class="btn-logout"  (click)="onRegister($event)">Đăng ký</a>
       </div>
-      <div class="greeting" *ngIf="userName">
-        <span>Xin chào, {{ userName }}!</span>
-        <!-- <a class="btn-logout" (click)="onLogout($event)">Đăng xuất</a> -->
-
+      
+      <div class="user-section" *ngIf="userName">
+        <!-- User Avatar -->
+        <a [routerLink]="['/profile']" class="user-avatar" title="{{ userName }}">
+          <img src="/assets/usericon.png" alt="Profile">
+        </a>
+        
+        <!-- Logout Button -->
         <button class="btn-logout relative font-semibold border-2 px-6 py-2 border-brand overflow-hidden group rounded-full cursor-pointer" (click)="onLogout($event)">
           <span class="absolute inset-0 bg-brand -translate-x-full rounded-full transition-transform duration-300 group-hover:translate-x-0 group-focus:translate-x-0"></span>
           <span class="relative z-10 transition-colors duration-300 text-brand group-hover:text-white group-focus:text-white">Đăng xuất</span>
         </button>
       </div>
+      
 
       <!-- <div class="language">
         <img src="https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg" alt="VN">

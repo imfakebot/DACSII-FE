@@ -20,12 +20,20 @@ import { Subscription } from 'rxjs';
 export class HeaderComponent implements OnDestroy {
   isRegister = false;
   userName: string | null = null;
+  isAdmin = false;
+  showAdminDropdown = false;
   private sub?: Subscription;
 
   constructor(private router: Router, private authState: AuthStateService) {
     this.sub = this.authState.user$.subscribe(u => {
       // Chỉ hiển thị tên đầy đủ; nếu chưa có thì để null (có thể thêm placeholder sau)
       this.userName = u?.full_name || null;
+      // Sử dụng helper trung tâm để kiểm tra quyền admin (hỗ trợ 'super_admin' và các dạng khác)
+      try {
+        this.isAdmin = this.authState.isAdmin();
+      } catch {
+        this.isAdmin = false;
+      }
     });
   }
 
@@ -47,6 +55,14 @@ export class HeaderComponent implements OnDestroy {
     if(e) e.preventDefault();
     this.authState.setUser(null);
     this.router.navigate(['/Login/login']);
+  }
+
+  toggleAdminDropdown() {
+    this.showAdminDropdown = !this.showAdminDropdown;
+  }
+
+  closeAdminDropdown() {
+    this.showAdminDropdown = false;
   }
 
   ngOnDestroy(){

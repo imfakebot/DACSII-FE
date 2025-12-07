@@ -1,24 +1,236 @@
-<div class="detail container" *ngIf="field; else loading">
-  <div class="gallery">
-    <img [src]="(field.images && field.images.length>0) ? field.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{field.name}}" />
-  </div>
-  <div class="info">
-    <h1>{{ field.name }}</h1>
-    <div class="meta">
-      <span>{{ field.fieldType || field.type || 'Loại: ?' }}</span>
-      <span>{{ field.city || 'Địa điểm chưa rõ' }}</span>
-      <span *ngIf="field.avgRating">⭐ {{ (field.avgRating | number:'1.1-1') }}</span>
+<div class="detail-page" *ngIf="field; else loading">
+  <section class="hero" [style.background-image]="'url(' + ((field.images && field.images.length>0) ? field.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60') + ')'">
+    <div class="hero-overlay">
+      <button class="ghost-btn" (click)="goBack()">
+        <span aria-hidden="true">&#8592;</span>
+        Trở lại danh sách
+      </button>
+      <div class="hero-content">
+        <div class="pill-row">
+          <span class="pill">
+            <i class="fa-solid fa-tag"></i>
+            {{ field.fieldType || field.type || 'Sân thể thao' }}
+          </span>
+          <span class="pill" *ngIf="field.ownerName">
+            <i class="fa-solid fa-user"></i>
+            {{ field.ownerName }}
+          </span>
+        </div>
+        <h1>{{ field.name }}</h1>
+        <p class="location">
+          <i class="fa-solid fa-location-dot"></i>
+          {{ (field.street ? field.street + ', ' : '') + (field.ward ? field.ward + ', ' : '') + (field.city || 'Địa điểm chưa rõ') }}
+        </p>
+        <div class="stats">
+          <div class="stat">
+            <span class="label">Đánh giá</span>
+            <strong>
+              <i class="fa-solid fa-star"></i>
+              {{ field.avgRating ? (field.avgRating | number:'1.1-1') : '4.8' }}
+            </strong>
+          </div>
+          <div class="stat">
+            <span class="label">Giá chuẩn</span>
+            <strong>{{ field.pricePerHour ? (field.pricePerHour | currency:'VND':'symbol':'1.0-0') : 'Liên hệ' }}</strong>
+          </div>
+          <div class="stat">
+            <span class="label">Sẵn sàng</span>
+            <strong>{{ pricing?.available ? 'Có thể đặt' : 'Kiểm tra ngay' }}</strong>
+          </div>
+        </div>
+      </div>
     </div>
-    <p class="price">{{ field.pricePerHour ? (field.pricePerHour | number) + ' đ/giờ' : 'Liên hệ' }}</p>
-    <p class="desc">{{ field.description }}</p>
+  </section>
 
-    <div class="actions">
-      <button class="btn" (click)="goBack()">Quay lại</button>
-      <button class="btn primary" (click)="book(field.id)">Đặt ngay</button>
-    </div>
-  </div>
+  <section class="content-grid">
+    <article class="info-card">
+      <header>
+        <div>
+          <p class="eyebrow">Thông tin sân</p>
+          <h2>Trải nghiệm tốt nhất cho trận đấu của bạn</h2>
+        </div>
+        <!-- <button class="primary-outline" (click)="book(field.id)">Đặt ngay</button> -->
+      </header>
+      <p class="desc">{{ field.description || 'Sân có mặt cỏ chất lượng, hệ thống chiếu sáng hiện đại và phòng thay đồ sạch sẽ.' }}</p>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="label">Loại sân</span>
+          <p>{{ field.fieldType || field.type || 'Đang cập nhật' }}</p>
+        </div>
+        <div class="info-item">
+          <span class="label">Giá tham khảo</span>
+          <p>{{ field.pricePerHour ? (field.pricePerHour | currency:'VND':'symbol':'1.0-0') + '/giờ' : 'Liên hệ quản lý' }}</p>
+        </div>
+        <div class="info-item">
+          <span class="label">Liên hệ</span>
+          <p>{{ field.ownerName || 'Đang cập nhật' }}</p>
+        </div>
+        <div class="info-item">
+          <span class="label">Địa chỉ</span>
+          <p>{{ (field.street ? field.street + ', ' : '') + (field.ward ? field.ward + ', ' : '') + (field.city || 'Địa điểm chưa rõ') }}</p>
+        </div>
+      </div>
+
+      <div class="highlights">
+        <span class="chip"><i class="fa-regular fa-lightbulb"></i> Hệ thống đèn chuẩn thi đấu</span>
+        <span class="chip"><i class="fa-regular fa-clock"></i> Linh hoạt thời gian</span>
+        <span class="chip"><i class="fa-solid fa-shower"></i> Khu thay đồ sạch</span>
+        <span class="chip"><i class="fa-solid fa-shield"></i> An ninh & bãi xe</span>
+      </div>
+    </article>
+
+    <aside class="booking-card">
+      <div class="card-header">
+        <p class="eyebrow">Đặt lịch ngay</p>
+        <h3>Tùy chỉnh khung giờ của bạn</h3>
+      </div>
+      <div class="form-grid">
+        <label>
+          <span>Ngày</span>
+          <input type="date" [(ngModel)]="date" (change)="onDateChange()" />
+        </label>
+        <label class="time-parts">
+          <span>Giờ bắt đầu</span>
+          <div class="time-selects">
+            <select [(ngModel)]="timeHour" (change)="onTimePartChange()" aria-label="Giờ">
+              <option [ngValue]="null">Giờ</option>
+              <option *ngFor="let h of hours" [ngValue]="h">{{ (h+'').padStart(2,'0') }}</option>
+            </select>
+            <select [(ngModel)]="timeMinute" (change)="onTimePartChange()" aria-label="Phút">
+              <option [ngValue]="null">Phút</option>
+              <option value="00">00</option>
+              <option value="30">30</option>
+            </select>
+          </div>
+        </label>
+        <label>
+          <span>Thời lượng (phút)</span>
+          <input type="number" min="30" step="30" [(ngModel)]="duration" (input)="onScheduleChange()" />
+        </label>
+        <label class="voucher-input">
+          <span>
+            <i class="fa-solid fa-ticket"></i>
+            Mã giảm giá (tùy chọn)
+          </span>
+          <input type="text" [(ngModel)]="voucherCode" placeholder="Nhập mã voucher" />
+        </label>
+      </div>
+
+      <!-- Lịch đặt sân - Schedule visualization -->
+      <div class="schedule-area" *ngIf="date">
+        <div class="schedule-header">
+          <div class="schedule-title">
+            <h4>
+              Lịch đặt sân
+              <!-- <span class="live-badge" *ngIf="!scheduleLoading">
+                <i class="fa-solid fa-circle"></i> Live (5s)
+              </span> -->
+            </h4>
+            <small class="last-update" *ngIf="lastScheduleUpdate">
+              Cập nhật: {{ lastScheduleUpdate | date:'HH:mm:ss' }}
+            </small>
+          </div>
+          <div class="legend">
+            <span class="legend-item"><span class="dot available"></span> Còn trống</span>
+            <span class="legend-item"><span class="dot booked"></span> Đã đặt</span>
+          </div>
+        </div>
+        <div *ngIf="scheduleLoading" class="schedule-loading">
+          <i class="fa-solid fa-spinner fa-spin"></i> Đang cập nhật lịch...
+        </div>
+        <div *ngIf="scheduleError" class="schedule-error">
+          <i class="fa-solid fa-exclamation-triangle"></i> {{ scheduleError }}
+        </div>
+        <div class="schedule-grid" *ngIf="!scheduleLoading && !scheduleError">
+          <button 
+            *ngFor="let slot of slots" 
+            class="slot" 
+            [class.available]="slot.available" 
+            [class.booked]="!slot.available"
+            [class.selected]="slot.selected"
+            [disabled]="!slot.available"
+            (click)="selectSlot(slot)"
+            [title]="slot.available ? 'Còn trống - Click để chọn' : 'Đã đặt'"
+          >
+            {{ slot.timeLabel }}
+          </button>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button 
+          class="primary" 
+          [disabled]="!pricing?.available || !isLoggedIn || creatingBooking || checkingAvailability" 
+          (click)="createBooking()"
+        >
+          <i class="fa-solid" [ngClass]="creatingBooking ? 'fa-spinner fa-spin' : 'fa-calendar-check'"></i>
+          {{ creatingBooking ? 'Đang xử lý...' : 'Đặt sân ngay' }}
+        </button>
+      </div>
+
+      
+
+      <div class="message-area">
+
+        <div class="pricing-summary" [class.available]="pricing?.available" [class.unavailable]="pricing && !pricing.available" [class.hidden]="!pricing">
+          <div class="status">
+            <i class="fa-solid" [ngClass]="pricing?.available ? 'fa-check-circle' : 'fa-times-circle'"></i>
+            <span *ngIf="pricing?.available" class="status-text available-text">✓ Khung giờ còn trống</span>
+            <span *ngIf="pricing && !pricing?.available" class="status-text unavailable-text">✗ Khung giờ đã có người đặt</span>
+          </div>
+          <div class="price" *ngIf="pricing?.available">
+            Tổng chi phí
+            <strong>{{ pricing?.pricing?.total_price ? (pricing?.pricing?.total_price | currency:'VND':'symbol':'1.0-0') : '--' }}</strong>
+              <small>({{ pricing?.pricing?.price_per_hour ? (pricing?.pricing?.price_per_hour | currency:'VND':'symbol':'1.0-0') : '--' }} / giờ)</small>
+          </div>
+          <div class="times" *ngIf="pricing?.available">
+            {{ pricing?.booking_details?.start_time || '' }}{{ pricing?.booking_details?.end_time ? ' - ' + pricing?.booking_details?.end_time : '' }}
+          </div>
+          <div class="unavailable-hint" *ngIf="pricing && !pricing?.available">
+            Vui lòng chọn khung giờ khác
+          </div>
+        </div>
+        
+        <div *ngIf="!isLoggedIn" class="message warn">
+          <i class="fa-solid fa-circle-info"></i>
+          Vui lòng đăng nhập để hoàn tất đặt sân.
+        </div>
+
+        <div *ngIf="checkingAvailability" class="message info">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          Đang kiểm tra tình trạng khung giờ...
+        </div>
+
+       
+      
+
+        <div *ngIf="pricingError" class="message error">{{ pricingError }}</div>
+
+        
+
+        <div *ngIf="bookingMessage" class="message success">
+          <i class="fa-solid fa-check-circle"></i>
+          {{ bookingMessage }}
+          <a *ngIf="paymentUrl" [href]="paymentUrl" class="payment-link" target="_blank">
+            <i class="fa-solid fa-credit-card"></i>
+            Nhấn vào đây nếu không tự động chuyển
+          </a>
+        </div>
+        <div *ngIf="bookingError" class="message error">
+          <i class="fa-solid fa-exclamation-circle"></i>
+          {{ bookingError }}
+        </div>
+      </div>
+    </aside>
+  </section>
 </div>
 
+<!-- Modal removed: Using direct booking flow now -->
+
 <ng-template #loading>
-  <div class="container">Đang tải chi tiết sân...</div>
+  <div class="detail-loading">
+    <span class="loader"></span>
+    Đang tải chi tiết sân...
+  </div>
 </ng-template>

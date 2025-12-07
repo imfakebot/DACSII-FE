@@ -1,0 +1,158 @@
+<div class="admin-utilities-container">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>Quản lý Tiện ích</h1>
+      <p class="subtitle">Quản lý các tiện ích có thể có ở sân bóng</p>
+    </div>
+    <button class="btn-create" (click)="openCreateForm()" [disabled]="loading || showForm">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+      </svg>
+      Thêm tiện ích mới
+    </button>
+  </div>
+
+  <!-- Success Message -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+    </svg>
+    {{ successMessage }}
+  </div>
+
+  <!-- Error Message -->
+  <div class="alert alert-error" *ngIf="error">
+    <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+      <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+    </svg>
+    {{ error }}
+  </div>
+
+  <!-- Create/Edit Form -->
+  <div class="form-card" *ngIf="showForm">
+    <div class="form-header">
+      <h2>{{ editingId ? 'Chỉnh sửa tiện ích' : 'Thêm tiện ích mới' }}</h2>
+      <button class="btn-close" (click)="closeForm()" [disabled]="formLoading">
+        <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+        </svg>
+      </button>
+    </div>
+
+    <form (ngSubmit)="submitForm()">
+      <div class="form-group">
+        <label for="name">
+          Tên tiện ích <span class="required">*</span>
+        </label>
+        <input 
+          type="text" 
+          id="name"
+          [(ngModel)]="formData.name"
+          name="name"
+          placeholder="Ví dụ: Wi-Fi miễn phí, Bãi đỗ xe..."
+          maxlength="100"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label for="iconUrl">
+          Icon URL (tùy chọn)
+        </label>
+        <input 
+          type="text" 
+          id="iconUrl"
+          [(ngModel)]="formData.iconUrl"
+          name="iconUrl"
+          placeholder="https://example.com/icon.png hoặc emoji 🔧">
+        <small class="form-hint">Có thể để URL hình ảnh hoặc emoji</small>
+      </div>
+
+      <div class="alert alert-error" *ngIf="formError">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+          <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+        </svg>
+        {{ formError }}
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="closeForm()" [disabled]="formLoading">
+          Hủy
+        </button>
+        <button type="submit" class="btn-submit" [disabled]="formLoading || !formData.name.trim()">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" *ngIf="!formLoading">
+            <path d="M15.964.686a.5.5 0 0 0-.65-.65L.767 5.855H.766l-.452.18a.5.5 0 0 0-.082.887l.41.26.001.002 4.995 3.178 3.178 4.995.002.002.26.41a.5.5 0 0 0 .886-.083l6-15Zm-1.833 1.89L6.637 10.07l-.215-.338a.5.5 0 0 0-.154-.154l-.338-.215 7.494-7.494 1.178-.471-.47 1.178Z"/>
+          </svg>
+          {{ formLoading ? 'Đang lưu...' : (editingId ? 'Cập nhật' : 'Tạo mới') }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Đang tải danh sách tiện ích...</p>
+  </div>
+
+  <!-- Utilities Grid -->
+  <div *ngIf="!loading && utilities.length > 0" class="utilities-grid">
+    <div *ngFor="let utility of utilities" class="utility-card">
+      <div class="utility-icon">
+        <span *ngIf="utility.iconUrl && utility.iconUrl.startsWith('http')">
+          <img [src]="utility.iconUrl" [alt]="utility.name" />
+        </span>
+        <span *ngIf="!utility.iconUrl || !utility.iconUrl.startsWith('http')" class="icon-emoji">
+          {{ utility.iconUrl || '🔧' }}
+        </span>
+      </div>
+
+      <div class="utility-info">
+        <h3 class="utility-name">{{ utility.name }}</h3>
+        <div class="utility-id">ID: {{ utility.id }}</div>
+      </div>
+
+      <div class="utility-actions" *ngIf="deletingId !== utility.id">
+        <button class="btn-edit" (click)="openEditForm(utility)" [disabled]="showForm">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"/>
+          </svg>
+          Sửa
+        </button>
+        <button class="btn-delete" (click)="confirmDelete(utility.id)" [disabled]="deleteLoading">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+          </svg>
+          Xóa
+        </button>
+      </div>
+
+      <div class="delete-confirm" *ngIf="deletingId === utility.id">
+        <span>Xác nhận xóa?</span>
+        <button class="btn-confirm" (click)="deleteUtility(utility.id)" [disabled]="deleteLoading">
+          {{ deleteLoading ? 'Đang xóa...' : 'Xác nhận' }}
+        </button>
+        <button class="btn-cancel-delete" (click)="cancelDelete()" [disabled]="deleteLoading">
+          Hủy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && utilities.length === 0" class="empty-state">
+    <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l1.313 7h8.17l1.313-7H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z"/>
+    </svg>
+    <h3>Chưa có tiện ích nào</h3>
+    <p>Thêm tiện ích đầu tiên cho các sân bóng của bạn</p>
+    <button class="btn-create" (click)="openCreateForm()">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+      </svg>
+      Thêm tiện ích đầu tiên
+    </button>
+  </div>
+</div>

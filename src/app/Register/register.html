@@ -1,5 +1,11 @@
 <div class="Register-page">
   <div class="container">
+    <div class="loading-overlay" *ngIf="loading">
+      <div class="loading-box" role="status" aria-live="polite">
+        <span class="spinner" aria-hidden="true"></span>
+        <span class="loading-text">Đang xử lý...</span>
+      </div>
+    </div>
     <div class="heading">Register</div>
     <form *ngIf="!awaitingVerification" class="form" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
       <input class="input" id="fullname" placeholder="Họ và tên" formControlName="full_name">

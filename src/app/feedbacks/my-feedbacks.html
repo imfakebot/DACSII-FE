@@ -1,0 +1,127 @@
+<div class="my-feedbacks-page">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-comments"></i>
+        Ticket hỗ trợ của tôi
+      </h1>
+      <p class="subtitle">Quản lý các yêu cầu hỗ trợ và góp ý</p>
+    </div>
+    <button class="btn-create" (click)="toggleCreateForm()" [disabled]="loading">
+      <i class="fas" [ngClass]="showCreateForm ? 'fa-times' : 'fa-plus'"></i>
+      {{ showCreateForm ? 'Đóng' : 'Tạo ticket mới' }}
+    </button>
+  </div>
+
+  <!-- Success Message -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i>
+    {{ successMessage }}
+  </div>
+
+  <!-- Error Message -->
+  <div class="alert alert-error" *ngIf="error && !showCreateForm">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ error }}
+  </div>
+
+  <!-- Create Form -->
+  <div class="create-form-card" *ngIf="showCreateForm">
+    <h2>Tạo ticket mới</h2>
+    
+    <div class="alert alert-error" *ngIf="error">
+      <i class="fas fa-exclamation-circle"></i>
+      {{ error }}
+    </div>
+
+    <form (ngSubmit)="createTicket()">
+      <div class="form-group">
+        <label for="subject">
+          Tiêu đề <span class="required">*</span>
+        </label>
+        <input 
+          type="text" 
+          id="subject"
+          [(ngModel)]="newTicket.subject"
+          name="subject"
+          placeholder="Nhập tiêu đề ticket..."
+          maxlength="200"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label for="message">
+          Nội dung <span class="required">*</span>
+        </label>
+        <textarea 
+          id="message"
+          [(ngModel)]="newTicket.message"
+          name="message"
+          placeholder="Mô tả chi tiết vấn đề của bạn..."
+          rows="6"
+          required></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" (click)="toggleCreateForm()" [disabled]="creating">
+          Hủy
+        </button>
+        <button type="submit" class="btn-submit" [disabled]="creating">
+          <i class="fas" [ngClass]="creating ? 'fa-spinner fa-spin' : 'fa-paper-plane'"></i>
+          {{ creating ? 'Đang gửi...' : 'Gửi ticket' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-state" *ngIf="loading && !showCreateForm">
+    <i class="fas fa-spinner fa-spin"></i>
+    <p>Đang tải danh sách ticket...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!loading && feedbacks.length === 0 && !showCreateForm">
+    <i class="fas fa-inbox"></i>
+    <h3>Chưa có ticket nào</h3>
+    <p>Bạn chưa tạo ticket hỗ trợ nào. Tạo ticket mới để được hỗ trợ!</p>
+    <button class="btn-create" (click)="toggleCreateForm()">
+      <i class="fas fa-plus"></i>
+      Tạo ticket đầu tiên
+    </button>
+  </div>
+
+  <!-- Feedbacks List -->
+  <div class="feedbacks-list" *ngIf="!loading && feedbacks.length > 0 && !showCreateForm">
+    <div 
+      *ngFor="let feedback of feedbacks" 
+      class="feedback-card"
+      (click)="viewDetail(feedback.id)">
+      
+      <div class="feedback-header">
+        <h3 class="feedback-subject">{{ feedback.title || feedback.subject || 'Phản hồi' }}</h3>
+        <span class="feedback-status" [ngClass]="getStatusClass(feedback.status)">
+          {{ getStatusLabel(feedback.status) }}
+        </span>
+      </div>
+
+      <div class="feedback-meta">
+        <div class="meta-item">
+          <i class="far fa-calendar"></i>
+          {{ getRelativeTime(feedback.created_at) }}
+        </div>
+        <div class="meta-item" *ngIf="feedback.responses && feedback.responses.length > 0">
+          <i class="far fa-comments"></i>
+          {{ feedback.responses.length }} phản hồi
+        </div>
+      </div>
+
+      <div class="feedback-actions">
+        <button class="btn-view">
+          <i class="fas fa-eye"></i>
+          Xem chi tiết
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

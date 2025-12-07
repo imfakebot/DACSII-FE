@@ -1,0 +1,201 @@
+<div class="my-bookings-container">
+  <div class="page-header">
+    <h1>
+      <i class="fa-solid fa-clock-rotate-left"></i>
+      Lịch sử đặt sân
+    </h1>
+    <a routerLink="/" class="btn-back">
+      <i class="fa-solid fa-arrow-left"></i>
+      Trang chủ
+    </a>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div class="message success-message" *ngIf="successMessage">
+    <i class="fa-solid fa-check-circle"></i>
+    {{ successMessage }}
+  </div>
+  
+  <div class="message error-message" *ngIf="error">
+    <i class="fa-solid fa-exclamation-circle"></i>
+    {{ error }}
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label for="statusFilter">
+        <i class="fa-solid fa-filter"></i>
+        Trạng thái:
+      </label>
+      <select id="statusFilter" [(ngModel)]="statusFilter" (change)="onFilterChange()">
+        <option value="">Tất cả</option>
+        <option value="PENDING_PAYMENT">Chờ thanh toán</option>
+        <option value="CONFIRMED">Đã xác nhận</option>
+        <option value="CHECKED_IN">Đã check-in</option>
+        <option value="COMPLETED">Hoàn thành</option>
+        <option value="CANCELLED">Đã hủy</option>
+        <option value="EXPIRED">Hết hạn</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Đang tải danh sách đặt sân...</p>
+  </div>
+
+  <!-- Bookings List -->
+  <div class="bookings-list" *ngIf="!loading && bookings.length > 0">
+    <div class="booking-card" *ngFor="let booking of bookings">
+      <div class="booking-header">
+        <div class="booking-id">
+          <i class="fa-solid fa-hashtag"></i>
+          {{ booking.id.substring(0, 8) }}
+        </div>
+        <div class="booking-status" [ngClass]="getStatusClass(booking.status)">
+          {{ getStatusLabel(booking.status) }}
+        </div>
+      </div>
+
+      <div class="booking-body">
+        <div class="info-row">
+          <span class="label">
+            <i class="fa-solid fa-futbol"></i>
+            Sân:
+          </span>
+          <span class="value">{{ booking.field?.name || 'N/A' }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="label">
+            <i class="fa-solid fa-map-marker-alt"></i>
+            Chi nhánh:
+          </span>
+          <span class="value">{{ booking.field?.branch?.name || 'N/A' }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="label">
+            <i class="fa-solid fa-calendar"></i>
+            Thời gian bắt đầu:
+          </span>
+          <span class="value">{{ formatDateTime(booking.start_time) }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="label">
+            <i class="fa-solid fa-clock"></i>
+            Thời gian kết thúc:
+          </span>
+          <span class="value">{{ formatDateTime(booking.end_time) }}</span>
+        </div>
+
+        <div class="info-row">
+          <span class="label">
+            <i class="fa-solid fa-hourglass-half"></i>
+            Thời lượng:
+          </span>
+          <span class="value">{{ booking.duration_minutes }} phút</span>
+        </div>
+
+        <div class="info-row total">
+          <span class="label">
+            <i class="fa-solid fa-money-bill-wave"></i>
+            Tổng tiền:
+          </span>
+          <span class="value">{{ formatCurrency(booking.total_price) }}</span>
+        </div>
+
+        <div class="info-row" *ngIf="booking.voucher">
+          <span class="label">
+            <i class="fa-solid fa-ticket"></i>
+            Voucher:
+          </span>
+          <span class="value voucher-code">{{ booking.voucher.code }}</span>
+        </div>
+      </div>
+
+      <div class="booking-footer" *ngIf="canCancel(booking) || canPay(booking)">
+        <button class="btn-pay" *ngIf="canPay(booking)" (click)="pay(booking.id)">
+          <i class="fa-solid fa-credit-card"></i>
+          Thanh toán
+        </button>
+        <button class="btn-cancel" *ngIf="canCancel(booking)" (click)="openCancelModal(booking.id)">
+          <i class="fa-solid fa-times-circle"></i>
+          Hủy đặt sân
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state" *ngIf="!loading && bookings.length === 0">
+    <i class="fa-solid fa-inbox"></i>
+    <p>Bạn chưa có lịch sử đặt sân nào</p>
+    <a routerLink="/" class="btn-primary">
+      <i class="fa-solid fa-plus"></i>
+      Đặt sân ngay
+    </a>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="!loading && totalPages > 1">
+    <button class="page-btn" (click)="prevPage()" [disabled]="currentPage === 1">
+      <i class="fa-solid fa-chevron-left"></i>
+    </button>
+
+    <button 
+      *ngFor="let page of getPageNumbers()" 
+      class="page-btn" 
+      [class.active]="page === currentPage"
+      (click)="goToPage(page)"
+    >
+      {{ page }}
+    </button>
+
+    <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+      <i class="fa-solid fa-chevron-right"></i>
+    </button>
+
+    <span class="page-info">
+      Trang {{ currentPage }} / {{ totalPages }} ({{ totalItems }} kết quả)
+    </span>
+  </div>
+</div>
+
+<!-- Cancel Confirmation Modal -->
+<div class="modal-overlay" *ngIf="showCancelModal" (click)="closeCancelModal()">
+  <div class="modal-content cancel-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>
+        <i class="fa-solid fa-exclamation-triangle"></i>
+        Xác nhận hủy đặt sân
+      </h3>
+      <button class="close-btn" (click)="closeCancelModal()">
+        <i class="fa-solid fa-times"></i>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <p>Bạn có chắc chắn muốn hủy đặt sân này?</p>
+      <p class="warning-text">
+        <i class="fa-solid fa-info-circle"></i>
+        Nếu đã thanh toán, tiền sẽ được hoàn lại vào tài khoản (nếu có).
+        Voucher sử dụng sẽ được hoàn trả.
+      </p>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-secondary" (click)="closeCancelModal()">
+        <i class="fa-solid fa-times"></i>
+        Đóng
+      </button>
+      <button class="btn-danger" (click)="confirmCancel()">
+        <i class="fa-solid fa-check"></i>
+        Xác nhận hủy
+      </button>
+    </div>
+  </div>
+</div>

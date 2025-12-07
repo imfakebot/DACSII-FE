@@ -1,0 +1,55 @@
+.admin-field-form {
+	max-width: 1100px;
+	margin: 0 auto;
+	padding: 2rem 1rem 4rem;
+}
+
+.card {
+	background: #fff;
+	border-radius: 16px;
+	box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+	padding: 1.5rem;
+}
+
+.card__header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 1rem;
+}
+
+.create-form .form-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 0.75rem;
+}
+
+.create-form label {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	font-size: 0.9rem;
+}
+
+.create-form .label {
+	font-weight: 600;
+	color: #374151;
+}
+
+.create-form input,
+.create-form select,
+.create-form textarea {
+	padding: 0.5rem 0.75rem;
+	border-radius: 8px;
+	border: 1px solid #e6eef6;
+	background: #fbfdff;
+}
+
+.create-form .full-width { grid-column: 1 / -1; }
+.form-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+.btn.primary { background: #0ea5a9; color: #fff; padding: 0.5rem 1rem; border-radius: 8px; }
+.btn.primary:disabled { opacity: 0.6; }
+
+.loading { padding: 1rem; }
+
+.hint { color: #6b7280; }

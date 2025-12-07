@@ -1,0 +1,87 @@
+<section class="badminton-hero">
+	<div class="hero-content">
+		<p class="eyebrow">Cầu lông</p>
+		<h1>{{ pageTitle || 'Đặt sân cầu lông chuẩn thi đấu trong vài giây' }}</h1>
+		<p class="subtitle">Danh sách sân indoor/outdoor với trần cao, ánh sáng tiêu chuẩn và thảm PVC chống trượt cho các trận đánh đôi cực đã.</p>
+		<div class="hero-stats">
+			<div>
+				<span class="number">{{ badmintonFields.length }}</span>
+				<span class="label">Sân khả dụng</span>
+			</div>
+			<div>
+				<span class="number">{{ displayedFields.length }}</span>
+				<span class="label">Phù hợp bộ lọc</span>
+			</div>
+			<div>
+				<span class="number">4.7★</span>
+				<span class="label">Đánh giá trung bình</span>
+			</div>
+		</div>
+	</div>
+	<div class="hero-panel">
+		<label for="badminton-search">Tìm kiếm sân cầu lông</label>
+		<div class="search-row">
+			<input id="badminton-search" type="text" placeholder="Nhập tên sân, phường/xã..." [(ngModel)]="query" />
+			<button (click)="onHeroSearch()">Tìm sân</button>
+		</div>
+		<label for="badminton-city">Địa điểm</label>
+		<select id="badminton-city" [(ngModel)]="selectedCity">
+			<option [ngValue]="null">Tất cả khu vực</option>
+			<option *ngFor="let c of cities" [value]="c">{{ c }}</option>
+		</select>
+	</div>
+</section>
+
+<section class="filters container">
+	<div class="court-filter">
+		<span class="label">Không gian sân</span>
+		<div class="chip-group">
+			<button class="chip" [class.active]="courtFilter==='all'" (click)="setCourtFilter('all')">Tất cả</button>
+			<button class="chip" [class.active]="courtFilter==='indoor'" (click)="setCourtFilter('indoor')">Trong nhà</button>
+			<button class="chip" [class.active]="courtFilter==='outdoor'" (click)="setCourtFilter('outdoor')">Ngoài trời</button>
+			<button class="chip" [class.active]="courtFilter==='pro'" (click)="setCourtFilter('pro')">Chuẩn thi đấu</button>
+		</div>
+	</div>
+</section>
+
+<section class="badminton-list container">
+	<div class="section-header">
+		<div>
+			<p class="eyebrow">Danh sách sân cầu lông</p>
+			<h2>Hẹn lịch giao cầu nhanh chóng</h2>
+		</div>
+		<p class="result-count">{{ displayedFields.length }} sân được đề xuất</p>
+	</div>
+
+	<div *ngIf="displayedFields.length === 0" class="empty-state">
+		<h3>Không tìm thấy sân phù hợp</h3>
+		<p>Thử thay đổi bộ lọc hoặc khu vực để tìm thêm sân còn trống.</p>
+	</div>
+
+	<div class="badminton-grid" *ngIf="displayedFields.length > 0">
+		<article class="badminton-card" *ngFor="let f of displayedFields" (click)="viewDetail(f.id)" (keyup.enter)="viewDetail(f.id)" tabindex="0" role="button" aria-label="Xem chi tiết {{ f.name }}">
+			<div class="card-cover">
+				<img [src]="(f.images && f.images.length>0) ? f.images[0] : '/assets/placeholder-field.jpg'" alt="{{f.name}}" />
+				<div class="badge-row">
+					<span class="court-badge" *ngIf="getCourtBadge(f) as court">{{ courtLabels[court] }}</span>
+					<span class="availability">Sẵn sàng</span>
+				</div>
+			</div>
+			<div class="card-content">
+				<div class="card-head">
+					<h3>{{ f.name }}</h3>
+					<div class="price">{{ f.pricePerHour ? (f.pricePerHour | currency:'VND':'symbol':'1.0-0') : 'Liên hệ' }}</div>
+				</div>
+				<p class="location"><i class="fa-solid fa-location-dot"></i> {{ (f.street ? f.street + ', ' : '') + (f.ward ? f.ward + ', ' : '') + (f.city || 'N/A') }}</p>
+				<p class="desc">{{ f.description || 'Sàn phủ thảm chống trượt, chiều cao trần đảm bảo và dịch vụ cho thuê vợt, cầu.' }}</p>
+				<div class="card-meta">
+					<span><i class="fa-solid fa-star"></i> {{ f.avgRating ? (f.avgRating | number:'1.1-1') : '4.7' }} / 5</span>
+					<span><i class="fa-solid fa-fan"></i> Hệ thống thông gió</span>
+				</div>
+			</div>
+			<div class="card-actions">
+				<button class="primary" (click)="$event.stopPropagation(); viewDetail(f.id)">Đặt sân</button>
+			</div>
+		</article>
+	</div>
+</section>

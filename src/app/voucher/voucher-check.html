@@ -1,0 +1,38 @@
+<div class="voucher-page">
+  <header class="page-header">
+    <h1>Kiểm tra mã giảm giá</h1>
+    
+  </header>
+
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+  <div *ngIf="result && result.isValid" class="alert alert-success">{{ result.message }}</div>
+
+  <form class="card" (ngSubmit)="checkVoucher()">
+    <div class="card__body grid two">
+      <label class="field">
+        <span>Mã voucher</span>
+        <input type="text" name="code" [(ngModel)]="code" placeholder="VD: SALE50K" required />
+      </label>
+      <label class="field">
+        <span>Giá trị đơn hàng (đ)</span>
+        <input type="number" name="orderValue" min="0" step="10000" [(ngModel)]="orderValue" required />
+      </label>
+    </div>
+    <div class="card__footer">
+      <button type="submit" class="btn primary" [disabled]="loading">
+        {{ loading ? 'Đang kiểm tra...' : 'Kiểm tra ngay' }}
+      </button>
+    </div>
+  </form>
+
+  <section class="card" *ngIf="hasResult">
+    <div class="card__header">
+      <h2>Kết quả</h2>
+    </div>
+    <div class="card__body result">
+      <p><strong>Mã:</strong> {{ result?.code }}</p>
+      <p><strong>Số tiền giảm:</strong> {{ result?.discountAmount | number:'1.0-0' }} đ</p>
+      <p><strong>Thanh toán còn:</strong> {{ result?.finalAmount | number:'1.0-0' }} đ</p>
+    </div>
+  </section>
+</div>

@@ -1,0 +1,86 @@
+<section class="table-tennis-hero">
+  <div class="hero-content">
+    <p class="eyebrow">Table Tennis</p>
+    <h1>{{ pageTitle || 'Đặt phòng bóng bàn chuẩn ITTF' }}</h1>
+    <p class="subtitle">Giữ phong độ với những phòng bóng bàn có bàn chuẩn thi đấu, ánh sáng đồng đều và điều hòa ổn định.</p>
+    <div class="hero-stats">
+      <div>
+        <span class="number">{{ tableTennisFields.length }}</span>
+        <span class="label">Phòng khả dụng</span>
+      </div>
+      <div>
+        <span class="number">{{ displayedFields.length }}</span>
+        <span class="label">Đáp ứng bộ lọc</span>
+      </div>
+      <div>
+        <span class="number">4.8★</span>
+        <span class="label">Đánh giá trung bình</span>
+      </div>
+    </div>
+  </div>
+  <div class="hero-panel">
+    <label for="tt-search">Tìm kiếm phòng bóng bàn</label>
+    <div class="search-row">
+      <input id="tt-search" type="text" placeholder="Nhập tên phòng, khu vực..." [(ngModel)]="query" />
+      <button type="button" (click)="onHeroSearch()">Tìm phòng</button>
+    </div>
+    <label for="tt-city">Địa điểm</label>
+    <select id="tt-city" [(ngModel)]="selectedCity">
+      <option [ngValue]="null">Tất cả khu vực</option>
+      <option *ngFor="let city of cities" [value]="city">{{ city }}</option>
+    </select>
+  </div>
+</section>
+
+<section class="filters container">
+  <div class="hall-filter">
+    <span class="label">Danh mục phòng</span>
+    <div class="chip-group">
+      <button class="chip" [class.active]="hallFilter === 'all'" (click)="setHallFilter('all')">Tất cả</button>
+      <button class="chip" *ngFor="let entry of hallEntries" [class.active]="hallFilter === entry[0]" (click)="setHallFilter(entry[0])">{{ entry[1] }}</button>
+    </div>
+  </div>
+</section>
+
+<section class="table-tennis-list container">
+  <div class="section-header">
+    <div>
+      <p class="eyebrow">Danh sách phòng bóng bàn</p>
+      <h2>Chọn phòng luyện tập & thi đấu</h2>
+    </div>
+    <p class="result-count">{{ displayedFields.length }} phòng phù hợp</p>
+  </div>
+
+  <div *ngIf="displayedFields.length === 0" class="empty-state">
+    <h3>Không tìm thấy phòng phù hợp</h3>
+    <p>Thử đổi khu vực hoặc loại phòng để nhận thêm gợi ý.</p>
+  </div>
+
+  <div class="table-tennis-grid" *ngIf="displayedFields.length > 0">
+    <article class="table-tennis-card" *ngFor="let field of displayedFields" (click)="viewDetail(field.id)" (keyup.enter)="viewDetail(field.id)" tabindex="0" role="button" aria-label="Xem chi tiết {{ field.name }}">
+      <div class="card-cover">
+        <img [src]="field.images.length ? field.images[0] : 'assets/images/table-tennis-default.jpg'" [alt]="field.name" />
+        <div class="badge-row">
+          <span class="hall-badge" *ngIf="getHallBadge(field) as hall">{{ hallLabels[hall] }}</span>
+          <span class="availability">Sẵn sàng</span>
+        </div>
+      </div>
+      <div class="card-content">
+        <div class="card-head">
+          <h3>{{ field.name }}</h3>
+          <div class="price">{{ field.pricePerHour ? (field.pricePerHour | currency:'VND':'symbol':'1.0-0') : 'Liên hệ' }}</div>
+        </div>
+        <p class="location"><i class="fa-solid fa-location-dot"></i> {{ (field.street ? field.street + ', ' : '') + (field.ward ? field.ward + ', ' : '') + (field.city || 'N/A') }}</p>
+        <p class="desc">{{ field.description || 'Phòng bóng bàn trang bị bàn chuẩn ITTF, đèn CRI cao và điều hòa ổn định.' }}</p>
+        <div class="card-meta">
+          <span><i class="fa-solid fa-star"></i> {{ field.avgRating ? (field.avgRating | number:'1.1-1') : '4.8' }} / 5</span>
+          <span><i class="fa-solid fa-bolt"></i> Điều hòa</span>
+          <span><i class="fa-solid fa-shield-halved"></i> Bàn chuẩn ITTF</span>
+        </div>
+      </div>
+      <div class="card-actions">
+        <button class="primary" (click)="$event.stopPropagation(); viewDetail(field.id)">Đặt phòng</button>
+      </div>
+    </article>
+  </div>
+</section>

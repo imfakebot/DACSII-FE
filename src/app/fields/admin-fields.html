@@ -1,0 +1,71 @@
+<div class="admin-fields-page">
+  <header class="page-header">
+    <h1>Quản lý sân</h1>
+  </header>
+
+  <section *ngIf="isAdmin" class="card card--small">
+    <div class="card__header">
+      <h3>Hành động</h3>
+      <div class="pager">
+        <button class="btn primary" (click)="onCreate()">Tạo sân mới</button>
+        <button class="btn" (click)="load()">Tải lại</button>
+      </div>
+    </div>
+    <div class="card__body">
+      <p class="hint">Tạo, sửa hoặc xóa sân. Các thao tác ảnh hưởng trực tiếp đến dữ liệu.</p>
+    </div>
+  </section>
+
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+  <div *ngIf="!error && fields?.length === 0 && !loading" class="alert alert-warning">Không có sân nào.</div>
+
+  <section class="card" *ngIf="isAdmin; else noPermission">
+    <div class="card__header">
+      <div>
+        <p class="card__eyebrow">{{ fields.length || 0 }} sân</p>
+        <h2>Danh sách sân</h2>
+      </div>
+      <div class="pager">
+        <button class="btn" (click)="load()" [disabled]="loading">Tải lại</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper" *ngIf="!loading; else loadingTpl">
+      <table>
+        <thead>
+          <tr>
+            <th>Tên</th>
+            <th>Loại</th>
+            <th>Địa chỉ</th>
+            <th>Trạng thái</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let f of fields">
+            <td>
+              <div class="email">{{ f.name }}</div>
+            </td>
+            <td>{{ f.fieldType || f.type || '-' }}</td>
+            <td>{{ f.street || f.city || '-' }}</td>
+            <td>
+              <span class="chip" [ngClass]="{ 'chip--success': f.status, 'chip--warning': !f.status }">{{ f.status ? 'Hoạt động' : 'Ngưng' }}</span>
+            </td>
+            <td>
+              <button class="btn" (click)="onEdit(f.id)">Sửa</button>
+              <button class="btn danger" (click)="onDelete(f.id)">Xóa</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <ng-template #loadingTpl>
+    <div class="loading">Đang tải danh sách...</div>
+  </ng-template>
+
+  <ng-template #noPermission>
+    <div class="alert alert-error">Bạn không có quyền truy cập khu vực này.</div>
+  </ng-template>
+</div>

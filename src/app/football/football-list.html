@@ -1,0 +1,90 @@
+<section class="football-hero">
+	<div class="hero-content">
+		<p class="eyebrow">Bóng đá</p>
+		<h1>{{ pageTitle || 'Tìm sân bóng đá chuẩn để cháy hết mình' }}</h1>
+		<p class="subtitle">Danh sách được tuyển chọn từ các sân có chất lượng mặt cỏ tốt, hệ thống đèn đêm hiện đại và tiện ích đầy đủ.</p>
+		<div class="hero-stats">
+			<div>
+				<span class="number">{{ footballFields.length }}</span>
+				<span class="label">Sân khả dụng</span>
+			</div>
+			<div>
+				<span class="number">{{ displayedFields.length }}</span>
+				<span class="label">Phù hợp bộ lọc</span>
+			</div>
+			<div>
+				<span class="number">4.8★</span>
+				<span class="label">Đánh giá trung bình</span>
+			</div>
+		</div>
+	</div>
+	<div class="hero-panel">
+		<label for="search">Tìm kiếm sân bóng</label>
+		<div class="search-row">
+			<input id="search" type="text" placeholder="Nhập tên sân, quận huyện..." [(ngModel)]="query" />
+			<button (click)="onHeroSearch()">Tìm sân</button>
+		</div>
+		<label for="city">Địa điểm</label>
+		<select  id="city" [(ngModel)]="selectedCity">
+			<option [ngValue]="null">Tất cả khu vực</option>
+			
+			<option *ngFor="let c of cities" [value]="c">{{ c }}</option>
+		</select>
+	</div>
+</section>
+
+<section class="filters container">
+	<div class="pitch-filter">
+		<span class="label">Loại sân</span>
+		<div class="chip-group">
+			<button class="chip" [class.active]="pitchFilter==='all'" (click)="setPitchFilter('all')">Tất cả</button>
+			<button class="chip" [class.active]="pitchFilter==='5p'" (click)="setPitchFilter('5p')">5 người</button>
+			<button class="chip" [class.active]="pitchFilter==='7p'" (click)="setPitchFilter('7p')">7 người</button>
+			<button class="chip" [class.active]="pitchFilter==='11p'" (click)="setPitchFilter('11p')">11 người</button>
+		</div>
+	</div>
+</section>
+
+<section class="football-list container">
+	<div class="section-header">
+		<div>
+			<p class="eyebrow">Danh sách sân bóng</p>
+			<h2>Sẵn sàng ra sân bất cứ lúc nào</h2>
+		</div>
+		<p class="result-count">{{ displayedFields.length }} sân được đề xuất</p>
+	</div>
+
+	<div *ngIf="displayedFields.length === 0" class="empty-state">
+		<h3>Không tìm thấy sân phù hợp</h3>
+		<p>Hãy thử đổi khu vực hoặc loại sân để có thêm lựa chọn.</p>
+	</div>
+
+	<div class="football-grid" *ngIf="displayedFields.length > 0">
+		<article class="football-card" *ngFor="let f of displayedFields" (click)="viewDetail(f.id)" (keyup.enter)="viewDetail(f.id)" tabindex="0" role="button" aria-label="Xem chi tiết {{ f.name }}">
+			<div class="card-cover">
+				<img [src]="(f.images && f.images.length>0) ? f.images[0] : '/assets/placeholder-field.jpg'" alt="{{f.name}}" />
+				<div class="badge-row">
+					<span class="pitch-badge" *ngIf="getPitchBadge(f) as pitch">{{ pitchLabels[pitch] }}</span>
+					<span class="availability">Sẵn sàng</span>
+				</div>
+			</div>
+			<div class="card-content">
+				<div class="card-head">
+					<h3>{{ f.name }}</h3>
+					<div class="price">{{ f.pricePerHour ? (f.pricePerHour | currency:'VND':'symbol':'1.0-0') : 'Liên hệ' }}</div>
+				</div>
+				<p class="location"><i class="fa-solid fa-location-dot"></i> {{ (f.street ? f.street + ', ' : '') + (f.ward ? f.ward + ', ' : '') + (f.city || 'N/A') }}</p>
+				<p class="desc">{{ f.description || 'Mặt cỏ đạt chuẩn, hệ thống chiếu sáng đêm và phòng thay đồ đầy đủ tiện nghi.' }}</p>
+				<div class="card-meta">
+					<span><i class="fa-solid fa-star"></i> {{ f.avgRating ? (f.avgRating | number:'1.1-1') : '4.8' }} / 5</span>
+					<span><i class="fa-solid fa-clock"></i> Linh hoạt khung giờ</span>
+				</div>
+				
+			</div>
+			<div class="card-actions">
+					<!-- <button  class="ghost" (click)="$event.stopPropagation(); viewDetail(f.id) ">Chi tiết</button> -->
+					<button  class="primary" (click)="$event.stopPropagation(); viewDetail(f.id)">Đặt sân</button>
+				</div>
+		</article>
+	</div>
+</section>

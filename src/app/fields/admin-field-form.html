@@ -1,0 +1,72 @@
+<div class="admin-field-form">
+  <header class="page-header">
+    <h1>{{ id ? 'Chỉnh sửa sân' : 'Tạo sân mới' }}</h1>
+  </header>
+
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+
+  <section class="card">
+    <div class="card__header">
+      <h3>{{ id ? 'Chỉnh sửa sân' : 'Tạo sân mới' }}</h3>
+    </div>
+    <div class="card__body">
+      <form *ngIf="!loading" (ngSubmit)="onSave()" class="create-form" autocomplete="off">
+        <div class="form-grid">
+          <label>
+            <span class="label">Tên sân</span>
+            <input name="name" [(ngModel)]="model.name" required />
+          </label>
+
+          <label>
+            <span class="label">Loại sân</span>
+            <input name="fieldTypeId" [(ngModel)]="model.fieldTypeId" placeholder="fieldTypeId (ví dụ: 123)" />
+            <div class="hint">Nếu API trả danh sách loại sân, hãy nhập `fieldTypeId` tương ứng.</div>
+          </label>
+
+          <label class="full-width">
+            <span class="label">Mô tả</span>
+            <textarea name="description" [(ngModel)]="model.description"></textarea>
+          </label>
+
+          <label>
+            <span class="label">Địa chỉ - Street</span>
+            <input name="street" [(ngModel)]="model.street" />
+          </label>
+
+          <label>
+            <span class="label">City</span>
+            <input name="city" [(ngModel)]="model.city" />
+          </label>
+
+          <label class="full-width">
+            <span class="label">Hình ảnh</span>
+            <input type="file" (change)="onFiles($event.target.files)" multiple />
+          </label>
+          <label class="full-width">
+            <span class="label">Chi nhánh (Branch)</span>
+            <ng-container *ngIf="branchesLoading">Đang tải chi nhánh...</ng-container>
+            <ng-container *ngIf="!branchesLoading">
+              <ng-container *ngIf="branches?.length; else branchInput">
+                <select name="branchId" [(ngModel)]="model.branchId">
+                  <option value="">(Chọn chi nhánh)</option>
+                  <option *ngFor="let b of branches" [value]="b.id">{{ b.name }} ({{ b.id }})</option>
+                </select>
+              </ng-container>
+            </ng-container>
+            <ng-template #branchInput>
+              <input name="branchId" [(ngModel)]="model.branchId" placeholder="Branch ID (ví dụ: 1)" />
+              <div *ngIf="branchesError" class="alert alert-error">{{ branchesError }}</div>
+            </ng-template>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button class="btn primary" type="submit" [disabled]="saving">{{ saving ? 'Đang lưu...' : 'Lưu' }}</button>
+          <button class="btn" type="button" (click)="router.navigate(['/admin/fields'])">Hủy</button>
+        </div>
+      </form>
+
+      <div *ngIf="loading" class="loading">Đang tải...</div>
+    </div>
+  </section>
+</div>

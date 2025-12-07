@@ -1,0 +1,180 @@
+<div class="admin-reviews-container">
+  <div class="page-header">
+    <h1>Quản lý Đánh giá</h1>
+    <p class="subtitle">Xem và quản lý tất cả đánh giá từ khách hàng</p>
+  </div>
+
+  <!-- Success Message -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+    </svg>
+    {{ successMessage }}
+  </div>
+
+  <!-- Error Message -->
+  <div class="alert alert-error" *ngIf="error">
+    <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+      <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+    </svg>
+    {{ error }}
+  </div>
+
+  <!-- Filters Section -->
+  <div class="filters-section">
+    <div class="filter-group">
+      <label>Lọc theo sao:</label>
+      <select [(ngModel)]="ratingFilter" (change)="onRatingFilterChange()" class="filter-select">
+        <option [ngValue]="null">Tất cả</option>
+        <option [ngValue]="5">5 sao</option>
+        <option [ngValue]="4">4 sao</option>
+        <option [ngValue]="3">3 sao</option>
+        <option [ngValue]="2">2 sao</option>
+        <option [ngValue]="1">1 sao</option>
+      </select>
+    </div>
+
+    <div class="search-group">
+      <input 
+        type="text" 
+        [(ngModel)]="searchQuery" 
+        (input)="onSearchChange()"
+        placeholder="Tìm kiếm theo tên khách hàng, sân, nội dung..."
+        class="search-input"
+      />
+    </div>
+
+    <button class="btn-clear" (click)="clearFilters()" *ngIf="ratingFilter !== null || searchQuery">
+      Xóa bộ lọc
+    </button>
+  </div>
+
+  <!-- Stats Summary -->
+  <div class="stats-summary" *ngIf="!loading">
+    <div class="stat-card">
+      <span class="stat-label">Tổng đánh giá</span>
+      <span class="stat-value">{{ total }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Đang hiển thị</span>
+      <span class="stat-value">{{ filteredReviews.length }}</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-label">Trang</span>
+      <span class="stat-value">{{ currentPage }} / {{ totalPages }}</span>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="loading" class="loading-container">
+    <div class="spinner"></div>
+    <p>Đang tải danh sách đánh giá...</p>
+  </div>
+
+  <!-- Reviews List -->
+  <div *ngIf="!loading && filteredReviews.length > 0" class="reviews-list">
+    <div *ngFor="let review of filteredReviews" class="review-card">
+      <div class="review-header">
+        <div class="user-info">
+          <div class="user-avatar">
+            <svg width="32" height="32" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+              <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+            </svg>
+          </div>
+          <div class="user-details">
+            <div class="user-name">{{ review.user?.full_name || 'Khách hàng' }}</div>
+            <div class="user-email" *ngIf="review.user?.email">{{ review.user?.email }}</div>
+          </div>
+        </div>
+
+        <div class="review-rating">
+          <span *ngFor="let filled of getStarArray(review.rating)" 
+                class="star" 
+                [class.filled]="filled">★</span>
+        </div>
+      </div>
+
+      <div class="review-meta">
+        <div class="meta-item" *ngIf="review.field">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M0 3a2 2 0 0 1 2-2h13.5a.5.5 0 0 1 0 1H15v2a1 1 0 0 1 1 1v8.5a1.5 1.5 0 0 1-1.5 1.5h-12A2.5 2.5 0 0 1 0 12.5V3zm1 1.732V12.5A1.5 1.5 0 0 0 2.5 14h12a.5.5 0 0 0 .5-.5V5H2a1.99 1.99 0 0 1-1-.268zM1 3a1 1 0 0 0 1 1h12V2H2a1 1 0 0 0-1 1z"/>
+          </svg>
+          <span>{{ review.field.name }} ({{ review.field.field_type }})</span>
+        </div>
+        <div class="meta-item">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M8 3.5a.5.5 0 0 0-1 0V9a.5.5 0 0 0 .252.434l3.5 2a.5.5 0 0 0 .496-.868L8 8.71V3.5z"/>
+            <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16zm7-8A7 7 0 1 1 1 8a7 7 0 0 1 14 0z"/>
+          </svg>
+          <span>{{ getRelativeTime(review.created_at) }}</span>
+        </div>
+        <div class="meta-item" *ngIf="review.booking">
+          <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M3.5 0a.5.5 0 0 1 .5.5V1h8V.5a.5.5 0 0 1 1 0V1h1a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V3a2 2 0 0 1 2-2h1V.5a.5.5 0 0 1 .5-.5zM1 4v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4H1z"/>
+          </svg>
+          <span>Booking: {{ formatDate(review.booking.booking_date) }}</span>
+        </div>
+      </div>
+
+      <div class="review-content" *ngIf="review.comment">
+        <p>{{ review.comment }}</p>
+      </div>
+
+      <div class="review-actions">
+        <button 
+          class="btn-delete"
+          (click)="confirmDelete(review.id)"
+          [disabled]="deleteLoading"
+          *ngIf="deletingId !== review.id">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+          </svg>
+          Xóa
+        </button>
+
+        <div class="delete-confirm" *ngIf="deletingId === review.id">
+          <span>Xác nhận xóa?</span>
+          <button class="btn-confirm" (click)="deleteReview(review.id)" [disabled]="deleteLoading">
+            {{ deleteLoading ? 'Đang xóa...' : 'Xác nhận' }}
+          </button>
+          <button class="btn-cancel" (click)="cancelDelete()" [disabled]="deleteLoading">
+            Hủy
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && filteredReviews.length === 0 && reviews.length > 0" class="empty-state">
+    <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M6 10.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1h-3a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h7a.5.5 0 0 1 0 1h-7a.5.5 0 0 1-.5-.5zm-2-3a.5.5 0 0 1 .5-.5h11a.5.5 0 0 1 0 1h-11a.5.5 0 0 1-.5-.5z"/>
+    </svg>
+    <h3>Không tìm thấy đánh giá</h3>
+    <p>Không có đánh giá nào phù hợp với bộ lọc của bạn</p>
+  </div>
+
+  <div *ngIf="!loading && reviews.length === 0" class="empty-state">
+    <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z"/>
+    </svg>
+    <h3>Chưa có đánh giá</h3>
+    <p>Hiện tại chưa có đánh giá nào từ khách hàng</p>
+  </div>
+
+  <!-- Pagination -->
+  <div *ngIf="!loading && totalPages > 1" class="pagination">
+    <button class="page-btn" (click)="previousPage()" [disabled]="currentPage === 1">
+      ‹ Trước
+    </button>
+    
+    <span class="page-info">Trang {{ currentPage }} / {{ totalPages }}</span>
+    
+    <button class="page-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+      Sau ›
+    </button>
+  </div>
+</div>

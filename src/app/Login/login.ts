@@ -82,6 +82,20 @@ export class LoginComponent {
     }
   }
 
+  async loginWithGoogle() {
+    this.loading = true;
+    this.error = null;
+    try {
+      await this.auth.loginWithGoogle();
+      this.router.navigate(['/']);
+    } catch (e: any) {
+      console.error('Google login error', e);
+      this.error = this.extractErrorMessage(e) || 'Đăng nhập Google thất bại';
+    } finally {
+      this.loading = false;
+    }
+  }
+
   private extractErrorMessage(err: any): string | null {
     if (!err) return null;
     if (err instanceof HttpErrorResponse) {

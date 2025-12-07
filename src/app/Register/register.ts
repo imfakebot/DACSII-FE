@@ -18,8 +18,8 @@ export class RegisterComponent {
 
   loading = false;
   error: string | null = null;
-  awaitingVerification = false;
-  verificationCode = '';
+  awaitingVerification = false; // cờ chuyển đổi giao diện sang bước nhập mã xác thực
+  verificationCode = ''; // lưu trữ mã xac thực người dùng nhập
 
   constructor(private router: Router, private auth: AuthService, private fb: FormBuilder) {
     this.form = this.fb.group({
@@ -46,9 +46,25 @@ export class RegisterComponent {
 
     try {
       const { email, password, full_name, phone_number, gender } = this.form.getRawValue();
-      const payload: any = { email: email!, password: password!, full_name: full_name!, phone_number: phone_number! };
+      // Sanitize inputs coming from the form to avoid sending undefined/null
+      const safeEmail = (email || '').toString().trim();
+      const safePassword = (password || '').toString();
+      const safeFullName = (full_name || '').toString().trim();
+      const safePhone = (phone_number || '').toString().trim();
+      const payload: any = { email: safeEmail, password: safePassword, full_name: safeFullName, phone_number: safePhone };
       if (gender) payload.gender = gender;
 
+      // Quick client-side sanity check to prevent sending empty phone/email
+      if (!payload.email || !payload.password || !payload.full_name || !payload.phone_number) {
+        this.error = 'Vui lòng điền đầy đủ thông tin hợp lệ trước khi gửi.';
+        this.loading = false;
+        return;
+      }
+
+      // Debug: log payload so you can inspect Network/Console to compare with Postman
+      // Remove or disable in production.
+      // eslint-disable-next-line no-console
+      console.log('Register payload (frontend):', payload);
       // Call initiate registration (backend will send verification code to email)
       await this.auth.register(payload);
       this.awaitingVerification = true;
@@ -86,6 +102,16 @@ export class RegisterComponent {
     // HttpErrorResponse from Angular
     if (err instanceof HttpErrorResponse) {
       const data = err.error;
+      // Chuẩn hoá một số thông báo backend thành tiếng Việt, thân thiện
+      const rawMessage = Array.isArray(data?.message)
+        ? data.message.join('\n')
+        : (typeof data?.message === 'string' ? data.message : (typeof data === 'string' ? data : err.message));
+      if (typeof rawMessage === 'string') {
+        // TH: Backend chưa seed role mặc định
+        if (rawMessage.includes('Default role "User" not found')) {
+          return 'Hệ thống chưa khởi tạo vai trò mặc định. Vui lòng liên hệ quản trị viên để seed dữ liệu (tạo role "User"). Đăng ký tạm thời chưa khả dụng.';
+        }
+      }
       // NestJS validation errors often return: { message: ['error1','error2'], error: 'Bad Request', statusCode: 400 }
       if (Array.isArray(data?.message)) {
         return data.message.join('\n');

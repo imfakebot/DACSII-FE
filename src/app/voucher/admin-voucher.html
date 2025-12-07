@@ -1,0 +1,10 @@
+<div class="admin-voucher">
+  <h2>Quản trị Voucher</h2>
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <div *ngIf="success" class="success">{{ success }}</div>
+  <form (submit)="$event.preventDefault(); create();">
+    <label>Code: <input [(ngModel)]="code" name="code" /></label>
+    <label>Discount: <input type="number" [(ngModel)]="discount" name="discount" /></label>
+    <button type="submit" [disabled]="loading">Tạo</button>
+  </form>
+</div>

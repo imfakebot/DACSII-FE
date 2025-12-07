@@ -1,0 +1,87 @@
+<section class="tennis-hero">
+	<div class="hero-content">
+		<p class="eyebrow">Tennis</p>
+		<h1>{{ pageTitle || 'Săn sân tennis chất lượng quanh bạn' }}</h1>
+		<p class="subtitle">Chọn nhanh các sân có mặt cỏ, đất nện hay sân cứng đạt chuẩn thi đấu, đầy đủ chiếu sáng và tiện ích phục vụ giải đấu.</p>
+		<div class="hero-stats">
+			<div>
+				<span class="number">{{ tennisFields.length }}</span>
+				<span class="label">Sân khả dụng</span>
+			</div>
+			<div>
+				<span class="number">{{ displayedFields.length }}</span>
+				<span class="label">Phù hợp bộ lọc</span>
+			</div>
+			<div>
+				<span class="number">4.9★</span>
+				<span class="label">Đánh giá trung bình</span>
+			</div>
+		</div>
+	</div>
+	<div class="hero-panel">
+		<label for="tennis-search">Tìm kiếm sân tennis</label>
+		<div class="search-row">
+			<input id="tennis-search" type="text" placeholder="Nhập tên sân, khu vực..." [(ngModel)]="query" />
+			<button (click)="onHeroSearch()">Tìm sân</button>
+		</div>
+		<label for="tennis-city">Địa điểm</label>
+		<select id="tennis-city" [(ngModel)]="selectedCity">
+			<option [ngValue]="null">Tất cả khu vực</option>
+			<option *ngFor="let c of cities" [value]="c">{{ c }}</option>
+		</select>
+	</div>
+</section>
+
+<section class="filters container">
+	<div class="surface-filter">
+		<span class="label">Loại mặt sân</span>
+		<div class="chip-group">
+			<button class="chip" [class.active]="surfaceFilter==='all'" (click)="setSurfaceFilter('all')">Tất cả</button>
+			<button class="chip" [class.active]="surfaceFilter==='hard'" (click)="setSurfaceFilter('hard')">Sân cứng</button>
+			<button class="chip" [class.active]="surfaceFilter==='clay'" (click)="setSurfaceFilter('clay')">Đất nện</button>
+			<button class="chip" [class.active]="surfaceFilter==='grass'" (click)="setSurfaceFilter('grass')">Cỏ</button>
+		</div>
+	</div>
+</section>
+
+<section class="tennis-list container">
+	<div class="section-header">
+		<div>
+			<p class="eyebrow">Danh sách sân tennis</p>
+			<h2>Sẵn sàng đặt lịch tập luyện và thi đấu</h2>
+		</div>
+		<p class="result-count">{{ displayedFields.length }} sân được đề xuất</p>
+	</div>
+
+	<div *ngIf="displayedFields.length === 0" class="empty-state">
+		<h3>Không tìm thấy sân phù hợp</h3>
+		<p>Thử đổi khu vực hoặc loại mặt sân để nhận thêm gợi ý.</p>
+	</div>
+
+	<div class="tennis-grid" *ngIf="displayedFields.length > 0">
+		<article class="tennis-card" *ngFor="let f of displayedFields" (click)="viewDetail(f.id)" (keyup.enter)="viewDetail(f.id)" tabindex="0" role="button" aria-label="Xem chi tiết {{ f.name }}">
+			<div class="card-cover">
+				<img [src]="(f.images && f.images.length>0) ? f.images[0] : '/assets/placeholder-field.jpg'" alt="{{f.name}}" />
+				<div class="badge-row">
+					<span class="surface-badge" *ngIf="getSurfaceBadge(f) as surface">{{ surfaceLabels[surface] }}</span>
+					<span class="availability">Sẵn sàng</span>
+				</div>
+			</div>
+			<div class="card-content">
+				<div class="card-head">
+					<h3>{{ f.name }}</h3>
+					<div class="price">{{ f.pricePerHour ? (f.pricePerHour | currency:'VND':'symbol':'1.0-0') : 'Liên hệ' }}</div>
+				</div>
+				<p class="location"><i class="fa-solid fa-location-dot"></i> {{ (f.street ? f.street + ', ' : '') + (f.ward ? f.ward + ', ' : '') + (f.city || 'N/A') }}</p>
+				<p class="desc">{{ f.description || 'Sân rộng rãi, lưới chuẩn thi đấu, có phòng thay đồ và khu vực nghỉ giữa set.' }}</p>
+				<div class="card-meta">
+					<span><i class="fa-solid fa-star"></i> {{ f.avgRating ? (f.avgRating | number:'1.1-1') : '4.9' }} / 5</span>
+					<span><i class="fa-solid fa-lightbulb"></i> Đèn ban đêm</span>
+				</div>
+			</div>
+			<div class="card-actions">
+				<button class="primary" (click)="$event.stopPropagation(); viewDetail(f.id)">Đặt sân</button>
+			</div>
+		</article>
+	</div>
+</section>

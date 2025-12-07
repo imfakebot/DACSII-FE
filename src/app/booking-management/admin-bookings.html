@@ -1,0 +1,103 @@
+<div class="admin-bookings-page">
+  <header class="page-header">
+    <h1>Quản lý đặt sân</h1>
+    <div class="pager">
+      <button class="btn" (click)="prev()" [disabled]="!canPrev() || loading">Trang trước</button>
+      <button class="btn" (click)="next()" [disabled]="!canNext() || loading">Trang sau</button>
+    </div>
+  </header>
+
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+
+  <section class="card" *ngIf="!loading; else loadingTpl">
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Mã</th>
+            <th>Người đặt</th>
+            <th>Sân</th>
+            <th>Thời gian</th>
+            <th>Trạng thái</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let b of bookings">
+            <td>{{ b.id }}</td>
+            <td>{{ b.user?.fullName || b.user?.email || b.customerName || '-' }}</td>
+            <td>{{ b.field?.name || b.fieldName || b.field_id || '-' }}</td>
+            <td>{{ b.startTime || b.start_time || b.createdAt }}</td>
+            <td><span class="chip">{{ b.status || b.bookingStatus || '-' }}</span></td>
+            <td>
+              <button class="btn" (click)="viewBooking(b.id)">Xem</button>
+              <button class="btn" (click)="doCheckIn(b)" [disabled]="pendingAction">Check-in</button>
+              <button class="btn danger" (click)="doCancel(b)" [disabled]="pendingAction">Hủy</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <ng-template #loadingTpl>
+    <div class="loading">Đang tải danh sách...</div>
+  </ng-template>
+
+  <!-- Debug panel for admin testing -->
+  <section class="card" *ngIf="isAdmin">
+    <div class="card__header"><h3>Debug: Tạo booking nhanh</h3></div>
+    <div class="card__body">
+      <div class="form-grid">
+        <label>
+          <span class="label">Field ID</span>
+          <input [(ngModel)]="debugPayload.fieldId" placeholder="Field id" />
+        </label>
+        <label>
+          <span class="label">Start Time (ISO)</span>
+          <input [(ngModel)]="debugPayload.startTime" placeholder="2025-12-06T18:00:00.000Z" />
+        </label>
+        <label>
+          <span class="label">Duration (minutes)</span>
+          <input type="number" [(ngModel)]="debugPayload.durationMinutes" />
+        </label>
+        <label class="full-width">
+          <span class="label">Voucher code (optional)</span>
+          <input [(ngModel)]="debugPayload.voucherCode" />
+        </label>
+      </div>
+      <div class="form-actions">
+        <button class="btn primary" (click)="doDebugCreate()">Gọi API tạo booking</button>
+        <button class="btn" (click)="debugPayload = { fieldId: '', startTime: '', durationMinutes: 60, voucherCode: '' }">Reset</button>
+      </div>
+
+      <div style="margin-top:1rem">
+        <strong>Last Request:</strong>
+        <pre style="max-height:200px;overflow:auto;background:#f8fafc;padding:0.5rem;border-radius:6px">{{ lastRequest | json }}</pre>
+
+        <strong>Last Response:</strong>
+        <pre style="max-height:300px;overflow:auto;background:#f8fafc;padding:0.5rem;border-radius:6px">{{ lastResponse | json }}</pre>
+      </div>
+    </div>
+  </section>
+</div>
+<div class="admin-bookings">
+  <h2>Quản trị Bookings</h2>
+  <div *ngIf="loading">Đang tải...</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <table *ngIf="!loading && bookings.length">
+    <thead>
+      <tr><th>ID</th><th>User</th><th>Field</th><th>Start</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let b of bookings">
+        <td>{{ b.id }}</td>
+        <td>{{ b.customer_name || b.user_profile?.full_name || '-' }}</td>
+        <td>{{ b.field_id || '-' }}</td>
+        <td>{{ b.start_time || b.startTime || '-' }}</td>
+        <td>{{ b.status }}</td>
+      </tr>
+    </tbody>
+  </table>
+  <div *ngIf="!loading && !bookings.length">Không có bookings</div>
+</div>

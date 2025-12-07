@@ -1,0 +1,134 @@
+<div class="admin-users-page">
+  <header class="page-header">
+    <h1>Quản lý người dùng</h1>
+    
+  </header>
+  
+  <section *ngIf="isAdmin" class="card card--small create-employee">
+    <div class="card__header"><h3>Tạo nhân viên mới</h3></div>
+    <div class="card__body">
+      <form (ngSubmit)="onCreateEmployee()" #createForm="ngForm" class="create-form" autocomplete="off">
+        <!-- Hidden dummy fields to reduce browser autofill suggestions -->
+        <input type="text" name="fakeusernameremembered" autocomplete="username" style="position:absolute;left:-9999px;top:-9999px;" />
+        <input type="password" name="fakepasswordremembered" autocomplete="new-password" style="position:absolute;left:-9999px;top:-9999px;" />
+        <div class="form-grid">
+          <label>
+            <span class="label">Email</span>
+            <input name="email" [(ngModel)]="newEmployee.email" required placeholder="ví dụ: staff@example.com" autocomplete="email" />
+          </label>
+          <label>
+            <span class="label">Mật khẩu</span>
+            <input name="password" [(ngModel)]="newEmployee.password" required minlength="6" placeholder="Mật khẩu (>=6 ký tự)" type="password" autocomplete="new-password" />
+          </label>
+          <label>
+            <span class="label">Họ và tên</span>
+            <input name="fullName" [(ngModel)]="newEmployee.fullName" required placeholder="Họ và tên" />
+          </label>
+          <label>
+            <span class="label">Số điện thoại</span>
+            <input name="phoneNumber" [(ngModel)]="newEmployee.phoneNumber" placeholder="Số điện thoại" />
+          </label>
+          <label>
+            <span class="label">Giới tính</span>
+            <select name="gender" [(ngModel)]="newEmployee.gender">
+              <option value="">(Không chọn)</option>
+              <option value="male">Nam</option>
+              <option value="female">Nữ</option>
+              <option value="other">Khác</option>
+            </select>
+          </label>
+          <label>
+            <span class="label">Chi nhánh</span>
+            <ng-container *ngIf="branchesLoading">Đang tải danh sách chi nhánh...</ng-container>
+            <ng-container *ngIf="!branchesLoading">
+              <ng-container *ngIf="branches?.length; else branchFallback">
+                <select name="branchId" [(ngModel)]="newEmployee.branchId">
+                  <option value="">(Không chọn)</option>
+                  <option *ngFor="let b of branches" [value]="b.id">{{ b.name }} ({{ b.id }})</option>
+                </select>
+              </ng-container>
+            </ng-container>
+            <ng-template #branchFallback>
+              <input name="branchId" [(ngModel)]="newEmployee.branchId" placeholder="Branch ID (nếu cần)" autocomplete="off" />
+              <div class="hint">Không lấy được danh sách chi nhánh tự động — bạn có thể nhập ID thủ công hoặc kiểm tra DB.</div>
+              <div *ngIf="branchesError" class="alert alert-error">{{ branchesError }}</div>
+            </ng-template>
+          </label>
+          <label class="full-width">
+            <span class="label">Tiểu sử</span>
+            <input name="bio" [(ngModel)]="newEmployee.bio" placeholder="Tiểu sử ngắn (tùy chọn)" />
+          </label>
+        </div>
+        <div class="form-actions">
+          <button class="btn primary" type="submit" [disabled]="creating || !createForm.form.valid">{{ creating ? 'Đang tạo...' : 'Tạo nhân viên' }}</button>
+          <button class="btn" type="button" (click)="newEmployee = { email: '', password: '', fullName: '', phoneNumber: '', gender: '', bio: '', branchId: '' }">Hủy</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+  <div *ngIf="success" class="alert alert-success">{{ success }}</div>
+
+  <section *ngIf="isAdmin; else noPermission" class="card">
+    <div class="card__header">
+      <div>
+        <p class="card__eyebrow">{{ total }} tài khoản</p>
+        <h2>Trang {{ page }} / {{ totalPages }}</h2>
+      </div>
+      <div class="pager">
+        <button class="btn" (click)="loadUsers(page - 1)" [disabled]="!canGoPrev() || loading">Trang trước</button>
+        <button class="btn" (click)="loadUsers(page + 1)" [disabled]="!canGoNext() || loading">Trang sau</button>
+      </div>
+    </div>
+
+    <div class="table-wrapper" *ngIf="!loading; else loadingTpl">
+      <table>
+        <thead>
+          <tr>
+            <th>Email</th>
+            <th>Vai trò</th>
+            <th>Trạng thái</th>
+            <th>Hồ sơ</th>
+            <th>Đăng nhập gần nhất</th>
+            <th>Hành động</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of users">
+            <td>
+              <div class="email">{{ user.email }}</div>
+            </td>
+            <td>{{ user.role?.name || 'User' }}</td>
+            <td>
+              <span class="chip" [ngClass]="user.status">{{ user.status }}</span>
+            </td>
+            <td>
+              <span class="chip" [class.chip--success]="user.userProfile?.is_profile_complete" [class.chip--warning]="!user.userProfile?.is_profile_complete">
+                {{ user.userProfile?.is_profile_complete ? 'Đã đủ' : 'Thiếu' }}
+              </span>
+            </td>
+            <td>{{ user.last_login || 'Chưa có' }}</td>
+            <td>
+              <button *ngIf="!(user.status === 'banned' || user.status === 'suspended')" class="btn danger" (click)="banUser(user)" [disabled]="pendingBan === user.id">
+                {{ pendingBan === user.id ? 'Đang khóa...' : 'Khóa tài khoản' }}
+              </button>
+
+              <button *ngIf="user.status === 'banned' || user.status === 'suspended'" class="btn" (click)="unbanUser(user)" [disabled]="pendingUnban === user.id">
+                {{ pendingUnban === user.id ? 'Đang mở khóa...' : 'Mở khóa' }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <ng-template #loadingTpl>
+    <div class="loading">Đang tải danh sách...</div>
+  </ng-template>
+
+  <ng-template #noPermission>
+    <div class="alert alert-error">Bạn không có quyền truy cập khu vực này.</div>
+  </ng-template>
+</div>

@@ -10,8 +10,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: linear-gradient(180deg, #0e4180, #0056c2);
-  color: #fff;
+  // background: linear-gradient(180deg, #0e4180, #0056c2);
+  background-image: url('/assets/banner5.jpg');
+  color: #ffffff;
   padding: 50px 80px;
 }
 
@@ -29,8 +30,9 @@ body {
 }
 
 .banner-phone {
-  width: 200px;
+  width: 170px;
   transform: rotate(-10deg);
+  border-radius: 200px;
 }
 
 .app-buttons img {
@@ -115,6 +117,27 @@ body {
   position: relative;
   border-radius: 15px;
   overflow: hidden;
+  margin-bottom: 30px;
+  // padding: 20px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.promo-banner .book-now {
+  background-color: #ff004c;
+  border: none;
+  color: white;
+  font-weight: bold;
+  padding: 10px 18px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  margin-top: 10px;
+  text-align: center;
 }
 
 .promo-banner img {

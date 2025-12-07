@@ -23,7 +23,7 @@ export class AuthStateService {
       try {
         const raw = localStorage.getItem('authUser');
         if (raw) this.userSubject.next(JSON.parse(raw));
-      } catch { /* ignore */ }
+      } catch {}
     }
   }
 
@@ -47,5 +47,26 @@ export class AuthStateService {
 
   getUserName(): string | null {
     return this.userSubject.value?.full_name || this.userSubject.value?.email || null;
+  }
+
+  getCurrentUser(): AuthUser | null {
+    return this.userSubject.value;
+  }
+
+  /**
+   * Returns true when the current user has an admin-like role.
+   * Accepts role names like 'admin' and 'super_admin' (case-insensitive),
+   * and will handle role being a string or an object with a `name` property.
+   */
+  isAdmin(): boolean {
+    const user = this.getCurrentUser();
+    if (!user) return false;
+    let roleVal: any = user.role;
+    if (!roleVal) return false;
+    if (typeof roleVal === 'object') {
+      roleVal = (roleVal.name || roleVal.role || '').toString();
+    }
+    const roleStr = String(roleVal || '').toLowerCase();
+    return roleStr === 'admin' || roleStr === 'super_admin' || roleStr.includes('admin');
   }
 }

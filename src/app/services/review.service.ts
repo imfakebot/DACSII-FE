@@ -1,0 +1,70 @@
+import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+
+export interface CreateReviewDto {
+  bookingId: string;
+  rating: number;
+  comment?: string;
+}
+
+export interface ReviewUserDto {
+  id: string;
+  full_name: string;
+  email?: string;
+}
+
+export interface ReviewBookingDto {
+  id: string;
+  booking_date: string;
+  start_time: string;
+  end_time: string;
+}
+
+export interface ReviewFieldDto {
+  id: string;
+  name: string;
+  field_type: string;
+}
+
+export interface ReviewDto {
+  id: string;
+  booking_id: string;
+  rating: number;
+  comment?: string;
+  created_at: string;
+  updated_at?: string;
+  user?: ReviewUserDto;
+  booking?: ReviewBookingDto;
+  field?: ReviewFieldDto;
+}
+
+export interface PaginatedReviewResponse { 
+  data: ReviewDto[]; 
+  total: number;
+  page: number;
+  limit: number;
+}
+
+@Injectable({ providedIn: 'root' })
+export class ReviewService {
+  constructor(private http: HttpClient) {}
+
+  private authHeaders(): { headers: HttpHeaders } {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    return { headers: new HttpHeaders({ Authorization: token ? `Bearer ${token}` : '' }) };
+  }
+
+  async createReview(payload: CreateReviewDto): Promise<ReviewDto> {
+    return firstValueFrom(this.http.post<ReviewDto>(`/review`, payload, this.authHeaders()));
+  }
+
+  async getReviewsByField(fieldId: string, page = 1, limit = 10): Promise<PaginatedReviewResponse> {
+    const params = new HttpParams().set('page', String(page)).set('limit', String(limit));
+    return firstValueFrom(this.http.get<PaginatedReviewResponse>(`/review/field/${fieldId}`, { params }));
+  }
+
+  async deleteReview(id: string): Promise<{ message: string }> {
+    return firstValueFrom(this.http.delete<{ message: string }>(`/review/${id}`, this.authHeaders()));
+  }
+}

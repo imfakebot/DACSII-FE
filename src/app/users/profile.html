@@ -1,0 +1,188 @@
+<div class="profile-page">
+  <header class="page-header">
+    <h1>Hồ sơ cá nhân</h1>
+  </header>
+
+  <div *ngIf="loading" class="alert alert-info">Đang tải dữ liệu hồ sơ...</div>
+  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+  <div *ngIf="success" class="alert alert-success">{{ success }}</div>
+  <div *ngIf="requiresLogin && !loading" class="alert alert-warning">
+    Vui lòng đăng nhập để xem và chỉnh sửa hồ sơ cá nhân.
+  </div>
+
+  <section class="profile-card" *ngIf="!requiresLogin">
+    <div class="profile-card__avatar">
+      <img *ngIf="avatar_url" [src]="avatar_url" alt="Ảnh đại diện" />
+      <div *ngIf="!avatar_url" class="avatar-fallback">{{ profileInitials }}</div>
+      <!-- <p class="avatar-hint">Trường database: <code>avatar_url</code></p> -->
+    </div>
+    <div class="profile-card__content">
+      <div class="profile-card__header">
+        <h2>{{ full_name || 'Chưa cập nhật họ tên' }}</h2>
+        <span class="chip" [class.chip--success]="is_profile_complete" [class.chip--warning]="!is_profile_complete">
+          {{ is_profile_complete ? 'Hồ sơ đã hoàn tất' : 'Cần bổ sung hồ sơ' }}
+        </span>
+      </div>
+      <p class="profile-email">{{ email }}</p>
+      <div class="chip-row">
+        <span class="chip" [ngClass]="accountStatusCode">Trạng thái: {{ accountStatusLabel }}</span>
+        <span class="chip chip--outline">{{ providerLabel }}</span>
+        <span class="chip" [class.chip--success]="isVerified" [class.chip--warning]="!isVerified">
+          {{ isVerified ? 'Đã xác thực email' : 'Chưa xác thực email' }}
+        </span>
+        <!-- <span class="chip chip--outline">{{ twoFactorEnabled ? 'Đang bật 2FA' : 'Chưa bật 2FA' }}</span> -->
+      </div>
+      <div class="meta-grid">
+        <div class="meta-item">
+          <span>Vai trò</span>
+          <strong>{{ roleName || 'Người dùng' }}</strong>
+        </div>
+        <div class="meta-item">
+          <span>Lần đăng nhập gần nhất</span>
+          <strong>{{ lastLoginDisplay }}</strong>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <form class="profile-form" (ngSubmit)="save()" *ngIf="!loading && !requiresLogin">
+    <div class="card">
+      <div class="card__header">
+        <div>
+          <p class="card__eyebrow">user_profiles</p>
+          <h3>Thông tin cá nhân</h3>
+         
+        </div>
+      </div>
+      <div class="card__body grid two">
+        <label class="field">
+          <span>Họ và tên</span>
+          <input type="text" name="full_name" [(ngModel)]="full_name" placeholder="VD: Nguyễn Văn A" />
+        </label>
+        <label class="field">
+          <span>Ngày sinh</span>
+          <input type="date" name="date_of_birth" [(ngModel)]="date_of_birth" />
+        </label>
+        <label class="field">
+          <span>Giới tính</span>
+          <select name="gender" [(ngModel)]="gender">
+            <option value="">Không chọn</option>
+            <option value="male">Nam</option>
+            <option value="female">Nữ</option>
+            <option value="other">Khác</option>
+          </select>
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__header">
+        <div>
+          <p class="card__eyebrow">accounts · user_profiles</p>
+          <h3>Liên hệ & tài khoản</h3>
+        
+        </div>
+      </div>
+      <div class="card__body grid two">
+        <label class="field">
+          <span>Email (chỉ đọc)</span>
+          <input type="email" [value]="email" disabled />
+        </label>
+        <label class="field">
+          <span>Số điện thoại</span>
+          <input type="text" name="phone_number" [(ngModel)]="phone_number" placeholder="VD: 0987 654 321" />
+        </label>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card__header">
+        <div>
+          <p class="card__eyebrow">user_profiles</p>
+          <h3>Ảnh đại diện & giới thiệu</h3>
+      
+        </div>
+      </div>
+      <div class="card__body grid two">
+        <label class="field field--file">
+          <span>Chọn ảnh đại diện</span>
+          <input
+            type="file"
+            accept="image/*"
+            #avatarFileInput
+            (change)="onAvatarFileSelected($event)"
+          />
+          <small>Ảnh sẽ được tải lên sau khi bạn bấm "Lưu thay đổi".</small>
+          <button *ngIf="avatarFile" type="button" class="btn link" (click)="clearAvatarSelection()">
+            Bỏ chọn ảnh
+          </button>
+        </label>
+        <div class="avatar-preview">
+          <div class="preview-wrapper">
+            <img *ngIf="avatarPreviewUrl; else remoteAvatar" [src]="avatarPreviewUrl" alt="avatar preview" />
+            <ng-template #remoteAvatar>
+              <img *ngIf="avatar_url" [src]="avatar_url" alt="avatar preview" />
+              <div *ngIf="!avatar_url" class="avatar-fallback large">{{ profileInitials }}</div>
+            </ng-template>
+          </div>
+          <small *ngIf="avatarFile">Ảnh mới chỉ hiển thị trên máy bạn cho tới khi lưu thay đổi.</small>
+          <small *ngIf="!avatarFile">Ảnh hiện tại được lấy từ trường <code>avatar_url</code>.</small>
+        </div>
+        <label class="field field--full">
+          <span>Giới thiệu bản thân</span>
+          <textarea name="bio" rows="4" [(ngModel)]="bio" placeholder="Chia sẻ đôi điều về bạn..."></textarea>
+        </label>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn primary" [disabled]="loading">Lưu thay đổi</button>
+      <p class="hint">Những thay đổi này sẽ cập nhật trực tiếp vào bảng <code>user_profiles</code>.</p>
+    </div>
+  </form>
+
+  <section class="card change-password" *ngIf="!loading && !requiresLogin">
+    <div class="card__header">
+      <div>
+        <p class="card__eyebrow">accounts</p>
+        <h3>Đổi mật khẩu</h3>
+        <p class="card__subtitle">Thay đổi mật khẩu hiện tại của bạn.</p>
+      </div>
+    </div>
+    <div class="card__body grid two">
+      <label class="field">
+        <span>Mật khẩu hiện tại</span>
+        <input type="password" name="oldPassword" [(ngModel)]="changeOldPassword" />
+      </label>
+      <label class="field">
+        <span>Mật khẩu mới</span>
+        <input type="password" name="newPassword" [(ngModel)]="changeNewPassword" />
+      </label>
+      <label class="field">
+        <span>Xác nhận mật khẩu mới</span>
+        <input type="password" name="confirmPassword" [(ngModel)]="changeConfirmPassword" />
+      </label>
+      <div class="form-actions">
+        <button class="btn" type="button" (click)="changePassword()" [disabled]="changeLoading">Đổi mật khẩu</button>
+        <div class="form-error" *ngIf="changeError">{{ changeError }}</div>
+        <div class="form-success" *ngIf="changeSuccess">{{ changeSuccess }}</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- <section class="card" *ngIf="!requiresLogin">
+    <div class="card__header">
+      <div>
+        <p class="card__eyebrow">booking</p>
+        <h3>Hủy đặt sân</h3>
+        <p class="card__subtitle">Nhập mã booking (UUID) để hủy vé hiện có.</p>
+      </div>
+    </div>
+    <div class="card__body booking-cancel">
+      <input  type="text" name="cancelBookingId" [(ngModel)]="cancelBookingId" placeholder="Nhập mã đặt sân" />
+      <button type="button" class="btn" (click)="cancelBooking()">Hủy đặt sân</button>
+    </div>
+    <div class="booking-status" *ngIf="cancelMessage">{{ cancelMessage }}</div>
+    <div class="booking-status error" *ngIf="cancelError">{{ cancelError }}</div>
+  </section> -->
+</div>

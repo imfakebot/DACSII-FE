@@ -1,0 +1,112 @@
+<div class="notifications-page">
+  <div class="page-header">
+    <div class="header-left">
+      <h1>
+        <i class="fas fa-bell"></i>
+        Thông báo
+        <span class="unread-badge" *ngIf="unreadCount > 0">{{ unreadCount }}</span>
+      </h1>
+      <p class="subtitle">Tổng {{ totalItems }} thông báo</p>
+    </div>
+    <div class="header-actions">
+      <button 
+        class="btn-filter" 
+        [class.active]="showUnreadOnly"
+        (click)="toggleUnreadFilter()"
+        [disabled]="loading">
+        <i class="fas fa-filter"></i>
+        {{ showUnreadOnly ? 'Tất cả' : 'Chỉ chưa đọc' }}
+      </button>
+      <button 
+        class="btn-mark-all" 
+        (click)="markAllAsRead()" 
+        [disabled]="loading || unreadCount === 0">
+        <i class="fas fa-check-double"></i>
+        Đánh dấu tất cả đã đọc
+      </button>
+    </div>
+  </div>
+
+  <!-- Success Message -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i>
+    {{ successMessage }}
+  </div>
+
+  <!-- Error Message -->
+  <div class="alert alert-error" *ngIf="error">
+    <i class="fas fa-exclamation-circle"></i>
+    {{ error }}
+  </div>
+
+  <!-- Loading Skeleton -->
+  <div class="notifications-list" *ngIf="loading">
+    <div class="notification-skeleton" *ngFor="let i of [1,2,3,4,5]">
+      <div class="skeleton-icon"></div>
+      <div class="skeleton-content">
+        <div class="skeleton-title"></div>
+        <div class="skeleton-body"></div>
+        <div class="skeleton-time"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notifications List -->
+  <div class="notifications-list" *ngIf="!loading">
+    <div class="empty-state" *ngIf="notifications.length === 0">
+      <i class="fas fa-bell-slash"></i>
+      <h3>{{ showUnreadOnly ? 'Không có thông báo chưa đọc' : 'Không có thông báo nào' }}</h3>
+      <p>{{ showUnreadOnly ? 'Tất cả thông báo đã được đọc' : 'Bạn sẽ nhận được thông báo về đặt sân, thanh toán tại đây' }}</p>
+    </div>
+
+    <div 
+      *ngFor="let notification of notifications" 
+      class="notification-item"
+      [class.unread]="!notification.is_read"
+      [class]="'notification-item ' + getNotificationClass(notification)">
+      <div class="notification-icon">
+        <i class="fas" [ngClass]="getNotificationIcon(notification)"></i>
+      </div>
+      <div class="notification-content">
+        <h3 class="notification-title">{{ notification.title }}</h3>
+        <p class="notification-body" *ngIf="notification.body">{{ notification.body }}</p>
+        <span class="notification-time">
+          <i class="far fa-clock"></i>
+          {{ formatDateTime(notification.created_at) }}
+        </span>
+      </div>
+      <div class="notification-status" *ngIf="!notification.is_read">
+        <span class="unread-dot"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination" *ngIf="totalPages > 1 && !loading">
+    <button 
+      class="pagination-btn"
+      (click)="prevPage()" 
+      [disabled]="currentPage === 1">
+      <i class="fas fa-chevron-left"></i>
+    </button>
+    
+    <button 
+      *ngFor="let page of getPageNumbers()"
+      class="pagination-btn"
+      [class.active]="page === currentPage"
+      (click)="goToPage(page)">
+      {{ page }}
+    </button>
+    
+    <button 
+      class="pagination-btn"
+      (click)="nextPage()" 
+      [disabled]="currentPage === totalPages">
+      <i class="fas fa-chevron-right"></i>
+    </button>
+    
+    <span class="pagination-info">
+      Trang {{ currentPage }} / {{ totalPages }}
+    </span>
+  </div>
+</div>

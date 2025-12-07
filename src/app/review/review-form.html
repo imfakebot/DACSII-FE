@@ -1,0 +1,12 @@
+<div class="review-form">
+  <h3>Viết đánh giá</h3>
+  <div *ngIf="success" class="success">{{ success }}</div>
+  <div *ngIf="error" class="error">{{ error }}</div>
+  <label>Đánh giá (1-5)</label>
+  <input type="number" [(ngModel)]="rating" min="1" max="5" />
+  <label>Nhận xét</label>
+  <textarea [(ngModel)]="comment"></textarea>
+  <div>
+    <button (click)="submit()" [disabled]="loading">Gửi</button>
+  </div>
+</div>

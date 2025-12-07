@@ -3,14 +3,14 @@
   <!-- Banner -->
   <section class="banner">
     <div class="banner-content">
-      <h1><span>Sport</span> - Trang web đặt sân tập thể thao </h1>
-      <p>Mang đến trải nghiệm đặt sân trực tuyến thuận tiện và linh hoạt cho người chơi thể thao.</p>
+      <!-- <h1><span>Sport</span> - Trang web đặt sân tập thể thao </h1>
+      <p>Mang đến trải nghiệm đặt sân trực tuyến thuận tiện và linh hoạt cho người chơi thể thao.</p> -->
       <!-- <div class="app-buttons">
         <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="App Store">
         <img src="https://upload.wikimedia.org/wikipedia/commons/c/cd/Get_it_on_Google_play.svg" alt="Google Play">
       </div> -->
     </div>
-    <img class="banner-phone" src="https://cdn-icons-png.flaticon.com/512/295/295128.png" alt="Phone App">
+    <img class="banner-phone" src="/assets/logoHaiAnhEm.png" alt="Phone App">
   </section>
 
   <!-- Khung tìm kiếm -->
@@ -38,11 +38,13 @@
   <section class="section">
     <h2>🎁 Ưu đãi</h2>
     <div class="promo-banner">
-      <img src="https://images.unsplash.com/photo-1508780709619-79562169bc64?w=1000" alt="Ưu đãi">
+      <img src="/assets/banner4.jpg" alt="Ưu đãi">
       <div class="promo-text">
         <h3>Tặng 1 giờ đá free</h3>
         <p>Áp dụng cho khách hàng mới khi đặt sân lần đầu.</p>
+        <a class="book-now" href="search-section" >Đặt ngay</a>
       </div>
+      
     </div>
   </section>
 
@@ -51,21 +53,21 @@
     <div class="section-header">
       <h2>Sân tập gần bạn</h2>
       <div class="tags">
-        <span class="active">Bóng đá</span>
-        <span>Tennis</span>
-        <span>Cầu lông</span>
-        <span>Bóng bàn</span>
+        <span [class.active]="selectedNear==='football'" (click)="setNearSport('football')">Bóng đá</span>
+        <span [class.active]="selectedNear==='tennis'" (click)="setNearSport('tennis')">Tennis</span>
+        <span [class.active]="selectedNear==='badminton'" (click)="setNearSport('badminton')">Cầu lông</span>
+        <span [class.active]="selectedNear==='tabletennis'" (click)="setNearSport('tabletennis')">Bóng bàn</span>
       </div>
     </div>
-    <div class="card-list">
-      <div class="card" *ngFor="let f of fields | slice:0:4">
+      <div class="card-list">
+        <div class="card" *ngFor="let f of nearFields">
         <a [routerLink]="['/detail', f.id]">
           <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}">
         </a>
         <h3>{{ f.name }}</h3>
         <p><i class="fa-solid fa-location-dot"></i> {{ f.city || 'Địa điểm chưa rõ' }}</p>
       </div>
-      <div *ngIf="fields.length === 0" class="empty">Đang tải sân...</div>
+        <div *ngIf="nearFields.length === 0" class="empty">Không có sân phù hợp với bộ lọc.</div>
     </div>
   </section>
 
@@ -74,21 +76,21 @@
     <div class="section-header">
       <h2>Đề xuất cho bạn</h2>
       <div class="tags">
-        <span class="active">Bóng đá</span>
-        <span>Tennis</span>
-        <span>Cầu lông</span>
-        <span>Bóng bàn</span>
+        <span [class.active]="selectedRecommend==='football'" (click)="setRecommendSport('football')">Bóng đá</span>
+        <span [class.active]="selectedRecommend==='tennis'" (click)="setRecommendSport('tennis')">Tennis</span>
+        <span [class.active]="selectedRecommend==='badminton'" (click)="setRecommendSport('badminton')">Cầu lông</span>
+        <span [class.active]="selectedRecommend==='tabletennis'" (click)="setRecommendSport('tabletennis')">Bóng bàn</span>
       </div>
     </div>
-    <div class="card-list">
-      <div class="card" *ngFor="let f of recommendedFields">
+      <div class="card-list">
+        <div class="card" *ngFor="let f of recommendedFields">
         <a [routerLink]="['/detail', f.id]">
           <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}">
         </a>
         <h3>{{ f.name }}</h3>
         <p><i class="fa-solid fa-location-dot"></i> {{ f.city || 'Địa điểm chưa rõ' }}</p>
       </div>
-      <div *ngIf="recommendedFields.length === 0" class="empty">Không có đề xuất.</div>
+        <div *ngIf="recommendedFields.length === 0" class="empty">Không có đề xuất phù hợp với bộ lọc.</div>
     </div>
   </section>
 
@@ -97,14 +99,14 @@
     <div class="section-header">
       <h2>Sân hàng đầu</h2>
       <div class="tags">
-        <span class="active">Bóng đá</span>
-        <span>Tennis</span>
-        <span>Cầu lông</span>
-        <span>Bóng bàn</span>
+        <span [class.active]="selectedTop==='football'" (click)="setTopSport('football')">Bóng đá</span>
+        <span [class.active]="selectedTop==='tennis'" (click)="setTopSport('tennis')">Tennis</span>
+        <span [class.active]="selectedTop==='badminton'" (click)="setTopSport('badminton')">Cầu lông</span>
+        <span [class.active]="selectedTop==='tabletennis'" (click)="setTopSport('tabletennis')">Bóng bàn</span>
       </div>
     </div>
-    <div class="card-list">
-      <div class="card top-card" *ngFor="let f of topFields; let i = index">
+      <div class="card-list">
+        <div class="card top-card" *ngFor="let f of topFields; let i = index">
         <div class="top-badge">Top {{ i + 1 }}</div>
         <a [routerLink]="['/detail', f.id]">
           <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}">
@@ -112,7 +114,7 @@
         <h3>{{ f.name }}</h3>
         <p><i class="fa-solid fa-location-dot"></i> {{ f.city || 'Địa điểm chưa rõ' }}</p>
       </div>
-      <div *ngIf="topFields.length === 0" class="empty">Không có dữ liệu top.</div>
+        <div *ngIf="topFields.length === 0" class="empty">Không có dữ liệu top cho bộ lọc này.</div>
     </div>
   </section>
 
