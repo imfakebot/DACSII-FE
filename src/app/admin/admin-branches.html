@@ -1,0 +1,202 @@
+<div class="admin-branches-container">
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1>🏗️ Quản lý Chi nhánh</h1>
+        <p class="subtitle">Quản lý và theo dõi tất cả chi nhánh trong hệ thống</p>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn btn-refresh" (click)="loadBranches()" [disabled]="loading">
+          <span class="icon">↻</span> Tải lại
+        </button>
+        <button type="button" class="btn btn-primary" (click)="openCreateForm()">
+          <span class="icon">+</span> Tạo chi nhánh
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card stat-card--blue">
+      <div class="stat-icon">🏗️</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ branches.length }}</div>
+        <div class="stat-label">Tổng chi nhánh</div>
+      </div>
+    </div>
+    <div class="stat-card stat-card--green">
+      <div class="stat-icon">⚽</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getTotalFields() }}</div>
+        <div class="stat-label">Tổng số sân</div>
+      </div>
+    </div>
+    <div class="stat-card stat-card--orange">
+      <div class="stat-icon">👥</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getManagerCount() }}</div>
+        <div class="stat-label">Quản lý được gán</div>
+      </div>
+    </div>
+    <div class="stat-card stat-card--purple">
+      <div class="stat-icon">📍</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getCityCount() }}</div>
+        <div class="stat-label">Thành phố</div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">⚠️ {{ error }}</div>
+  <div *ngIf="success" class="alert alert-success">✅ {{ success }}</div>
+
+  <div *ngIf="loading && !showForm" class="loading-state">⏳ Đang tải dữ liệu...</div>
+
+  <div *ngIf="!loading && branches.length === 0" class="empty-state">
+    🏛️ Chưa có chi nhánh nào. Hãy tạo chi nhánh mới!
+  </div>
+
+  <div *ngIf="!loading && branches.length > 0" class="branches-grid">
+    <div *ngFor="let branch of branches" class="branch-card">
+      <div class="branch-card-header">
+        <div class="branch-icon">🏗️</div>
+        <div class="branch-header-content">
+          <h3 class="branch-name">{{ branch.name }}</h3>
+          <span class="branch-badge">
+            <span class="badge-dot"></span>
+            Hoạt động
+          </span>
+        </div>
+      </div>
+      
+      <div class="branch-card-body">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-icon">📞</div>
+            <div class="info-content">
+              <div class="info-label">Điện thoại</div>
+              <div class="info-value">{{ branch.phoneNumber || branch.phone_number || 'Chưa cập nhật' }}</div>
+            </div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-icon">📍</div>
+            <div class="info-content">
+              <div class="info-label">Địa chỉ</div>
+              <div class="info-value">{{ branch.address?.street || 'Chưa cập nhật' }}, {{ getCityName(branch.address?.cityId) }}</div>
+            </div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-icon">👤</div>
+            <div class="info-content">
+              <div class="info-label">Quản lý</div>
+              <div class="info-value">{{ branch.manager?.fullName || 'Chưa gán' }}</div>
+            </div>
+          </div>
+          
+          <div class="info-item">
+            <div class="info-icon">⚽</div>
+            <div class="info-content">
+              <div class="info-label">Số sân</div>
+              <div class="info-value">{{ (branch.fields && branch.fields.length) || 0 }} sân</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="branch-card-footer">
+        <button type="button" class="btn-card btn-card--edit" (click)="openEditForm(branch)" title="Chỉnh sửa">
+          <span class="icon">✏️</span> Chỉnh sửa
+        </button>
+        <button type="button" class="btn-card btn-card--delete" (click)="deleteBranch(branch)" title="Xóa">
+          <span class="icon">🗑️</span> Xóa
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Form Modal -->
+  <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editMode ? 'Chỉnh sửa chi nhánh' : 'Tạo chi nhánh mới' }}</h2>
+        <button type="button" class="btn-close" (click)="closeForm()">×</button>
+      </div>
+
+      <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+
+      <form class="modal-body" (ngSubmit)="submitForm()">
+        <label class="field">
+          <span>Tên chi nhánh <span class="required">*</span></span>
+          <input type="text" name="name" [(ngModel)]="form.name" placeholder="VD: Chi nhánh Quận 1" required />
+        </label>
+
+        <label class="field">
+          <span>Số điện thoại <span class="required">*</span></span>
+          <input type="tel" name="phoneNumber" [(ngModel)]="form.phoneNumber" placeholder="0912345678" required />
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span>Giờ mở cửa <span class="required">*</span></span>
+            <input type="time" step="1" name="openTime" [(ngModel)]="form.openTime" required />
+          </label>
+          <label class="field">
+            <span>Giờ đóng cửa <span class="required">*</span></span>
+            <input type="time" step="1" name="closeTime" [(ngModel)]="form.closeTime" required />
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Quản lý</span>
+          <select name="managerId" [(ngModel)]="form.managerId">
+            <option [ngValue]="undefined">-- Chưa gán quản lý --</option>
+            <option *ngFor="let mgr of availableManagers" [ngValue]="mgr.id">{{ mgr.fullName }} ({{ mgr.phoneNumber }})</option>
+            <option *ngIf="currentBranch?.manager" [ngValue]="currentBranch?.managerId">{{ currentBranch?.manager?.fullName }} ({{ currentBranch?.manager?.phoneNumber }}) - Hiện tại</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Tỉnh/Thành phố <span class="required">*</span></span>
+          <select name="cityId" [(ngModel)]="form.cityId" (change)="onCityChange()" required>
+            <option value="">-- Chọn Tỉnh/Thành --</option>
+            <option *ngFor="let city of cities" [value]="city.id">{{ city.name }}</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Quận/Huyện <span class="required">*</span></span>
+          <select name="wardId" [(ngModel)]="form.wardId" required [disabled]="!form.cityId || wards.length === 0">
+            <option value="">-- Chọn Quận/Huyện --</option>
+            <option *ngFor="let ward of wards" [value]="ward.id">{{ ward.name }}</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Địa chỉ (Số nhà, tên đường)</span>
+          <input type="text" name="street" [(ngModel)]="form.street" placeholder="VD: 123 Nguyễn Huệ" />
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span>Vĩ độ (Latitude)</span>
+            <input type="number" step="any" name="latitude" [(ngModel)]="form.latitude" placeholder="10.7769" />
+          </label>
+          <label class="field">
+            <span>Kinh độ (Longitude)</span>
+            <input type="number" step="any" name="longitude" [(ngModel)]="form.longitude" placeholder="106.7009" />
+          </label>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn secondary" (click)="closeForm()">Hủy</button>
+          <button type="submit" class="btn primary" [disabled]="loading">
+            {{ loading ? 'Đang lưu...' : (editMode ? 'Cập nhật' : 'Tạo mới') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

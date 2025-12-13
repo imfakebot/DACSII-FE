@@ -37,11 +37,6 @@ export class AdminBookingsComponent implements OnInit {
     notes: ''
   };
   creatingBooking = false;
-  
-  // Debug/testing helpers
-  debugPayload: any = { fieldId: '', startTime: '', durationMinutes: 60, voucherCode: '' };
-  lastRequest: any = null;
-  lastResponse: any = null;
 
   constructor(private mgmt: BookingManagementService, private bookingsSrv: BookingsService, private router: Router, private authState: AuthStateService) {}
 
@@ -169,6 +164,26 @@ export class AdminBookingsComponent implements OnInit {
     return statusMap[status] || 'status-default';
   }
 
+  getStatusCount(status: string): number {
+    return this.bookings.filter(b => (b.status || '').toLowerCase() === status.toLowerCase()).length;
+  }
+
+  formatTime(time: string): string {
+    if (!time) return '-';
+    try {
+      const d = new Date(time);
+      return d.toLocaleString('vi-VN', { 
+        day: '2-digit', 
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit', 
+        minute: '2-digit' 
+      });
+    } catch {
+      return time;
+    }
+  }
+
   getStatusLabel(status: string): string {
     const labelMap: Record<string, string> = {
       'PENDING_PAYMENT': 'Chờ thanh toán',
@@ -228,28 +243,6 @@ export class AdminBookingsComponent implements OnInit {
   goToPage(page: number) {
     this.page = page;
     this.load();
-  }
-
-  // Quick debug create booking from admin UI
-  async doDebugCreate() {
-    this.lastRequest = null;
-    this.lastResponse = null;
-    const payload = {
-      fieldId: this.debugPayload.fieldId,
-      startTime: this.debugPayload.startTime,
-      durationMinutes: Number(this.debugPayload.durationMinutes) || 60,
-      voucherCode: this.debugPayload.voucherCode || undefined,
-    };
-    this.lastRequest = payload;
-    try {
-      const res = await this.bookingsSrv.create(payload as any);
-      this.lastResponse = { ok: true, data: res };
-      alert('Tạo booking: thành công');
-      await this.load();
-    } catch (err: any) {
-      this.lastResponse = { ok: false, error: err };
-      alert('Tạo booking thất bại: ' + (err?.message || JSON.stringify(err)));
-    }
   }
 }
 

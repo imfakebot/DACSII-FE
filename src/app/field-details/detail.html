@@ -19,14 +19,14 @@
         <h1>{{ field.name }}</h1>
         <p class="location">
           <i class="fa-solid fa-location-dot"></i>
-          {{ (field.street ? field.street + ', ' : '') + (field.ward ? field.ward + ', ' : '') + (field.city || 'Địa điểm chưa rõ') }}
+          {{ (field.street || field.ward || field.city) ? ((field.street ? field.street + ', ' : '') + (field.ward ? field.ward + ', ' : '') + (field.city || '')) : 'Chưa cập nhật địa chỉ' }}
         </p>
         <div class="stats">
           <div class="stat">
             <span class="label">Đánh giá</span>
             <strong>
               <i class="fa-solid fa-star"></i>
-              {{ field.avgRating ? (field.avgRating | number:'1.1-1') : '4.8' }}
+              {{ field.avgRating ? (field.avgRating | number:'1.1-1') : 'Chưa có' }}
             </strong>
           </div>
           <div class="stat">
@@ -64,19 +64,22 @@
         </div>
         <div class="info-item">
           <span class="label">Liên hệ</span>
-          <p>{{ field.ownerName || 'Đang cập nhật' }}</p>
+          <p>{{ field.branchPhone || field.managerName || 'Đang cập nhật' }}</p>
         </div>
         <div class="info-item">
           <span class="label">Địa chỉ</span>
-          <p>{{ (field.street ? field.street + ', ' : '') + (field.ward ? field.ward + ', ' : '') + (field.city || 'Địa điểm chưa rõ') }}</p>
+          <p>{{ (field.street || field.ward || field.city) ? ((field.street ? field.street + ', ' : '') + (field.ward ? field.ward + ', ' : '') + (field.city || '')) : 'Chưa cập nhật địa chỉ' }}</p>
         </div>
       </div>
 
       <div class="highlights">
-        <span class="chip"><i class="fa-regular fa-lightbulb"></i> Hệ thống đèn chuẩn thi đấu</span>
-        <span class="chip"><i class="fa-regular fa-clock"></i> Linh hoạt thời gian</span>
-        <span class="chip"><i class="fa-solid fa-shower"></i> Khu thay đồ sạch</span>
-        <span class="chip"><i class="fa-solid fa-shield"></i> An ninh & bãi xe</span>
+        <span class="chip" *ngFor="let utility of field.utilities">
+          <i class="fa-solid fa-circle-check"></i> {{ utility.name }}
+          <span *ngIf="utility.price" class="text-xs text-gray-600">({{ utility.price | currency:'VND':'symbol':'1.0-0' }})</span>
+        </span>
+        <span class="chip" *ngIf="!field.utilities || field.utilities.length === 0">
+          <i class="fa-solid fa-info-circle"></i> Chưa có tiện ích
+        </span>
       </div>
     </article>
 
@@ -88,16 +91,17 @@
       <div class="form-grid">
         <label>
           <span>Ngày</span>
-          <input type="date" [(ngModel)]="date" (change)="onDateChange()" />
+          <input type="date" [(ngModel)]="date" (change)="onDateChange()" class="form-input" />
         </label>
         <label class="time-parts">
           <span>Giờ bắt đầu</span>
-          <div class="time-selects">
-            <select [(ngModel)]="timeHour" (change)="onTimePartChange()" aria-label="Giờ">
+          <div class="time-selects flex gap-2">
+            <select [(ngModel)]="timeHour" (change)="onTimePartChange()" aria-label="Giờ" class="form-select flex-1">
               <option [ngValue]="null">Giờ</option>
               <option *ngFor="let h of hours" [ngValue]="h">{{ (h+'').padStart(2,'0') }}</option>
             </select>
-            <select [(ngModel)]="timeMinute" (change)="onTimePartChange()" aria-label="Phút">
+            <span class="self-center">:</span>
+            <select [(ngModel)]="timeMinute" (change)="onTimePartChange()" aria-label="Phút" class="form-select flex-1">
               <option [ngValue]="null">Phút</option>
               <option value="00">00</option>
               <option value="30">30</option>
@@ -106,123 +110,82 @@
         </label>
         <label>
           <span>Thời lượng (phút)</span>
-          <input type="number" min="30" step="30" [(ngModel)]="duration" (input)="onScheduleChange()" />
+          <select [(ngModel)]="duration" (change)="checkAvailability()" class="form-select">
+            <option [ngValue]="null">Chọn thời lượng</option>
+            <option [ngValue]="60">60 phút</option>
+            <option [ngValue]="90">90 phút</option>
+            <option [ngValue]="120">120 phút</option>
+          </select>
         </label>
-        <label class="voucher-input">
-          <span>
-            <i class="fa-solid fa-ticket"></i>
-            Mã giảm giá (tùy chọn)
-          </span>
-          <input type="text" [(ngModel)]="voucherCode" placeholder="Nhập mã voucher" />
+        <label>
+          <span>Mã giảm giá (nếu có)</span>
+          <input type="text" [(ngModel)]="voucherCode" placeholder="Nhập mã voucher" class="form-input" />
         </label>
       </div>
 
-      <!-- Lịch đặt sân - Schedule visualization -->
-      <div class="schedule-area" *ngIf="date">
+      <!-- Schedule Grid -->
+      <div *ngIf="date && slots && slots.length > 0" class="schedule-grid mt-4">
         <div class="schedule-header">
-          <div class="schedule-title">
-            <h4>
-              Lịch đặt sân
-              <!-- <span class="live-badge" *ngIf="!scheduleLoading">
-                <i class="fa-solid fa-circle"></i> Live (5s)
-              </span> -->
-            </h4>
-            <small class="last-update" *ngIf="lastScheduleUpdate">
-              Cập nhật: {{ lastScheduleUpdate | date:'HH:mm:ss' }}
-            </small>
-          </div>
+          <h4 class="text-sm font-semibold text-gray-700">Lịch sân ngày {{ date }}</h4>
           <div class="legend">
-            <span class="legend-item"><span class="dot available"></span> Còn trống</span>
+            <span class="legend-item"><span class="dot available"></span> Trống</span>
+            <span class="legend-item"><span class="dot selected"></span> Chọn</span>
             <span class="legend-item"><span class="dot booked"></span> Đã đặt</span>
           </div>
         </div>
-        <div *ngIf="scheduleLoading" class="schedule-loading">
-          <i class="fa-solid fa-spinner fa-spin"></i> Đang cập nhật lịch...
-        </div>
-        <div *ngIf="scheduleError" class="schedule-error">
-          <i class="fa-solid fa-exclamation-triangle"></i> {{ scheduleError }}
-        </div>
-        <div class="schedule-grid" *ngIf="!scheduleLoading && !scheduleError">
-          <button 
+        <div class="slots-container">
+          <div 
             *ngFor="let slot of slots" 
-            class="slot" 
-            [class.available]="slot.available" 
-            [class.booked]="!slot.available"
+            class="slot-item"
+            [class.available]="slot.available && !slot.selected"
             [class.selected]="slot.selected"
-            [disabled]="!slot.available"
-            (click)="selectSlot(slot)"
-            [title]="slot.available ? 'Còn trống - Click để chọn' : 'Đã đặt'"
-          >
+            [class.booked]="!slot.available"
+            (click)="onSlotClick(slot)">
             {{ slot.timeLabel }}
-          </button>
+          </div>
+        </div>
+        <p *ngIf="scheduleLoading" class="text-xs text-gray-500 mt-2 text-center">
+          <i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang tải lịch...
+        </p>
+      </div>
+
+      <div *ngIf="pricing" class="pricing-summary mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <div class="flex justify-between mb-2">
+          <span>Đơn giá:</span>
+          <span class="font-medium">{{ pricing.pricing.price_per_hour | currency:'VND':'symbol':'1.0-0' }}/giờ</span>
+        </div>
+        <div class="flex justify-between text-lg font-bold text-primary">
+          <span>Tổng cộng:</span>
+          <span>{{ pricing.pricing.total_price | currency:'VND':'symbol':'1.0-0' }}</span>
         </div>
       </div>
 
-      <div class="actions">
+      <div *ngIf="bookingError" class="error-message mt-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
+        <i class="fa-solid fa-circle-exclamation mr-2"></i> {{ bookingError }}
+      </div>
+
+      <div *ngIf="bookingMessage" class="success-message mt-4 p-3 bg-green-50 text-green-600 rounded-md text-sm">
+        <i class="fa-solid fa-check-circle mr-2"></i> {{ bookingMessage }}
+      </div>
+
+      <div class="actions mt-6">
         <button 
-          class="primary" 
-          [disabled]="!pricing?.available || !isLoggedIn || creatingBooking || checkingAvailability" 
-          (click)="createBooking()"
-        >
-          <i class="fa-solid" [ngClass]="creatingBooking ? 'fa-spinner fa-spin' : 'fa-calendar-check'"></i>
-          {{ creatingBooking ? 'Đang xử lý...' : 'Đặt sân ngay' }}
+          class="primary-btn w-full py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          (click)="submitBooking()"
+          [disabled]="creatingBooking || !date || !time || !duration">
+          <span *ngIf="creatingBooking"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang xử lý...</span>
+          <span *ngIf="!creatingBooking">Thanh toán ngay</span>
         </button>
-      </div>
-
-      
-
-      <div class="message-area">
-
-        <div class="pricing-summary" [class.available]="pricing?.available" [class.unavailable]="pricing && !pricing.available" [class.hidden]="!pricing">
-          <div class="status">
-            <i class="fa-solid" [ngClass]="pricing?.available ? 'fa-check-circle' : 'fa-times-circle'"></i>
-            <span *ngIf="pricing?.available" class="status-text available-text">✓ Khung giờ còn trống</span>
-            <span *ngIf="pricing && !pricing?.available" class="status-text unavailable-text">✗ Khung giờ đã có người đặt</span>
-          </div>
-          <div class="price" *ngIf="pricing?.available">
-            Tổng chi phí
-            <strong>{{ pricing?.pricing?.total_price ? (pricing?.pricing?.total_price | currency:'VND':'symbol':'1.0-0') : '--' }}</strong>
-              <small>({{ pricing?.pricing?.price_per_hour ? (pricing?.pricing?.price_per_hour | currency:'VND':'symbol':'1.0-0') : '--' }} / giờ)</small>
-          </div>
-          <div class="times" *ngIf="pricing?.available">
-            {{ pricing?.booking_details?.start_time || '' }}{{ pricing?.booking_details?.end_time ? ' - ' + pricing?.booking_details?.end_time : '' }}
-          </div>
-          <div class="unavailable-hint" *ngIf="pricing && !pricing?.available">
-            Vui lòng chọn khung giờ khác
-          </div>
-        </div>
-        
-        <div *ngIf="!isLoggedIn" class="message warn">
-          <i class="fa-solid fa-circle-info"></i>
-          Vui lòng đăng nhập để hoàn tất đặt sân.
-        </div>
-
-        <div *ngIf="checkingAvailability" class="message info">
-          <i class="fa-solid fa-spinner fa-spin"></i>
-          Đang kiểm tra tình trạng khung giờ...
-        </div>
-
-       
-      
-
-        <div *ngIf="pricingError" class="message error">{{ pricingError }}</div>
-
-        
-
-        <div *ngIf="bookingMessage" class="message success">
-          <i class="fa-solid fa-check-circle"></i>
-          {{ bookingMessage }}
-          <a *ngIf="paymentUrl" [href]="paymentUrl" class="payment-link" target="_blank">
-            <i class="fa-solid fa-credit-card"></i>
-            Nhấn vào đây nếu không tự động chuyển
-          </a>
-        </div>
-        <div *ngIf="bookingError" class="message error">
-          <i class="fa-solid fa-exclamation-circle"></i>
-          {{ bookingError }}
-        </div>
+        <p *ngIf="!isLoggedIn" class="text-center text-sm text-gray-500 mt-2">
+          Vui lòng <a routerLink="/login" class="text-primary hover:underline">đăng nhập</a> để đặt sân.
+        </p>
       </div>
     </aside>
+  </section>
+
+  <!-- Reviews Section -->
+  <section class="reviews-section" *ngIf="field">
+    <app-field-reviews [fieldId]="field.id"></app-field-reviews>
   </section>
 </div>
 

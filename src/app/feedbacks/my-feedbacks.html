@@ -36,27 +36,42 @@
 
     <form (ngSubmit)="createTicket()">
       <div class="form-group">
-        <label for="subject">
+        <label for="title">
           Tiêu đề <span class="required">*</span>
         </label>
         <input 
           type="text" 
-          id="subject"
-          [(ngModel)]="newTicket.subject"
-          name="subject"
+          id="title"
+          [(ngModel)]="newTicket.title"
+          name="title"
           placeholder="Nhập tiêu đề ticket..."
           maxlength="200"
           required>
       </div>
 
       <div class="form-group">
-        <label for="message">
+        <label for="category">
+          Danh mục <span class="required">*</span>
+        </label>
+        <select 
+          id="category"
+          [(ngModel)]="newTicket.category"
+          name="category"
+          required>
+          <option *ngFor="let cat of categories" [value]="cat.value">
+            {{ cat.label }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group full-width">
+        <label for="content">
           Nội dung <span class="required">*</span>
         </label>
         <textarea 
-          id="message"
-          [(ngModel)]="newTicket.message"
-          name="message"
+          id="content"
+          [(ngModel)]="newTicket.content"
+          name="content"
           placeholder="Mô tả chi tiết vấn đề của bạn..."
           rows="6"
           required></textarea>
@@ -99,7 +114,13 @@
       (click)="viewDetail(feedback.id)">
       
       <div class="feedback-header">
-        <h3 class="feedback-subject">{{ feedback.title || feedback.subject || 'Phản hồi' }}</h3>
+        <div class="header-left">
+          <h3 class="feedback-subject">{{ feedback.title || feedback.subject || 'Phản hồi' }}</h3>
+          <span class="feedback-category" *ngIf="feedback.category">
+            <i class="fas fa-tag"></i>
+            {{ getCategoryLabel(feedback.category) }}
+          </span>
+        </div>
         <span class="feedback-status" [ngClass]="getStatusClass(feedback.status)">
           {{ getStatusLabel(feedback.status) }}
         </span>

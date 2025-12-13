@@ -5,16 +5,6 @@
     <p>Đang tải chi tiết phản hồi...</p>
   </div>
 
-  <!-- Error State -->
-  <div *ngIf="error && !loading" class="error-alert">
-    <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
-      <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
-    </svg>
-    {{ error }}
-    <button class="back-btn" (click)="goBack()">Quay lại</button>
-  </div>
-
   <!-- Feedback Detail -->
   <div *ngIf="feedback && !loading" class="detail-content">
     <!-- Header with Back Button -->
@@ -61,33 +51,8 @@
     <div class="conversation-container">
       <h2 class="conversation-title">Cuộc trò chuyện</h2>
       
-      <!-- Original Message -->
-      <div class="message-bubble user-message">
-        <div class="message-header">
-          <div class="sender-info">
-            <div class="sender-avatar user-avatar">
-              <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
-                <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
-              </svg>
-            </div>
-            <div>
-              <div class="sender-name">{{ feedback.user?.full_name || feedback.submitter?.full_name || 'Người dùng' }}</div>
-              <div class="sender-type">Khách hàng</div>
-            </div>
-          </div>
-          <div class="message-time">{{ formatDateTime(feedback.created_at) }}</div>
-        </div>
-        <div class="message-content" *ngIf="feedback.responses && feedback.responses.length > 0">
-          {{ feedback.responses[0]?.message || 'Không có nội dung' }}
-        </div>
-        <div class="message-content" *ngIf="!feedback.responses || feedback.responses.length === 0">
-          Ticket chưa có nội dung
-        </div>
-      </div>
-
-      <!-- Responses -->
-      <div *ngFor="let response of feedback.responses" 
+      <!-- All Messages from responses array -->
+      <div *ngFor="let response of feedback.responses; let i = index" 
            class="message-bubble"
            [ngClass]="response.sender_type === 'admin' ? 'admin-message' : 'user-message'">
         <div class="message-header">
@@ -102,13 +67,13 @@
               </svg>
             </div>
             <div>
-              <div class="sender-name">{{ getSenderName(response.sender, response.sender_type) }}</div>
+              <div class="sender-name">{{ response.responder?.full_name || feedback.submitter?.full_name || 'Người dùng' }}</div>
               <div class="sender-type">{{ getSenderLabel(response.sender_type) }}</div>
             </div>
           </div>
           <div class="message-time">{{ formatDateTime(response.created_at) }}</div>
         </div>
-        <div class="message-content">{{ response.message }}</div>
+        <div class="message-content">{{ response.content || response.message || 'Không có nội dung' }}</div>
       </div>
 
       <!-- Empty State for No Responses -->
@@ -120,8 +85,8 @@
       </div>
     </div>
 
-    <!-- Reply Form -->
-    <div class="reply-form-container">
+    <!-- Reply Form (admin only) -->
+    <div class="reply-form-container" *ngIf="isAdmin">
       <h3 class="reply-title">Trả lời phản hồi</h3>
       
       <textarea 

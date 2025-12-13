@@ -110,7 +110,7 @@ export class AdminFeedbacksComponent implements OnInit {
     this.replySuccess = null;
     
     try {
-      await this.svc.reply(id, { message: this.replyMessage });
+      await this.svc.reply(id, { content: this.replyMessage });
       this.replySuccess = 'Đã gửi phản hồi thành công!';
       this.replyMessage = '';
       

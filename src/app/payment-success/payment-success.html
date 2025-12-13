@@ -1,0 +1,165 @@
+<div class="payment-success-container">
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="loading">
+    <div class="spinner"></div>
+    <p>Đang tải thông tin đặt sân...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" *ngIf="error && !loading">
+    <div class="error-icon">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+    </div>
+    <h2>Có lỗi xảy ra</h2>
+    <p>{{ error }}</p>
+    <button class="btn-primary" (click)="goHome()">
+      <i class="fa-solid fa-home"></i> Về trang chủ
+    </button>
+  </div>
+
+  <!-- Success State -->
+  <div class="success-content" *ngIf="bookingDetails && !loading">
+    <!-- Success Icon Animation -->
+    <div class="success-icon-wrapper">
+      <div class="success-icon">
+        <div class="icon-circle">
+          <i class="fa-solid fa-check"></i>
+        </div>
+      </div>
+      <div class="confetti">
+        <div class="confetti-piece" *ngFor="let i of [1,2,3,4,5,6,7,8,9,10]"></div>
+      </div>
+    </div>
+
+    <!-- Success Message -->
+    <div class="success-message">
+      <h1>Đặt Sân Thành Công!</h1>
+      <p class="subtitle">Thanh toán đã được xác nhận. Chúc bạn có trận đấu vui vẻ!</p>
+    </div>
+
+    <!-- Booking Details Card -->
+    <div class="booking-card">
+      <div class="card-header">
+        <h3>Thông Tin Đặt Sân</h3>
+        <span class="status-badge confirmed">
+          <i class="fa-solid fa-circle-check"></i> Đã xác nhận
+        </span>
+      </div>
+
+      <div class="card-body">
+        <!-- Booking ID -->
+        <div class="info-row">
+          <div class="info-label">
+            <i class="fa-solid fa-barcode"></i>
+            Mã đặt chỗ
+          </div>
+          <div class="info-value">{{ bookingDetails.id }}</div>
+        </div>
+
+        <!-- Field Name -->
+        <div class="info-row">
+          <div class="info-label">
+            <i class="fa-solid fa-futbol"></i>
+            Sân
+          </div>
+          <div class="info-value">
+            <strong>{{ bookingDetails.fieldName }}</strong>
+            <span class="field-type">{{ bookingDetails.fieldType }}</span>
+          </div>
+        </div>
+
+        <!-- Location -->
+        <div class="info-row">
+          <div class="info-label">
+            <i class="fa-solid fa-location-dot"></i>
+            Địa điểm
+          </div>
+          <div class="info-value">{{ bookingDetails.location }}</div>
+        </div>
+
+        <!-- Time -->
+        <div class="info-row">
+          <div class="info-label">
+            <i class="fa-solid fa-clock"></i>
+            Thời gian
+          </div>
+          <div class="info-value">
+            <strong>{{ formatDateTime(bookingDetails.startTime) }}</strong>
+            <span class="duration">({{ bookingDetails.duration }} phút)</span>
+          </div>
+        </div>
+
+        <!-- Customer Name -->
+        <div class="info-row">
+          <div class="info-label">
+            <i class="fa-solid fa-user"></i>
+            Khách hàng
+          </div>
+          <div class="info-value">{{ bookingDetails.customerName }}</div>
+        </div>
+
+        <!-- Total Amount -->
+        <div class="info-row total">
+          <div class="info-label">
+            <i class="fa-solid fa-money-bill-wave"></i>
+            Tổng tiền
+          </div>
+          <div class="info-value amount">{{ formatCurrency(bookingDetails.totalAmount) }}</div>
+        </div>
+
+        <!-- Payment Status -->
+        <div class="info-row">
+          <div class="info-label">
+            <i class="fa-solid fa-credit-card"></i>
+            Thanh toán
+          </div>
+          <div class="info-value">
+            <span class="payment-badge success">
+              <i class="fa-solid fa-check-circle"></i> Đã thanh toán
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- QR Code -->
+      <div class="qr-section">
+        <div class="qr-label">Mã QR Check-in</div>
+        <div class="qr-code">
+          <img [src]="bookingDetails.qrCode" alt="QR Code" />
+        </div>
+        <p class="qr-note">Xuất trình mã này khi check-in tại sân</p>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+      <button class="btn-download" (click)="downloadTicket()" [disabled]="downloadingTicket">
+        <i class="fa-solid" [class.fa-download]="!downloadingTicket" [class.fa-spinner]="downloadingTicket" [class.fa-spin]="downloadingTicket"></i>
+        {{ downloadingTicket ? 'Đang tải...' : 'Tải vé' }}
+      </button>
+      <button class="btn-print" (click)="printTicket()">
+        <i class="fa-solid fa-print"></i>
+        In vé
+      </button>
+      <button class="btn-secondary" (click)="viewMyBookings()">
+        <i class="fa-solid fa-calendar-check"></i>
+        Xem lịch sử đặt sân
+      </button>
+      <button class="btn-outline" (click)="goHome()">
+        <i class="fa-solid fa-home"></i>
+        Về trang chủ
+      </button>
+    </div>
+
+    <!-- Important Notes -->
+    <div class="notes-section">
+      <h4><i class="fa-solid fa-circle-info"></i> Lưu ý quan trọng</h4>
+      <ul>
+        <li>Vui lòng đến sân <strong>trước giờ bắt đầu 15 phút</strong> để check-in</li>
+        <li>Mang theo <strong>mã QR</strong> hoặc <strong>mã đặt chỗ</strong> để xác nhận</li>
+        <li>Liên hệ hotline <strong>1900-xxxx</strong> nếu cần hỗ trợ hoặc thay đổi lịch</li>
+        <li>Chính sách hủy: Hủy trước <strong>24 giờ</strong> để được hoàn tiền</li>
+      </ul>
+    </div>
+  </div>
+</div>

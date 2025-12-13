@@ -1,63 +1,101 @@
 <div class="admin-fields-page">
   <header class="page-header">
-    <h1>Quản lý sân</h1>
+    <div class="header-content">
+      <div class="header-title">
+        <h1>⚽ Quản lý Sân</h1>
+        <p class="subtitle">Quản lý và theo dõi tất cả sân bóng trong hệ thống</p>
+      </div>
+      <div class="header-actions" *ngIf="isAdmin">
+        <button class="btn btn-refresh" (click)="load()" [disabled]="loading">
+          <span class="icon">↻</span> Tải lại
+        </button>
+        <button class="btn btn-primary" (click)="onCreate()">
+          <span class="icon">+</span> Tạo sân mới
+        </button>
+      </div>
+    </div>
   </header>
 
-  <section *ngIf="isAdmin" class="card card--small">
-    <div class="card__header">
-      <h3>Hành động</h3>
-      <div class="pager">
-        <button class="btn primary" (click)="onCreate()">Tạo sân mới</button>
-        <button class="btn" (click)="load()">Tải lại</button>
+  <!-- Stats Cards -->
+  <div class="stats-grid" *ngIf="isAdmin">
+    <div class="stat-card stat-card--blue">
+      <div class="stat-icon">⚽</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ fields.length }}</div>
+        <div class="stat-label">Tổng sân</div>
       </div>
     </div>
-    <div class="card__body">
-      <p class="hint">Tạo, sửa hoặc xóa sân. Các thao tác ảnh hưởng trực tiếp đến dữ liệu.</p>
+    <div class="stat-card stat-card--green">
+      <div class="stat-icon">✅</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getActiveCount() }}</div>
+        <div class="stat-label">Đang hoạt động</div>
+      </div>
     </div>
-  </section>
+    <div class="stat-card stat-card--orange">
+      <div class="stat-icon">⏸️</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getInactiveCount() }}</div>
+        <div class="stat-label">Tạm ngưng</div>
+      </div>
+    </div>
+    <div class="stat-card stat-card--purple">
+      <div class="stat-icon">🏗️</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getTypeCount() }}</div>
+        <div class="stat-label">Loại sân</div>
+      </div>
+    </div>
+  </div>
 
-  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
-  <div *ngIf="!error && fields?.length === 0 && !loading" class="alert alert-warning">Không có sân nào.</div>
+  <div *ngIf="error" class="alert alert-error">⚠️ {{ error }}</div>
+  <div *ngIf="!error && fields?.length === 0 && !loading" class="alert alert-warning">🚧 Chưa có sân nào. Hãy tạo sân mới!</div>
 
   <section class="card" *ngIf="isAdmin; else noPermission">
-    <div class="card__header">
-      <div>
-        <p class="card__eyebrow">{{ fields.length || 0 }} sân</p>
-        <h2>Danh sách sân</h2>
-      </div>
-      <div class="pager">
-        <button class="btn" (click)="load()" [disabled]="loading">Tải lại</button>
-      </div>
+    <div class="card-header">
+      <h2 class="card-title">Danh sách sân ({{ fields.length }})</h2>
     </div>
 
-    <div class="table-wrapper" *ngIf="!loading; else loadingTpl">
-      <table>
-        <thead>
-          <tr>
-            <th>Tên</th>
-            <th>Loại</th>
-            <th>Địa chỉ</th>
-            <th>Trạng thái</th>
-            <th>Hành động</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let f of fields">
-            <td>
-              <div class="email">{{ f.name }}</div>
-            </td>
-            <td>{{ f.fieldType || f.type || '-' }}</td>
-            <td>{{ f.street || f.city || '-' }}</td>
-            <td>
-              <span class="chip" [ngClass]="{ 'chip--success': f.status, 'chip--warning': !f.status }">{{ f.status ? 'Hoạt động' : 'Ngưng' }}</span>
-            </td>
-            <td>
-              <button class="btn" (click)="onEdit(f.id)">Sửa</button>
-              <button class="btn danger" (click)="onDelete(f.id)">Xóa</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="fields-grid" *ngIf="!loading; else loadingTpl">
+      <div *ngFor="let f of fields" class="field-card">
+        <div class="field-card-header">
+          <div class="field-icon">⚽</div>
+          <span class="status-badge" [ngClass]="{ 'status-active': f.status, 'status-inactive': !f.status }">
+            <span class="status-dot"></span>
+            {{ f.status ? 'Hoạt động' : 'Tạm ngưng' }}
+          </span>
+        </div>
+        
+        <div class="field-card-body">
+          <h3 class="field-name">{{ f.name }}</h3>
+          
+          <div class="field-info">
+            <div class="info-item">
+              <span class="info-label">🏷️ Loại sân:</span>
+              <span class="info-value">{{ f.fieldType || f.type || 'Chưa xác định' }}</span>
+            </div>
+            
+            <div class="info-item" *ngIf="f.street || f.city">
+              <span class="info-label">📍 Địa chỉ:</span>
+              <span class="info-value">{{ f.street || f.city || '-' }}</span>
+            </div>
+            
+            <div class="info-item" *ngIf="f.description">
+              <span class="info-label">📝 Mô tả:</span>
+              <span class="info-value">{{ f.description }}</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="field-card-footer">
+          <button class="btn-card btn-card--edit" (click)="onEdit(f.id)" title="Chỉnh sửa">
+            <span class="icon">✏️</span> Sửa
+          </button>
+          <button class="btn-card btn-card--delete" (click)="onDelete(f.id)" title="Xóa">
+            <span class="icon">🗑️</span> Xóa
+          </button>
+        </div>
+      </div>
     </div>
   </section>
 

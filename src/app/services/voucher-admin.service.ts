@@ -11,6 +11,14 @@ export class VoucherAdminService {
     return { headers: new HttpHeaders({ Authorization: token ? `Bearer ${token}` : '' }) };
   }
 
+  async getAll(): Promise<any[]> {
+    return firstValueFrom(this.http.get<any[]>(`/voucher`, this.authHeaders()));
+  }
+
+  async getById(id: string): Promise<any> {
+    return firstValueFrom(this.http.get<any>(`/voucher/${id}`, this.authHeaders()));
+  }
+
   async create(payload: any): Promise<any> {
     return firstValueFrom(this.http.post(`/voucher`, payload, this.authHeaders()));
   }

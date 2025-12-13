@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo Payment Flow</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .demo-container {
+            background: white;
+            border-radius: 24px;
+            padding: 3rem;
+            max-width: 600px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            color: #0f172a;
+            margin-bottom: 1rem;
+            font-size: 2rem;
+        }
+
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .flow-steps {
+            background: #f8fafc;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .step:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-content {
+            flex: 1;
+        }
+
+        .step-title {
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+        }
+
+        .step-desc {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .demo-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            text-align: center;
+            display: block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-secondary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.4);
+        }
+
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+
+        .btn-outline:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .note {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-top: 2rem;
+            font-size: 0.875rem;
+            color: #92400e;
+        }
+
+        .note strong {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <h1>🎯 Demo Payment Flow</h1>
+        <p class="subtitle">
+            Đây là demo flow đặt sân và thanh toán cho báo cáo. 
+            Bạn có thể test từng bước hoặc xem trực tiếp màn hình kết quả.
+        </p>
+
+        <div class="flow-steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-content">
+                    <div class="step-title">Chọn sân và đặt lịch</div>
+                    <div class="step-desc">Khách hàng chọn sân, thời gian, thời lượng</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-content">
+                    <div class="step-title">Xác nhận và thanh toán</div>
+                    <div class="step-desc">Chuyển hướng sang cổng thanh toán VNPay</div>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-content">
+                    <div class="step-title">Hoàn tất thanh toán</div>
+                    <div class="step-desc">Hiển thị màn hình thành công + nút tải vé</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-buttons">
+            <a href="http://localhost:4200/detail/1" class="btn btn-primary">
+                🏟️ Bắt đầu từ trang đặt sân
+            </a>
+            <a href="http://localhost:4200/payment-success?bookingId=DEMO-12345" class="btn btn-secondary">
+                ✅ Xem màn hình thanh toán thành công
+            </a>
+            <button class="btn btn-outline" onclick="simulateVNPayFlow()">
+                🔄 Simulate toàn bộ flow (3s)
+            </button>
+        </div>
+
+        <div class="note">
+            <strong>📋 Lưu ý cho báo cáo:</strong>
+            1. Flow thực tế: Trang đặt sân → VNPay Gateway → Payment Success<br>
+            2. Backend xử lý race condition với pessimistic lock<br>
+            3. QR code và ticket download đã được implement<br>
+            4. Responsive design cho mobile và desktop
+        </div>
+    </div>
+
+    <script>
+        function simulateVNPayFlow() {
+            const steps = [
+                { text: 'Đang tạo booking...', duration: 1000 },
+                { text: 'Chuyển hướng sang VNPay...', duration: 1000 },
+                { text: 'Xác nhận thanh toán...', duration: 1000 }
+            ];
+
+            let currentStep = 0;
+            const btn = event.target;
+            const originalText = btn.textContent;
+            btn.disabled = true;
+
+            function runStep() {
+                if (currentStep < steps.length) {
+                    btn.textContent = steps[currentStep].text;
+                    setTimeout(() => {
+                        currentStep++;
+                        runStep();
+                    }, steps[currentStep].duration);
+                } else {
+                    window.location.href = 'http://localhost:4200/payment-success?bookingId=DEMO-' + Date.now();
+                }
+            }
+
+            runStep();
+        }
+    </script>
+</body>
+</html>

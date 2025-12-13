@@ -18,23 +18,30 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./header.scss']
 })
 export class HeaderComponent implements OnDestroy {
+  authReady = false;
   isRegister = false;
   userName: string | null = null;
   isAdmin = false;
   showAdminDropdown = false;
-  private sub?: Subscription;
+  // state for user dropdown (used by template)
+  showUserDropdown = false;
+  
+  private subs: Subscription[] = [];
 
   constructor(private router: Router, private authState: AuthStateService) {
-    this.sub = this.authState.user$.subscribe(u => {
-      // Chỉ hiển thị tên đầy đủ; nếu chưa có thì để null (có thể thêm placeholder sau)
+    // wait for auth initialization to avoid flicker of guest UI during SSR/client bootstrap
+    this.subs.push(this.authState.ready$.subscribe(r => {
+      this.authReady = !!r;
+    }));
+
+    this.subs.push(this.authState.user$.subscribe(u => {
       this.userName = u?.full_name || null;
-      // Sử dụng helper trung tâm để kiểm tra quyền admin (hỗ trợ 'super_admin' và các dạng khác)
       try {
         this.isAdmin = this.authState.isAdmin();
       } catch {
         this.isAdmin = false;
       }
-    });
+    }));
   }
 
   onLogin(e?: Event){
@@ -65,7 +72,17 @@ export class HeaderComponent implements OnDestroy {
     this.showAdminDropdown = false;
   }
 
-  ngOnDestroy(){
-    this.sub?.unsubscribe();
+  toggleUserDropdown() {
+    this.showUserDropdown = !this.showUserDropdown;
   }
+
+  closeUserDropdown() {
+    this.showUserDropdown = false;
+  }
+
+  ngOnDestroy(){
+    this.subs.forEach(s => s.unsubscribe());
+  }
+
+
 }

@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
@@ -6,13 +7,38 @@ export interface CreateBookingDto {
   fieldId: string;
   startTime: string; // ISO 8601
   durationMinutes: number;
+  voucherCode?: string;
+}
+
+export interface BookingResponse {
+  message: string;
+  paymentUrl: string;
+  finalAmount: number;
+  booking: {
+    id: string;
+    code: string;
+    start_time: string;
+    end_time: string;
+    total_price: number;
+    status: string;
+  };
 }
 
 @Injectable({ providedIn: 'root' })
 export class BookingsService {
-  constructor(private http: HttpClient) {}
+  private isBrowser: boolean;
+
+  constructor(private http: HttpClient, @Inject(PLATFORM_ID) private platformId: Object) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
 
   private authHeaders(): { headers: HttpHeaders } {
+    // SSR safety check
+    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+      console.warn('[BookingsService] Running in SSR context, no localStorage available');
+      return { headers: new HttpHeaders() };
+    }
+    
     const token = localStorage.getItem('accessToken') || '';
     console.log('[BookingsService] Getting auth headers, token exists:', !!token);
     if (!token) {
@@ -21,37 +47,22 @@ export class BookingsService {
     return { headers: new HttpHeaders({ Authorization: token ? `Bearer ${token}` : '' }) };
   }
 
-  async create(payload: CreateBookingDto): Promise<any> {
-    // Lightweight retry logic for transient errors (e.g., 5xx or network failures)
-    const maxAttempts = 3;
-    const retryDelay = (attempt: number) => 500 * Math.pow(2, attempt - 1); // 500ms, 1000ms
-
-    let attempt = 0;
-    while (attempt < maxAttempts) {
-      attempt++;
-      try {
-        const res = await firstValueFrom(this.http.post(`/bookings`, payload, this.authHeaders()));
-        return res;
-      } catch (err: any) {
-        // If it's an HttpErrorResponse-like object, inspect status
-        const status = err?.status;
-        const isServerError = status >= 500 || status === 0 || status === undefined;
-        // Do not retry for 4xx client validation errors
-        if (!isServerError || attempt >= maxAttempts) {
-          // Normalize error object so callers can show useful debug info
-          const normalized = {
-            status: status ?? 0,
-            message: err?.error?.message || err?.message || 'Unknown error',
-            body: err?.error ?? null,
-            raw: err,
-          };
-          throw normalized;
-        }
-
-        // transient server error => wait and retry
-        await new Promise((r) => setTimeout(r, retryDelay(attempt)));
-        continue;
-      }
+  async create(payload: CreateBookingDto): Promise<BookingResponse> {
+    console.log('[BookingsService] Creating booking with payload:', payload);
+    try {
+      const res = await firstValueFrom(
+        this.http.post<BookingResponse>(`/bookings`, payload, this.authHeaders())
+      );
+      console.log('[BookingsService] Booking created successfully:', res);
+      return res;
+    } catch (err: any) {
+      console.error('[BookingsService] Error creating booking:', err);
+      // Rethrow with normalized structure
+      throw {
+        status: err?.status ?? 0,
+        message: err?.error?.message || err?.message || 'Unknown error',
+        error: err?.error ?? null,
+      };
     }
   }
 
@@ -70,7 +81,21 @@ export class BookingsService {
       });
     }
     const url = `/bookings/me?${params.toString()}`;
+    // If running on server (SSR), avoid calling backend without credentials/proxy.
+    // Return empty page so server rendering doesn't attempt an unauthorized API call.
+    if (!this.isBrowser) {
+      console.warn('[BookingsService] SSR detected - skipping getMyBookings network call');
+      return Promise.resolve({ items: [], page, limit, total: 0 });
+    }
     return firstValueFrom(this.http.get<any>(url, this.authHeaders()));
+  }
+
+  async getBookingById(bookingId: string): Promise<any> {
+    if (!this.isBrowser) {
+      console.warn('[BookingsService] SSR detected - skipping getBookingById network call');
+      return Promise.resolve(null);
+    }
+    return firstValueFrom(this.http.get<any>(`/bookings/${bookingId}`, this.authHeaders()));
   }
 
   // Admin: get all bookings with pagination and optional status filter

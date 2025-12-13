@@ -39,19 +39,22 @@
           </label>
           <label>
             <span class="label">Chi nhánh</span>
-            <ng-container *ngIf="branchesLoading">Đang tải danh sách chi nhánh...</ng-container>
+            <ng-container *ngIf="branchesLoading">
+              <select disabled>
+                <option>Đang tải danh sách chi nhánh...</option>
+              </select>
+            </ng-container>
             <ng-container *ngIf="!branchesLoading">
               <ng-container *ngIf="branches?.length; else branchFallback">
                 <select name="branchId" [(ngModel)]="newEmployee.branchId">
-                  <option value="">(Không chọn)</option>
-                  <option *ngFor="let b of branches" [value]="b.id">{{ b.name }} ({{ b.id }})</option>
+                  <option value="">(Không chọn chi nhánh)</option>
+                  <option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</option>
                 </select>
               </ng-container>
             </ng-container>
             <ng-template #branchFallback>
               <input name="branchId" [(ngModel)]="newEmployee.branchId" placeholder="Branch ID (nếu cần)" autocomplete="off" />
-              <div class="hint">Không lấy được danh sách chi nhánh tự động — bạn có thể nhập ID thủ công hoặc kiểm tra DB.</div>
-              <div *ngIf="branchesError" class="alert alert-error">{{ branchesError }}</div>
+              <div class="hint" style="font-size: 0.85rem; color: #666; margin-top: 4px;">Không lấy được danh sách chi nhánh tự động — bạn có thể nhập ID thủ công.</div>
             </ng-template>
           </label>
           <label class="full-width">
@@ -67,7 +70,7 @@
     </div>
   </section>
 
-  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+  <!-- Success message only - errors logged to console -->
   <div *ngIf="success" class="alert alert-success">{{ success }}</div>
 
   <section *ngIf="isAdmin; else noPermission" class="card">
@@ -110,13 +113,14 @@
             </td>
             <td>{{ user.last_login || 'Chưa có' }}</td>
             <td>
-              <button *ngIf="!(user.status === 'banned' || user.status === 'suspended')" class="btn danger" (click)="banUser(user)" [disabled]="pendingBan === user.id">
-                {{ pendingBan === user.id ? 'Đang khóa...' : 'Khóa tài khoản' }}
-              </button>
-
-              <button *ngIf="user.status === 'banned' || user.status === 'suspended'" class="btn" (click)="unbanUser(user)" [disabled]="pendingUnban === user.id">
-                {{ pendingUnban === user.id ? 'Đang mở khóa...' : 'Mở khóa' }}
-              </button>
+              <div class="action-buttons">
+                <button *ngIf="!(user.status === 'banned' || user.status === 'suspended')" class="btn btn-danger" (click)="banUser(user)" [disabled]="pendingBan === user.id">
+                  {{ pendingBan === user.id ? 'Đang khóa...' : 'Khóa tài khoản' }}
+                </button>
+                <button *ngIf="user.status === 'banned' || user.status === 'suspended'" class="btn btn-success" (click)="unbanUser(user)" [disabled]="pendingUnban === user.id">
+                  {{ pendingUnban === user.id ? 'Đang mở...' : 'Mở khóa' }}
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>

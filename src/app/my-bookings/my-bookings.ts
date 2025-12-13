@@ -154,36 +154,38 @@ export class MyBookingsComponent implements OnInit {
 
   getStatusClass(status: string): string {
     const statusMap: Record<string, string> = {
-      'PENDING_PAYMENT': 'status-pending',
-      'CONFIRMED': 'status-confirmed',
-      'CHECKED_IN': 'status-checked-in',
-      'COMPLETED': 'status-completed',
-      'CANCELLED': 'status-cancelled',
-      'EXPIRED': 'status-expired'
+      'pending': 'status-pending',
+      'confirmed': 'status-confirmed',
+      'checked_in': 'status-checked-in',
+      'completed': 'status-completed',
+      'cancelled': 'status-cancelled',
+      'finished': 'status-finished',
+      'expired': 'status-expired'
     };
     return statusMap[status] || 'status-default';
   }
 
   getStatusLabel(status: string): string {
     const labelMap: Record<string, string> = {
-      'PENDING_PAYMENT': 'Chờ thanh toán',
-      'CONFIRMED': 'Đã xác nhận',
-      'CHECKED_IN': 'Đã check-in',
-      'COMPLETED': 'Hoàn thành',
-      'CANCELLED': 'Đã hủy',
-      'EXPIRED': 'Hết hạn'
+      'pending': 'Chờ thanh toán',
+      'confirmed': 'Đã xác nhận',
+      'checked_in': 'Đã check-in',
+      'completed': 'Hoàn thành',
+      'cancelled': 'Đã hủy',
+      'finished': 'Đã kết thúc',
+      'expired': 'Hết hạn'
     };
     return labelMap[status] || status;
   }
 
   canCancel(booking: any): boolean {
-    // Can only cancel if status is PENDING_PAYMENT or CONFIRMED
-    const cancelableStatuses = ['PENDING_PAYMENT', 'CONFIRMED'];
+    // Can only cancel if status is pending or confirmed
+    const cancelableStatuses = ['pending', 'confirmed'];
     return cancelableStatuses.includes(booking.status);
   }
 
   canPay(booking: any): boolean {
-    return booking.status === 'PENDING_PAYMENT';
+    return booking.status === 'pending';
   }
 
   formatDateTime(isoString: string): string {

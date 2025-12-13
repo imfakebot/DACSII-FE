@@ -1,0 +1,25 @@
+/* Application layout: ensure header/footer positioning and content fills between */
+main.main {
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+}
+
+/* router outlet (page content) should grow to take available space */
+main.main > router-outlet,
+main.main > .page-content,
+main.main > .content {
+	display: block;
+	flex: 1 1 auto;
+}
+
+/* push footer to the bottom when page content is short */
+main.main > app-footer {
+	margin-top: auto;
+}
+
+/* ensure header participates in normal flow */
+app-header, .navbar {
+	position: relative;
+	z-index: 100;
+}

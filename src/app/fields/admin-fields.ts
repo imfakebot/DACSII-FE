@@ -58,4 +58,17 @@ export class AdminFieldsComponent implements OnInit {
       alert(e?.error?.message || e?.message || 'Xóa thất bại');
     }
   }
+
+  getActiveCount(): number {
+    return this.fields.filter(f => f.status).length;
+  }
+
+  getInactiveCount(): number {
+    return this.fields.filter(f => !f.status).length;
+  }
+
+  getTypeCount(): number {
+    const types = new Set(this.fields.map(f => f.fieldType || f.type).filter(Boolean));
+    return types.size;
+  }
 }

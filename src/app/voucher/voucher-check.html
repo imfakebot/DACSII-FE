@@ -1,13 +1,13 @@
 <div class="voucher-page">
   <header class="page-header">
     <h1>Kiểm tra mã giảm giá</h1>
-    
+    <p class="subtitle">Nhập mã voucher để biết ngay số tiền được giảm và tổng phải thanh toán.</p>
   </header>
 
   <div *ngIf="error" class="alert alert-error">{{ error }}</div>
   <div *ngIf="result && result.isValid" class="alert alert-success">{{ result.message }}</div>
 
-  <form class="card" (ngSubmit)="checkVoucher()">
+  <form class="card form-card" (ngSubmit)="checkVoucher()">
     <div class="card__body grid two">
       <label class="field">
         <span>Mã voucher</span>
@@ -25,14 +25,52 @@
     </div>
   </form>
 
-  <section class="card" *ngIf="hasResult">
-    <div class="card__header">
+  <section class="card result-card" *ngIf="hasResult">
+    <div class="card__header result-header">
       <h2>Kết quả</h2>
+      <span class="badge" [ngClass]="{'valid': result?.isValid, 'invalid': !result?.isValid}">
+        {{ result?.isValid ? 'Hợp lệ' : 'Không hợp lệ' }}
+      </span>
     </div>
-    <div class="card__body result">
-      <p><strong>Mã:</strong> {{ result?.code }}</p>
-      <p><strong>Số tiền giảm:</strong> {{ result?.discountAmount | number:'1.0-0' }} đ</p>
-      <p><strong>Thanh toán còn:</strong> {{ result?.finalAmount | number:'1.0-0' }} đ</p>
+
+    <div class="card__body result-grid">
+      <div class="result-row">
+        <div class="label">Mã</div>
+        <div class="value">
+          <code class="code">{{ result?.code }}</code>
+          <button type="button" class="btn-ghost copy" (click)="copyCode(result?.code)">
+            Sao chép
+          </button>
+        </div>
+      </div>
+
+      <div class="result-row">
+        <div class="label">Số tiền giảm</div>
+        <div class="value highlight">{{ result?.discountAmount | number:'1.0-0' }} đ</div>
+      </div>
+
+      <div class="result-row">
+        <div class="label">Thanh toán còn</div>
+        <div class="value strong">{{ result?.finalAmount | number:'1.0-0' }} đ</div>
+      </div>
+
+      <div class="result-message" *ngIf="result?.message">
+        {{ result?.message }}
+      </div>
+    </div>
+  </section>
+
+  <section class="card history-card" *ngIf="history && history.length > 0">
+    <div class="card__header"><h3>Lịch sử kiểm tra</h3></div>
+    <div class="card__body">
+      <ul class="history-list">
+        <li *ngFor="let h of history">
+          <span class="h-code">{{ h.code }}</span>
+          <span class="h-result" [ngClass]="{'valid': h.isValid, 'invalid': !h.isValid}">
+            {{ h.isValid ? (h.discountAmount | number:'1.0-0') + ' đ' : 'Không hợp lệ' }}
+          </span>
+        </li>
+      </ul>
     </div>
   </section>
 </div>

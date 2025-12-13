@@ -9,6 +9,9 @@ interface CityBackend { id: string | number; name: string }
 interface WardBackend { id: string | number; name: string }
 interface AddressBackend { id: string; street: string; ward?: WardBackend; city?: CityBackend }
 interface OwnerBackend { id: string; full_name?: string }
+interface UtilityBackend { id: number; name: string; price?: number; description?: string }
+interface ManagerBackend { id: string; fullName?: string; phoneNumber?: string; full_name?: string; phone_number?: string }
+interface BranchBackend { id: string; name: string; address?: AddressBackend; manager?: ManagerBackend; phoneNumber?: string; phone_number?: string }
 interface FieldBackend {
   id: string;
   name: string;
@@ -20,7 +23,9 @@ interface FieldBackend {
   field_type_id?: string;
   address?: AddressBackend;
   owner?: OwnerBackend;
+  branch?: BranchBackend;
   images?: FieldImageBackend[];
+  utilities?: UtilityBackend[];
   // possible aggregated fields
   avgRating?: number;
   avg_rating?: number;
@@ -46,6 +51,9 @@ export interface Field {
   createdAt: string;
   avgRating?: number;
   pricePerHour?: number;
+  utilities?: Array<{id: number; name: string; price?: number; description?: string}>;
+  branchPhone?: string;
+  managerName?: string;
 }
 
 function mapField(raw: FieldBackend): Field {
@@ -59,6 +67,12 @@ function mapField(raw: FieldBackend): Field {
     if (!s.startsWith('http') && !s.startsWith('/')) s = '/' + s;
     return s;
   };
+
+  // Prioritize branch.address over raw.address
+  const address = raw.branch?.address || raw.address;
+  const manager = raw.branch?.manager;
+  const branchPhone = raw.branch?.phoneNumber || raw.branch?.phone_number;
+
   return {
     id: raw.id,
     name: raw.name,
@@ -66,15 +80,23 @@ function mapField(raw: FieldBackend): Field {
     fieldType: raw.fieldType?.name,
     type: raw.fieldType?.name,
     fieldTypeId: raw.fieldType?.id ?? raw.field_type_id,
-    street: raw.address?.street,
-    ward: raw.address?.ward?.name as any,
-    city: raw.address?.city?.name,
+    street: address?.street,
+    ward: address?.ward?.name as any,
+    city: address?.city?.name,
     ownerName: raw.owner?.full_name,
     images: (raw.images || []).map(i => normalizeImageUrl(i.image_url)),
     status: raw.status,
     createdAt: raw.createdAt,
     avgRating: raw.avgRating ?? raw.avg_rating ?? undefined,
     pricePerHour: raw.pricePerHour ?? raw.price_per_hour ?? undefined,
+    utilities: raw.utilities?.map(u => ({
+      id: u.id,
+      name: u.name,
+      price: u.price,
+      description: u.description
+    })) || [],
+    branchPhone: branchPhone,
+    managerName: manager?.fullName || manager?.full_name,
   };
 }
 
@@ -114,5 +136,31 @@ export class FieldsService {
     const form = new FormData();
     for (const f of files) form.append('images', f);
     return firstValueFrom(this.http.post(`/fields/${fieldId}/images`, form, this.authHeaders()));
+  }
+
+  /**
+   * Get available field types from backend
+   */
+  async getFieldTypes(): Promise<{ id: string; name: string; description?: string }[]> {
+    try {
+      const data = await firstValueFrom(this.http.get<any[]>(`/field-types`));
+      return data.map(ft => ({ id: ft.id, name: ft.name, description: ft.description }));
+    } catch (err) {
+      console.error('[FieldsService] Failed to load field types:', err);
+      return [];
+    }
+  }
+
+  /**
+   * Get available utilities from backend
+   */
+  async getUtilities(): Promise<{ id: number; name: string; price?: number }[]> {
+    try {
+      const data = await firstValueFrom(this.http.get<any[]>(`/utilities`));
+      return data.map(u => ({ id: u.id, name: u.name, price: u.price }));
+    } catch (err) {
+      console.error('[FieldsService] Failed to load utilities:', err);
+      return [];
+    }
   }
 }

@@ -3,8 +3,6 @@
     <h1>{{ id ? 'Chỉnh sửa sân' : 'Tạo sân mới' }}</h1>
   </header>
 
-  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
-
   <section class="card">
     <div class="card__header">
       <h3>{{ id ? 'Chỉnh sửa sân' : 'Tạo sân mới' }}</h3>
@@ -18,9 +16,11 @@
           </label>
 
           <label>
-            <span class="label">Loại sân</span>
-            <input name="fieldTypeId" [(ngModel)]="model.fieldTypeId" placeholder="fieldTypeId (ví dụ: 123)" />
-            <div class="hint">Nếu API trả danh sách loại sân, hãy nhập `fieldTypeId` tương ứng.</div>
+            <span class="label">Loại sân *</span>
+            <select name="fieldTypeId" [(ngModel)]="model.fieldTypeId" required>
+              <option value="">(Chọn loại sân)</option>
+              <option *ngFor="let ft of fieldTypes" [value]="ft.id">{{ ft.name }}</option>
+            </select>
           </label>
 
           <label class="full-width">
@@ -28,34 +28,52 @@
             <textarea name="description" [(ngModel)]="model.description"></textarea>
           </label>
 
-          <label>
-            <span class="label">Địa chỉ - Street</span>
-            <input name="street" [(ngModel)]="model.street" />
-          </label>
-
-          <label>
-            <span class="label">City</span>
-            <input name="city" [(ngModel)]="model.city" />
-          </label>
-
           <label class="full-width">
             <span class="label">Hình ảnh</span>
-            <input type="file" (change)="onFiles($event.target.files)" multiple />
+            <input type="file" (change)="onFiles($event.target.files)" multiple accept="image/*" />
           </label>
+
           <label class="full-width">
-            <span class="label">Chi nhánh (Branch)</span>
+            <span class="label">Tiện ích có sẵn tại sân</span>
+            <ng-container *ngIf="utilitiesLoading">Đang tải tiện ích...</ng-container>
+            <ng-container *ngIf="!utilitiesLoading && utilities && utilities.length > 0">
+              <div class="utilities-grid">
+                <label *ngFor="let utility of utilities" class="utility-checkbox">
+                  <input 
+                    type="checkbox" 
+                    [checked]="isUtilitySelected(utility.id)"
+                    (change)="toggleUtility(utility.id)"
+                  />
+                  <span class="utility-label">
+                    {{ utility.name }}
+                    <span *ngIf="utility.price" class="utility-price">({{ utility.price | number:'1.0-0' }}đ)</span>
+                  </span>
+                </label>
+              </div>
+            </ng-container>
+            <div *ngIf="!utilitiesLoading && (!utilities || utilities.length === 0)" class="hint">
+              Không có tiện ích nào trong hệ thống.
+            </div>
+          </label>
+
+          <label class="full-width">
+            <span class="label">Chi nhánh (Branch) <span *ngIf="isAdmin" style="color: red;">*</span></span>
             <ng-container *ngIf="branchesLoading">Đang tải chi nhánh...</ng-container>
             <ng-container *ngIf="!branchesLoading">
-              <ng-container *ngIf="branches?.length; else branchInput">
-                <select name="branchId" [(ngModel)]="model.branchId">
+              <ng-container *ngIf="branches?.length; else noBranches">
+                <select name="branchId" [(ngModel)]="model.branchId" [required]="isAdmin">
                   <option value="">(Chọn chi nhánh)</option>
-                  <option *ngFor="let b of branches" [value]="b.id">{{ b.name }} ({{ b.id }})</option>
+                  <option *ngFor="let b of branches" [value]="b.id">{{ b.name }}</option>
                 </select>
+                <div class="hint" style="font-size: 0.85rem; color: #666; margin-top: 4px;">
+                  <span *ngIf="isAdmin">Admin bắt buộc phải chọn chi nhánh.</span>
+                  <span *ngIf="!isAdmin">Manager có thể bỏ trống, hệ thống sẽ tự động lấy chi nhánh của bạn.</span>
+                </div>
               </ng-container>
             </ng-container>
-            <ng-template #branchInput>
-              <input name="branchId" [(ngModel)]="model.branchId" placeholder="Branch ID (ví dụ: 1)" />
-              <div *ngIf="branchesError" class="alert alert-error">{{ branchesError }}</div>
+            <ng-template #noBranches>
+              <input name="branchId" [(ngModel)]="model.branchId" placeholder="Nhập Branch ID (UUID)" [required]="isAdmin" />
+              <div class="hint" style="font-size: 0.85rem; color: #666; margin-top: 4px;">Không tải được danh sách chi nhánh. Vui lòng nhập UUID thủ công.</div>
             </ng-template>
           </label>
         </div>

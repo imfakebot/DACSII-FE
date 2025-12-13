@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FeedbacksService, FeedbackDto } from '../services/feedbacks.service';
+import { AuthStateService } from '../services/auth-state.service';
 
 @Component({
   selector: 'app-feedback-detail',
@@ -16,6 +17,7 @@ export class FeedbackDetailComponent implements OnInit {
   feedback: FeedbackDto | null = null;
   loading = false;
   error: string | null = null;
+  isAdmin = false;
   
   // Reply state
   replyMessage: string = '';
@@ -26,7 +28,8 @@ export class FeedbackDetailComponent implements OnInit {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private svc: FeedbacksService
+    private svc: FeedbacksService,
+    private authState: AuthStateService,
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -37,6 +40,13 @@ export class FeedbackDetailComponent implements OnInit {
     }
     
     this.feedbackId = idParam;
+
+    // Determine whether current user is admin to toggle admin-only UI
+    try {
+      this.isAdmin = this.authState.isAdmin();
+    } catch (err) {
+      this.isAdmin = false;
+    }
 
     await this.loadDetail();
   }
@@ -65,7 +75,7 @@ export class FeedbackDetailComponent implements OnInit {
     this.replySuccess = null;
     
     try {
-      await this.svc.reply(this.feedbackId, { message: this.replyMessage });
+      await this.svc.reply(this.feedbackId, { content: this.replyMessage });
       this.replySuccess = 'Đã gửi phản hồi thành công!';
       this.replyMessage = '';
       
@@ -82,7 +92,11 @@ export class FeedbackDetailComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/admin/feedbacks']);
+    if (this.isAdmin) {
+      this.router.navigate(['/admin/feedbacks']);
+    } else {
+      this.router.navigate(['/feedbacks']);
+    }
   }
 
   getStatusLabel(status: string): string {

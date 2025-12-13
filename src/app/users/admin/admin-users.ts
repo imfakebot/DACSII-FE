@@ -51,7 +51,7 @@ export class AdminUsersComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     if (!this.isAdmin) {
-      this.error = 'Bạn không có quyền truy cập trang quản trị người dùng.';
+      console.error('[AdminUsersComponent] Access denied: user is not admin');
       return;
     }
     // Debug: show current auth user to help diagnose permission issues
@@ -69,13 +69,13 @@ export class AdminUsersComponent implements OnInit {
     try {
       const list = await this.branchesService.listBranches();
       if (!list || !list.length) {
-        this.branchesError = 'Không tìm thấy danh sách chi nhánh từ backend.';
+        console.warn('Không tìm thấy danh sách chi nhánh từ backend.');
         this.branches = [];
         return;
       }
       this.branches = list;
     } catch (e) {
-      this.branchesError = 'Lỗi khi tải danh sách chi nhánh.';
+      console.error('Lỗi khi tải danh sách chi nhánh:', e);
       this.branches = [];
     } finally {
       this.branchesLoading = false;
@@ -84,7 +84,6 @@ export class AdminUsersComponent implements OnInit {
 
   async loadUsers(page = 1): Promise<void> {
     this.loading = true;
-    this.error = null;
     this.success = null;
     try {
       const res = await this.adminUsersService.getUsers(page);
@@ -92,8 +91,7 @@ export class AdminUsersComponent implements OnInit {
       this.total = res.total || 0;
       this.page = page;
     } catch (err: any) {
-      console.warn('[AdminUsersComponent] loadUsers failed', err);
-      this.error = err?.error?.message || err?.message || 'Không tải được danh sách người dùng.';
+      console.error('[AdminUsersComponent] loadUsers failed:', err?.error?.message || err?.message || 'Không tải được danh sách người dùng.', err);
     } finally {
       this.loading = false;
     }
@@ -104,15 +102,13 @@ export class AdminUsersComponent implements OnInit {
       return;
     }
     this.pendingBan = user.id;
-    this.error = null;
     this.success = null;
     try {
       const res = await this.adminUsersService.banUser(user.id);
       this.success = res?.message || 'Đã khóa tài khoản.';
       await this.loadUsers(this.page);
     } catch (err: any) {
-      console.warn('[AdminUsersComponent] banUser failed', err);
-      this.error = err?.error?.message || err?.message || 'Không khóa được tài khoản.';
+      console.error('[AdminUsersComponent] banUser failed:', err?.error?.message || err?.message || 'Không khóa được tài khoản.', err);
     } finally {
       this.pendingBan = null;
     }
@@ -123,15 +119,13 @@ export class AdminUsersComponent implements OnInit {
       return;
     }
     this.pendingUnban = user.id;
-    this.error = null;
     this.success = null;
     try {
       const res = await this.adminUsersService.unbanUser(user.id);
       this.success = res?.message || 'Đã mở khóa tài khoản.';
       await this.loadUsers(this.page);
     } catch (err: any) {
-      console.warn('[AdminUsersComponent] unbanUser failed', err);
-      this.error = err?.error?.message || err?.message || 'Không mở khóa được tài khoản.';
+      console.error('[AdminUsersComponent] unbanUser failed:', err?.error?.message || err?.message || 'Không mở khóa được tài khoản.', err);
     } finally {
       this.pendingUnban = null;
     }
@@ -139,11 +133,10 @@ export class AdminUsersComponent implements OnInit {
 
   async onCreateEmployee(): Promise<void> {
     if (!this.isAdmin) {
-      this.error = 'Bạn không có quyền tạo nhân viên.';
+      console.error('[AdminUsersComponent] createEmployee: Access denied');
       return;
     }
     this.creating = true;
-    this.error = null;
     this.success = null;
     try {
       const payload = {
@@ -162,14 +155,8 @@ export class AdminUsersComponent implements OnInit {
       // reload list
       await this.loadUsers(this.page);
     } catch (err: any) {
-      console.warn('[AdminUsersComponent] createEmployee failed', err);
-      // Friendly handling when backend reports missing/invalid branch
-      const serverMsg = err?.error?.message || err?.message || '';
-      if (/branch|chi nhán|branchId|branch id/i.test(String(serverMsg))) {
-        this.error = 'Chi nhánh không tồn tại hoặc ID không hợp lệ. Vui lòng kiểm tra Branch ID.';
-      } else {
-        this.error = serverMsg || 'Không tạo được nhân viên.';
-      }
+      const serverMsg = err?.error?.message || err?.message || 'Không tạo được nhân viên.';
+      console.error('[AdminUsersComponent] createEmployee failed:', serverMsg, err);
     } finally {
       this.creating = false;
     }

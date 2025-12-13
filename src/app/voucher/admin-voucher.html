@@ -1,10 +1,202 @@
-<div class="admin-voucher">
-  <h2>Quản trị Voucher</h2>
-  <div *ngIf="error" class="error">{{ error }}</div>
-  <div *ngIf="success" class="success">{{ success }}</div>
-  <form (submit)="$event.preventDefault(); create();">
-    <label>Code: <input [(ngModel)]="code" name="code" /></label>
-    <label>Discount: <input type="number" [(ngModel)]="discount" name="discount" /></label>
-    <button type="submit" [disabled]="loading">Tạo</button>
-  </form>
+<div class="admin-voucher-page">
+  <header class="page-header">
+    <h1>🎫 Quản lý Voucher</h1>
+    <p class="subtitle">Tạo và quản lý mã giảm giá cho khách hàng</p>
+  </header>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="success" class="alert alert-success">
+    <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0zm-3.97-3.03a.75.75 0 0 0-1.08.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-.01-1.05z"/>
+    </svg>
+    {{ success }}
+  </div>
+  
+  <div *ngIf="error" class="alert alert-error">
+    <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+      <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+      <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
+    </svg>
+    {{ error }}
+  </div>
+
+  <!-- Create Voucher Form -->
+  <section class="card create-voucher-card">
+    <div class="card-header">
+      <h2>Tạo mã giảm giá mới</h2>
+    </div>
+    <form (submit)="$event.preventDefault(); create();" class="voucher-form">
+      <!-- Basic Info -->
+      <div class="form-grid">
+        <div class="form-group full-width">
+          <label for="code">
+            Mã voucher <span class="required">*</span>
+          </label>
+          <input 
+            id="code"
+            type="text" 
+            [(ngModel)]="code" 
+            name="code" 
+            placeholder="VD: SUMMER2025"
+            required
+            [disabled]="loading" />
+          <small class="hint">Mã duy nhất, viết hoa, không dấu</small>
+        </div>
+      </div>
+
+      <!-- Discount Type -->
+      <div class="form-group full-width">
+        <label>Loại giảm giá <span class="required">*</span></label>
+        <div class="radio-group">
+          <label class="radio-label">
+            <input 
+              type="radio" 
+              name="discountType" 
+              value="percentage"
+              [(ngModel)]="discountType"
+              [disabled]="loading" />
+            <span>Phần trăm (%)</span>
+          </label>
+          <label class="radio-label">
+            <input 
+              type="radio" 
+              name="discountType" 
+              value="amount"
+              [(ngModel)]="discountType"
+              [disabled]="loading" />
+            <span>Số tiền cố định (VNĐ)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Discount Value -->
+      <div class="form-grid" *ngIf="discountType === 'percentage'">
+        <div class="form-group">
+          <label for="discountPercentage">
+            Phần trăm giảm <span class="required">*</span>
+          </label>
+          <input 
+            id="discountPercentage"
+            type="number" 
+            [(ngModel)]="discountPercentage" 
+            name="discountPercentage" 
+            placeholder="VD: 20"
+            min="1"
+            max="100"
+            [disabled]="loading" />
+          <small class="hint">Từ 1% đến 100%</small>
+        </div>
+
+        <div class="form-group">
+          <label for="maxDiscountAmount">
+            Giảm tối đa (VNĐ)
+          </label>
+          <input 
+            id="maxDiscountAmount"
+            type="number" 
+            [(ngModel)]="maxDiscountAmount" 
+            name="maxDiscountAmount" 
+            placeholder="VD: 100000"
+            min="0"
+            [disabled]="loading" />
+          <small class="hint">Để trống = không giới hạn</small>
+        </div>
+      </div>
+
+      <div class="form-grid" *ngIf="discountType === 'amount'">
+        <div class="form-group">
+          <label for="discountAmount">
+            Số tiền giảm (VNĐ) <span class="required">*</span>
+          </label>
+          <input 
+            id="discountAmount"
+            type="number" 
+            [(ngModel)]="discountAmount" 
+            name="discountAmount" 
+            placeholder="VD: 50000"
+            min="1000"
+            step="1000"
+            [disabled]="loading" />
+          <small class="hint">Số tiền giảm cố định</small>
+        </div>
+      </div>
+
+      <!-- Conditions -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="minOrderValue">
+            Giá trị đơn tối thiểu (VNĐ)
+          </label>
+          <input 
+            id="minOrderValue"
+            type="number" 
+            [(ngModel)]="minOrderValue" 
+            name="minOrderValue" 
+            placeholder="VD: 500000"
+            min="0"
+            step="10000"
+            [disabled]="loading" />
+          <small class="hint">Để trống = áp dụng cho mọi đơn</small>
+        </div>
+
+        <div class="form-group">
+          <label for="quantity">
+            Số lượng <span class="required">*</span>
+          </label>
+          <input 
+            id="quantity"
+            type="number" 
+            [(ngModel)]="quantity" 
+            name="quantity" 
+            placeholder="VD: 100"
+            min="1"
+            required
+            [disabled]="loading" />
+          <small class="hint">Tổng số lượt sử dụng</small>
+        </div>
+      </div>
+
+      <!-- Date Range -->
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="validFrom">
+            Ngày bắt đầu <span class="required">*</span>
+          </label>
+          <input 
+            id="validFrom"
+            type="date" 
+            [(ngModel)]="validFrom" 
+            name="validFrom" 
+            required
+            [disabled]="loading" />
+        </div>
+
+        <div class="form-group">
+          <label for="validTo">
+            Ngày kết thúc <span class="required">*</span>
+          </label>
+          <input 
+            id="validTo"
+            type="date" 
+            [(ngModel)]="validTo" 
+            name="validTo" 
+            required
+            [disabled]="loading" />
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="loading || !code">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16" *ngIf="!loading">
+            <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+          </svg>
+          {{ loading ? 'Đang tạo...' : 'Tạo voucher' }}
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="resetForm()" [disabled]="loading">
+          Xóa form
+        </button>
+      </div>
+    </form>
+  </section>
+  <!-- Voucher list removed: GET /voucher endpoint is not available on backend. -->
 </div>

@@ -30,12 +30,12 @@
       </label>
       <select id="statusFilter" [(ngModel)]="statusFilter" (change)="onFilterChange()">
         <option value="">Tất cả</option>
-        <option value="PENDING_PAYMENT">Chờ thanh toán</option>
-        <option value="CONFIRMED">Đã xác nhận</option>
-        <option value="CHECKED_IN">Đã check-in</option>
-        <option value="COMPLETED">Hoàn thành</option>
-        <option value="CANCELLED">Đã hủy</option>
-        <option value="EXPIRED">Hết hạn</option>
+        <option value="pending">Chờ thanh toán</option>
+        <option value="confirmed">Đã xác nhận</option>
+        <option value="checked_in">Đã check-in</option>
+        <option value="completed">Hoàn thành</option>
+        <option value="cancelled">Đã hủy</option>
+        <option value="finished">Đã kết thúc</option>
       </select>
     </div>
   </div>

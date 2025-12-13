@@ -4,8 +4,9 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FieldsService, Field } from '../services/fields.service';
 import { PricingService, CheckPriceResponseDto } from '../services/pricing.service';
-import { BookingsService } from '../services/bookings.service';
+import { BookingsService, BookingResponse, CreateBookingDto } from '../services/bookings.service';
 import { AuthStateService } from '../services/auth-state.service';
+import { FieldReviewsComponent } from '../review/field-reviews';
 
 /*
   DetailComponent (Tiếng Việt):
@@ -15,7 +16,7 @@ import { AuthStateService } from '../services/auth-state.service';
 @Component({
   selector: 'field-detail',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, FieldReviewsComponent],
   templateUrl: './detail.html',
   styleUrls: ['./detail.scss']
 })
@@ -57,6 +58,7 @@ export class DetailComponent implements OnInit, OnDestroy {
     private bookingsService: BookingsService,
     public authState: AuthStateService,
   ) {}
+
   async ngOnInit(){
     const id = this.route.snapshot.paramMap.get('id');
     if(!id){
@@ -65,13 +67,14 @@ export class DetailComponent implements OnInit, OnDestroy {
     }
     try{
       this.field = await this.fieldsService.getFieldById(id);
+      // Set default date to today
+      this.date = new Date().toISOString().split('T')[0];
+      this.onDateChange(); // Load schedule for today
     }catch(error: any){
       console.warn('[DetailComponent] load field failed', error);
       this.pricingError = error?.error?.message || 'Không tải được thông tin sân.';
       return;
     }
-    // Intentionally do not prefill schedule or auto-check availability.
-    // User must select date/time/duration to trigger availability check.
   }
 
   onTimePartChange(){
@@ -82,7 +85,96 @@ export class DetailComponent implements OnInit, OnDestroy {
       const mm = this.timeMinute;
       this.time = `${hh}:${mm}`;
     }
-    this.onScheduleChange();
+    // We don't need to re-fetch schedule on time change, just maybe validate
+  }
+
+
+
+  async submitBooking() {
+    if (!this.isLoggedIn) {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
+      return;
+    }
+
+    if (!this.field || !this.date || !this.time || !this.duration) {
+      this.bookingError = 'Vui lòng chọn đầy đủ thông tin: Ngày, Giờ, Thời lượng.';
+      return;
+    }
+
+    // Build ISO start time
+    const startIso = this.buildIsoStart();
+    if (!startIso) {
+      this.bookingError = 'Ngày giờ không hợp lệ. Vui lòng kiểm tra lại.';
+      return;
+    }
+
+    // Validate future time
+    const startDate = new Date(startIso);
+    if (startDate.getTime() <= Date.now()) {
+      this.bookingError = 'Vui lòng chọn khung giờ ở tương lai.';
+      return;
+    }
+
+    this.creatingBooking = true;
+    this.bookingError = null;
+    this.bookingMessage = null;
+
+    try {
+      const payload: CreateBookingDto = {
+        fieldId: this.field.id,
+        startTime: startIso,
+        durationMinutes: this.duration,
+      };
+
+      if (this.voucherCode && this.voucherCode.trim()) {
+        payload.voucherCode = this.voucherCode.trim();
+      }
+
+      const res = await this.bookingsService.create(payload);
+
+      this.bookingMessage = res.message || 'Đặt sân thành công!';
+
+      // Refresh schedule to show newly booked slot
+      if (this.date) {
+        await this.loadDailySchedule(this.date);
+      }
+
+      // Redirect to payment if URL exists
+      if (res.paymentUrl) {
+        this.bookingMessage += ' Đang chuyển đến trang thanh toán...';
+        setTimeout(() => {
+          window.location.href = res.paymentUrl;
+        }, 1500);
+      } else {
+        // No payment URL - maybe admin created booking or other scenario
+        this.router.navigate(['/my-bookings']);
+      }
+    } catch (err: any) {
+      console.error('[DetailComponent] Booking error:', err);
+
+      if (err.status === 401) {
+        this.bookingError = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        this.authState.setUser(null);
+        setTimeout(() => this.router.navigate(['/login']), 1500);
+      } else if (err.status === 409) {
+        this.bookingError = 'Khung giờ này đã có người đặt trước. Vui lòng chọn khung giờ khác.';
+        // Refresh schedule immediately
+        this.pricing = null;
+        if (this.date) {
+          await this.loadDailySchedule(this.date);
+        }
+      } else if (err.status === 400) {
+        this.bookingError = err.message || 'Dữ liệu không hợp lệ (voucher sai, thời gian không hợp lệ...).';
+      } else if (err.status === 404) {
+        this.bookingError = err.message || 'Không tìm thấy sân hoặc thông tin người dùng.';
+      } else {
+        this.bookingError = err.message || 'Đặt sân thất bại. Vui lòng thử lại.';
+      }
+    } finally {
+      this.creatingBooking = false;
+    }
   }
 
   ngOnDestroy(): void {
@@ -92,11 +184,11 @@ export class DetailComponent implements OnInit, OnDestroy {
     }
     this.stopScheduleAutoRefresh();
   }
-  goBack(){ this.router.navigate(['/football']); }
-  book(id: string){ /* legacy navigation placeholder; booking inline below */ this.router.navigate(['/detail', id]); }
 
-  get isLoggedIn(){ return this.authState.isLoggedIn(); }
+  goBack(){ this.router.navigate(['/football']); }
   
+  get isLoggedIn(){ return this.authState.isLoggedIn(); }
+
   get hasToken(): boolean {
     return !!localStorage.getItem('accessToken');
   }
@@ -175,167 +267,6 @@ export class DetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Kiểm tra xem time range đã chọn có conflict với slots đã book không
-   */
-  private hasConflictingSlots(startIso: string, durationMinutes: number): boolean {
-    if (!this.slots || this.slots.length === 0) return false;
-    
-    const startTime = new Date(startIso).getTime();
-    const endTime = startTime + durationMinutes * 60 * 1000;
-    
-    // Check if ANY slot in the time range is unavailable
-    return this.slots.some(slot => {
-      const slotStart = new Date(slot.iso).getTime();
-      const slotEnd = slotStart + 30 * 60 * 1000; // 30-minute slots
-      
-      // Check overlap: (StartA < EndB) && (EndA > StartB)
-      const hasOverlap = startTime < slotEnd && endTime > slotStart;
-      return hasOverlap && !slot.available;
-    });
-  }
-
-  /**
-   * Tạo booking ngay lập tức (Backend sẽ handle race condition với pessimistic lock)
-   */
-  async createBooking() {
-    // Validation
-    this.bookingMessage = null; 
-    this.bookingError = null;
-    this.paymentUrl = null;
-    
-    if(!this.field){ 
-      this.bookingError = 'Thiếu thông tin sân'; 
-      return; 
-    }
-    
-    if(!this.isLoggedIn){ 
-      this.bookingError = 'Vui lòng đăng nhập để đặt sân';
-      // Redirect to login
-      setTimeout(() => this.router.navigate(['/login']), 1500);
-      return; 
-    }
-    
-    const startIso = this.buildIsoStart();
-    if(!startIso){ 
-      this.bookingError = 'Vui lòng chọn ngày và giờ bắt đầu'; 
-      return; 
-    }
-    
-    if(!this.duration || this.duration < 30){ 
-      this.bookingError = 'Vui lòng chọn thời lượng hợp lệ (tối thiểu 30 phút)'; 
-      return; 
-    }
-    
-    if(!this.pricing?.available) { 
-      this.bookingError = 'Vui lòng kiểm tra khả dụng trước khi đặt sân'; 
-      return; 
-    }
-    
-    const startDate = new Date(startIso);
-    if(startDate.getTime() <= Date.now()){
-      this.bookingError = 'Không thể đặt sân ở thời điểm đã qua. Vui lòng chọn lại.';
-      return;
-    }
-
-    // Check token
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      this.bookingError = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
-      setTimeout(() => this.router.navigate(['/login']), 1500);
-      return;
-    }
-
-    // Start creating booking (Backend pessimistic lock will handle conflicts)
-    this.creatingBooking = true;
-    console.log('[Booking] Creating booking...');
-    
-    try {
-      const payload: any = { 
-        fieldId: this.field.id, 
-        startTime: startIso, 
-        durationMinutes: this.duration 
-      };
-      
-      // Add voucher if provided
-      if (this.voucherCode && this.voucherCode.trim()) {
-        payload.voucherCode = this.voucherCode.trim();
-      }
-      
-      console.log('[Booking] Payload:', payload);
-      const res = await this.bookingsService.create(payload);
-      console.log('[Booking] Success response:', res);
-      console.log('[Booking] Payment URL:', res?.paymentUrl);
-      
-      // Success - Show message
-      this.bookingMessage = res?.message || 'Đặt sân thành công!';
-      
-      // FORCE refresh schedule immediately to show booked slot
-      if (this.date) {
-        this.slots = [];
-        await this.loadDailySchedule(this.date);
-      }
-      
-      // Redirect to payment immediately if URL exists
-      if (res?.paymentUrl) {
-        console.log('[Booking] Redirecting to VNPay:', res.paymentUrl);
-        this.paymentUrl = res.paymentUrl;
-        this.bookingMessage = 'Đặt sân thành công! Đang chuyển đến trang thanh toán...';
-        
-        // Redirect immediately
-        setTimeout(() => {
-          window.location.href = res.paymentUrl;
-        }, 1500);
-      } else {
-        console.warn('[Booking] No payment URL in response');
-        this.bookingMessage = 'Đặt sân thành công! Nhưng không có link thanh toán.';
-        this.paymentUrl = null;
-      }
-      
-    } catch(e: any) {
-      console.error('[Booking] Error:', e);
-      
-      // Handle specific errors
-      if (e?.status === 401) {
-        this.bookingError = 'Phiên đăng nhập đã hết hạn.';
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        this.authState.setUser(null);
-        setTimeout(() => this.router.navigate(['/login']), 1500);
-      } 
-      else if (e?.status === 409) {
-        // Conflict - someone else booked first
-        this.bookingError = 'Khung giờ này đã có người đặt trước bạn. Vui lòng chọn khung giờ khác.';
-        
-        // Clear pricing to force re-check
-        this.pricing = null;
-        
-        // FORCE clear and refresh schedule immediately
-        if (this.date) {
-          this.slots = [];
-          await this.loadDailySchedule(this.date);
-        }
-        
-        // Auto-clear error after 5s
-        setTimeout(() => {
-          this.bookingError = null;
-        }, 5000);
-      }
-      else if (e?.status === 400) {
-        // Bad request - validation errors
-        this.bookingError = e?.error?.message || 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.';
-      }
-      else {
-        // Other errors
-        this.bookingError = e?.error?.message || e?.message || 'Đặt sân thất bại. Vui lòng thử lại.';
-      }
-    } finally {
-      this.creatingBooking = false;
-    }
-  }
-
-
-
   private bootstrapInitialSchedule(){
     const nextSlot = new Date();
     nextSlot.setMinutes(0,0,0);
@@ -383,27 +314,34 @@ export class DetailComponent implements OnInit, OnDestroy {
       const bookings = response?.bookings || [];
 
       // Generate 32 time slots from 06:00 to 22:00 (30-minute intervals)
+      // IMPORTANT: Create slots in LOCAL TIME but store as ISO (UTC) for backend compatibility
       const slots: Array<{ timeLabel: string; iso: string; available: boolean; selected?: boolean }> = [];
       for (let hour = 6; hour < 22; hour++) {
         for (let minute of [0, 30]) {
           const hh = (`${hour}`).padStart(2, '0');
           const mm = (`${minute}`).padStart(2, '0');
           const timeLabel = `${hh}:${mm}`;
+          
+          // Create date in local timezone (user's perspective)
           const slotDate = new Date(`${date}T${timeLabel}:00`);
+          const slotIso = slotDate.toISOString();
+          
+          // Convert to timestamps for comparison (both in UTC milliseconds)
           const slotStart = slotDate.getTime();
           const slotEnd = slotStart + 30 * 60 * 1000; // 30 minutes
 
           // Check if this slot overlaps with any booking
+          // Backend returns UTC ISO strings, Date constructor parses them correctly
           const isBooked = bookings.some((b: any) => {
             const bookingStart = new Date(b.startTime).getTime();
             const bookingEnd = new Date(b.endTime).getTime();
-            // Slot is booked if there's any overlap
+            // Slot is booked if there's any overlap: (StartA < EndB) && (EndA > StartB)
             return bookingStart < slotEnd && bookingEnd > slotStart;
           });
 
           slots.push({
             timeLabel,
-            iso: slotDate.toISOString(),
+            iso: slotIso,
             available: !isBooked,
           });
         }
@@ -418,6 +356,17 @@ export class DetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  /**
+   * Handle date change: reload schedule for new date
+   */
+  // onDateChange() {
+  //   if (this.date && this.field) {
+  //     this.loadDailySchedule(this.date);
+  //     this.startScheduleAutoRefresh();
+  //   } else {
+  //     this.stopScheduleAutoRefresh();
+  //   }
+  // }
   /**
    * Handle date change: reload schedule for new date
    */
@@ -477,5 +426,12 @@ export class DetailComponent implements OnInit, OnDestroy {
     
     // Mark all affected slots based on duration
     this.markAffectedSlots(slot.iso, this.duration);
+  }
+
+  /**
+   * Alias for selectSlot - called from HTML template
+   */
+  onSlotClick(slot: any) {
+    this.selectSlot(slot);
   }
 }

@@ -1,38 +1,103 @@
 <div class="admin-bookings-page">
   <header class="page-header">
-    <h1>Quản lý đặt sân</h1>
-    <div class="pager">
-      <button class="btn" (click)="prev()" [disabled]="!canPrev() || loading">Trang trước</button>
-      <button class="btn" (click)="next()" [disabled]="!canNext() || loading">Trang sau</button>
+    <div class="header-content">
+      <div class="header-title">
+        <h1>📊 Quản lý Đặt sân</h1>
+        <p class="subtitle">Quản lý và theo dõi tất cả đơn đặt sân</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-refresh" (click)="load()" [disabled]="loading">
+          <span class="icon">↻</span> Tải lại
+        </button>
+      </div>
     </div>
   </header>
 
-  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <div class="stat-card stat-card--blue">
+      <div class="stat-icon">📝</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ bookings.length }}</div>
+        <div class="stat-label">Tổng đơn</div>
+      </div>
+    </div>
+    <div class="stat-card stat-card--green">
+      <div class="stat-icon">✅</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getStatusCount('confirmed') + getStatusCount('checked-in') + getStatusCount('completed') }}</div>
+        <div class="stat-label">Hoàn thành</div>
+      </div>
+    </div>
+    <div class="stat-card stat-card--orange">
+      <div class="stat-icon">⏳</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getStatusCount('pending') }}</div>
+        <div class="stat-label">Đang chờ</div>
+      </div>
+    </div>
+    <div class="stat-card stat-card--red">
+      <div class="stat-icon">❌</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getStatusCount('cancelled') + getStatusCount('expired') }}</div>
+        <div class="stat-label">Đã hủy</div>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="error" class="alert alert-error">⚠️ {{ error }}</div>
 
   <section class="card" *ngIf="!loading; else loadingTpl">
+    <div class="card-header">
+      <h2 class="card-title">Danh sách đặt sân</h2>
+      <div class="pagination">
+        <button class="btn-page" (click)="prev()" [disabled]="!canPrev() || loading">
+          <span>←</span> Trang trước
+        </button>
+        <span class="page-info">Trang {{ page }}</span>
+        <button class="btn-page" (click)="next()" [disabled]="!canNext() || loading">
+          Trang sau <span>→</span>
+        </button>
+      </div>
+    </div>
     <div class="table-wrapper">
-      <table>
+      <table class="modern-table">
         <thead>
           <tr>
-            <th>Mã</th>
-            <th>Người đặt</th>
-            <th>Sân</th>
-            <th>Thời gian</th>
-            <th>Trạng thái</th>
-            <th>Hành động</th>
+            <th><span class="th-content">🆔 Mã đơn</span></th>
+            <th><span class="th-content">👤 Khách hàng</span></th>
+            <th><span class="th-content">⚽ Sân</span></th>
+            <th><span class="th-content">🕒 Thời gian</span></th>
+            <th><span class="th-content">🏷️ Trạng thái</span></th>
+            <th><span class="th-content">⚙️ Hành động</span></th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let b of bookings">
-            <td>{{ b.id }}</td>
-            <td>{{ b.user?.fullName || b.user?.email || b.customerName || '-' }}</td>
-            <td>{{ b.field?.name || b.fieldName || b.field_id || '-' }}</td>
-            <td>{{ b.startTime || b.start_time || b.createdAt }}</td>
-            <td><span class="chip">{{ b.status || b.bookingStatus || '-' }}</span></td>
+          <tr *ngFor="let b of bookings" class="table-row">
+            <td><div class="booking-id">{{ b.id.substring(0, 8) }}...</div></td>
             <td>
-              <button class="btn" (click)="viewBooking(b.id)">Xem</button>
-              <button class="btn" (click)="doCheckIn(b)" [disabled]="pendingAction">Check-in</button>
-              <button class="btn danger" (click)="doCancel(b)" [disabled]="pendingAction">Hủy</button>
+              <div class="customer-info">
+                <div class="customer-name">{{ b.user?.fullName || b.customerName || 'Khách' }}</div>
+                <div class="customer-email">{{ b.user?.email || '-' }}</div>
+              </div>
+            </td>
+            <td><div class="field-name">{{ b.field?.name || b.fieldName || '-' }}</div></td>
+            <td><div class="time-info">{{ formatTime(b.startTime || b.start_time || b.createdAt) }}</div></td>
+            <td>
+              <span class="status-badge" [ngClass]="getStatusClass(b.status || b.bookingStatus)">
+                <span class="status-dot"></span>
+                {{ getStatusLabel(b.status || b.bookingStatus) }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="btn-action btn-action--success" (click)="doCheckIn(b)" [disabled]="pendingAction" title="Check-in">
+                  <span class="icon">✔️</span>
+                </button>
+                <button class="btn-action btn-action--danger" (click)="doCancel(b)" [disabled]="pendingAction" title="Hủy đơn">
+                  <span class="icon">❌</span>
+                </button>
+              </div>
             </td>
           </tr>
         </tbody>
@@ -43,61 +108,4 @@
   <ng-template #loadingTpl>
     <div class="loading">Đang tải danh sách...</div>
   </ng-template>
-
-  <!-- Debug panel for admin testing -->
-  <section class="card" *ngIf="isAdmin">
-    <div class="card__header"><h3>Debug: Tạo booking nhanh</h3></div>
-    <div class="card__body">
-      <div class="form-grid">
-        <label>
-          <span class="label">Field ID</span>
-          <input [(ngModel)]="debugPayload.fieldId" placeholder="Field id" />
-        </label>
-        <label>
-          <span class="label">Start Time (ISO)</span>
-          <input [(ngModel)]="debugPayload.startTime" placeholder="2025-12-06T18:00:00.000Z" />
-        </label>
-        <label>
-          <span class="label">Duration (minutes)</span>
-          <input type="number" [(ngModel)]="debugPayload.durationMinutes" />
-        </label>
-        <label class="full-width">
-          <span class="label">Voucher code (optional)</span>
-          <input [(ngModel)]="debugPayload.voucherCode" />
-        </label>
-      </div>
-      <div class="form-actions">
-        <button class="btn primary" (click)="doDebugCreate()">Gọi API tạo booking</button>
-        <button class="btn" (click)="debugPayload = { fieldId: '', startTime: '', durationMinutes: 60, voucherCode: '' }">Reset</button>
-      </div>
-
-      <div style="margin-top:1rem">
-        <strong>Last Request:</strong>
-        <pre style="max-height:200px;overflow:auto;background:#f8fafc;padding:0.5rem;border-radius:6px">{{ lastRequest | json }}</pre>
-
-        <strong>Last Response:</strong>
-        <pre style="max-height:300px;overflow:auto;background:#f8fafc;padding:0.5rem;border-radius:6px">{{ lastResponse | json }}</pre>
-      </div>
-    </div>
-  </section>
-</div>
-<div class="admin-bookings">
-  <h2>Quản trị Bookings</h2>
-  <div *ngIf="loading">Đang tải...</div>
-  <div *ngIf="error" class="error">{{ error }}</div>
-  <table *ngIf="!loading && bookings.length">
-    <thead>
-      <tr><th>ID</th><th>User</th><th>Field</th><th>Start</th><th>Status</th></tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let b of bookings">
-        <td>{{ b.id }}</td>
-        <td>{{ b.customer_name || b.user_profile?.full_name || '-' }}</td>
-        <td>{{ b.field_id || '-' }}</td>
-        <td>{{ b.start_time || b.startTime || '-' }}</td>
-        <td>{{ b.status }}</td>
-      </tr>
-    </tbody>
-  </table>
-  <div *ngIf="!loading && !bookings.length">Không có bookings</div>
 </div>

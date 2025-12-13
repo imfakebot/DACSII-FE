@@ -15,6 +15,10 @@ export class AuthStateService {
   private userSubject = new BehaviorSubject<AuthUser | null>(null);
   user$ = this.userSubject.asObservable();
 
+  // Indicates auth module finished initialization on the client
+  private readySubject = new BehaviorSubject<boolean>(false);
+  ready$ = this.readySubject.asObservable();
+
   private isBrowser: boolean;
 
   constructor(@Inject(PLATFORM_ID) platformId: object) {
@@ -24,6 +28,11 @@ export class AuthStateService {
         const raw = localStorage.getItem('authUser');
         if (raw) this.userSubject.next(JSON.parse(raw));
       } catch {}
+      // mark ready on browser after attempting to read storage
+      this.readySubject.next(true);
+    } else {
+      // keep not-ready on server so templates can avoid showing guest UI during SSR
+      this.readySubject.next(false);
     }
   }
 

@@ -20,10 +20,19 @@ export class MyFeedbacksComponent implements OnInit {
   // Create new ticket form
   showCreateForm = false;
   newTicket: CreateFeedbackDto = {
-    subject: '',
-    message: ''
+    title: '',
+    category: 'support',
+    content: ''
   };
   creating = false;
+
+  categories = [
+    { value: 'support', label: 'Yêu cầu hỗ trợ' },
+    { value: 'suggestion', label: 'Góp ý / Đề xuất' },
+    { value: 'complaint', label: 'Khiếu nại' },
+    { value: 'inquiry', label: 'Câu hỏi / Tư vấn' },
+    { value: 'other', label: 'Khác' }
+  ];
 
   constructor(
     private feedbacksService: FeedbacksService,
@@ -56,13 +65,13 @@ export class MyFeedbacksComponent implements OnInit {
   }
 
   resetForm() {
-    this.newTicket = { subject: '', message: '' };
+    this.newTicket = { title: '', category: 'support', content: '' };
     this.error = null;
     this.successMessage = null;
   }
 
   async createTicket() {
-    if (!this.newTicket.subject.trim() || !this.newTicket.message.trim()) {
+    if (!this.newTicket.title.trim() || !this.newTicket.content.trim()) {
       this.error = 'Vui lòng nhập đầy đủ tiêu đề và nội dung';
       return;
     }
@@ -70,18 +79,31 @@ export class MyFeedbacksComponent implements OnInit {
     this.creating = true;
     this.error = null;
     
+    console.log('[Create Ticket] Payload:', this.newTicket);
+    
     try {
-      await this.feedbacksService.create(this.newTicket);
+      const result = await this.feedbacksService.create(this.newTicket);
+      console.log('[Create Ticket] Success:', result);
       this.successMessage = 'Tạo ticket thành công!';
       this.showCreateForm = false;
       this.resetForm();
-      await this.loadMyFeedbacks();
-      
+      // Avoid immediately calling /feedbacks/me (server may not include
+      // userProfile in the auth payload and that causes a backend crash).
+      // Instead update local list using the response from the create call.
+      if (result) {
+        this.feedbacks = [result, ...(this.feedbacks || [])];
+      } else {
+        // Fallback in case backend returns no body
+        await this.loadMyFeedbacks();
+      }
+
       setTimeout(() => {
         this.successMessage = null;
       }, 3000);
     } catch (e: any) {
-      console.error('Error creating feedback:', e);
+      console.error('[Create Ticket] Error:', e);
+      console.error('[Create Ticket] Error Response:', e?.error);
+      console.error('[Create Ticket] Error Message:', e?.error?.message);
       this.error = e?.error?.message || e?.message || 'Không thể tạo ticket';
     } finally {
       this.creating = false;
@@ -89,7 +111,7 @@ export class MyFeedbacksComponent implements OnInit {
   }
 
   viewDetail(feedbackId: string) {
-    this.router.navigate(['/feedback', feedbackId]);
+    this.router.navigate(['/feedbacks', feedbackId]);
   }
 
   getStatusLabel(status: string): string {
@@ -104,6 +126,11 @@ export class MyFeedbacksComponent implements OnInit {
 
   getStatusClass(status: string): string {
     return `status-${status.replace('_', '-')}`;
+  }
+
+  getCategoryLabel(category: string): string {
+    const cat = this.categories.find(c => c.value === category);
+    return cat ? cat.label : category;
   }
 
   formatDateTime(isoString: string): string {

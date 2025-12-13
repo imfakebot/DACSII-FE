@@ -15,14 +15,23 @@ import { AuthStateService } from '../services/auth-state.service';
 })
 export class AdminFieldFormComponent implements OnInit {
   id: string | null = null;
-  model: any = { name: '', description: '', fieldTypeId: '', fieldType: '', branchId: '', street: '', city: '' };
+  model: any = { 
+    name: '', 
+    description: '', 
+    fieldTypeId: '', 
+    branchId: '',
+    utilityIds: [] 
+  };
   loading = false;
   saving = false;
   error: string | null = null;
   images: File[] = [];
   branches: Branch[] = [];
   branchesLoading = false;
-  branchesError: string | null = null;
+  fieldTypes: { id: string; name: string; description?: string }[] = [];
+  fieldTypesLoading = false;
+  utilities: { id: number; name: string; price?: number }[] = [];
+  utilitiesLoading = false;
 
   constructor(private route: ActivatedRoute, private fieldsService: FieldsService, public router: Router, private authState: AuthStateService, private branchesSrv: BranchesService) {}
 
@@ -34,32 +43,72 @@ export class AdminFieldFormComponent implements OnInit {
       return;
     }
     this.id = this.route.snapshot.paramMap.get('id');
+    this.loadFieldTypes();
     this.loadBranches();
+    this.loadUtilities();
     if (this.id) this.load();
   }
 
   async load() {
     this.loading = true;
-    this.error = null;
     try {
       const f = await this.fieldsService.getFieldById(this.id as string);
-      this.model = { name: f.name, description: f.description, fieldTypeId: f.fieldTypeId, fieldType: f.fieldType, branchId: (f as any).branchId ?? '', street: f.street, city: f.city };
+      this.model = { 
+        name: f.name, 
+        description: f.description, 
+        fieldTypeId: f.fieldTypeId || '', 
+        branchId: (f as any).branchId || '',
+        utilityIds: (f as any).utilityIds || [] 
+      };
     } catch (e: any) {
-      this.error = e?.error?.message || e?.message || 'Không tải được thông tin sân.';
+      console.error('[AdminFieldFormComponent] Load failed:', e?.error?.message || e?.message, e);
     } finally {
       this.loading = false;
     }
   }
 
+  async loadFieldTypes() {
+    this.fieldTypesLoading = true;
+    try {
+      this.fieldTypes = await this.fieldsService.getFieldTypes();
+      if (!this.fieldTypes || this.fieldTypes.length === 0) {
+        console.warn('[AdminFieldFormComponent] No field types found');
+      }
+    } catch (e: any) {
+      console.error('[AdminFieldFormComponent] Load field types failed:', e?.message, e);
+      this.fieldTypes = [];
+    } finally {
+      this.fieldTypesLoading = false;
+    }
+  }
+
   async loadBranches() {
     this.branchesLoading = true;
-    this.branchesError = null;
     try {
       this.branches = await this.branchesSrv.listBranches();
+      if (!this.branches || this.branches.length === 0) {
+        console.warn('[AdminFieldFormComponent] No branches found');
+      }
     } catch (e: any) {
-      this.branchesError = e?.message || 'Không tải được danh sách chi nhánh.';
+      console.error('[AdminFieldFormComponent] Load branches failed:', e?.message, e);
+      this.branches = [];
     } finally {
       this.branchesLoading = false;
+    }
+  }
+
+  async loadUtilities() {
+    this.utilitiesLoading = true;
+    try {
+      this.utilities = await this.fieldsService.getUtilities();
+      if (!this.utilities || this.utilities.length === 0) {
+        console.warn('[AdminFieldFormComponent] No utilities found');
+      }
+    } catch (e: any) {
+      console.error('[AdminFieldFormComponent] Load utilities failed:', e?.message, e);
+      this.utilities = [];
+    } finally {
+      this.utilitiesLoading = false;
     }
   }
 
@@ -67,31 +116,77 @@ export class AdminFieldFormComponent implements OnInit {
     this.images = files ? Array.from(files) : [];
   }
 
+  toggleUtility(utilityId: number) {
+    const index = this.model.utilityIds.indexOf(utilityId);
+    if (index > -1) {
+      this.model.utilityIds.splice(index, 1);
+    } else {
+      this.model.utilityIds.push(utilityId);
+    }
+  }
+
+  isUtilitySelected(utilityId: number): boolean {
+    return this.model.utilityIds.includes(utilityId);
+  }
+
   async onSave() {
     this.saving = true;
-    this.error = null;
     try {
-      // Build payload according to backend validator: avoid `fieldType` and nested `address`.
+      // Validate required fields
+      if (!this.model.name?.trim()) {
+        alert('Vui lòng nhập tên sân');
+        this.saving = false;
+        return;
+      }
+      if (!this.model.fieldTypeId) {
+        alert('Vui lòng chọn loại sân');
+        this.saving = false;
+        return;
+      }
+      
+      // Admin MUST provide branchId, Manager can omit (backend will auto-fill)
+      if (this.isAdmin && !this.model.branchId) {
+        alert('Admin phải chọn chi nhánh');
+        this.saving = false;
+        return;
+      }
+
+      // Build payload matching CreateFieldDto exactly
       const payload: any = {
-        name: this.model.name,
-        description: this.model.description,
-        fieldTypeId: this.model.fieldTypeId || undefined,
-        branchId: this.model.branchId || undefined,
+        name: this.model.name.trim(),
+        fieldTypeId: this.model.fieldTypeId,
       };
-      // include flat address fields if present (backend may accept them)
-      if (this.model.street) payload.street = this.model.street;
-      if (this.model.city) payload.city = this.model.city;
+      
+      // Optional fields
+      if (this.model.description?.trim()) {
+        payload.description = this.model.description.trim();
+      }
+      // Only send branchId if provided (Manager doesn't need to provide it)
+      if (this.model.branchId) {
+        payload.branchId = this.model.branchId;
+      }
+      // Send utilityIds if selected
+      if (this.model.utilityIds && this.model.utilityIds.length > 0) {
+        payload.utilityIds = this.model.utilityIds;
+      }
 
       let res;
-      if (this.id) res = await this.fieldsService.updateField(this.id, payload);
-      else res = await this.fieldsService.createField(payload);
-      // upload images if any
-      if (this.images.length && res?.id) {
-        await this.fieldsService.uploadImages(res.id ?? this.id ?? res?.fieldId, this.images);
+      if (this.id) {
+        res = await this.fieldsService.updateField(this.id, payload);
+      } else {
+        res = await this.fieldsService.createField(payload);
       }
+      
+      // Upload images if any
+      if (this.images.length && res?.id) {
+        await this.fieldsService.uploadImages(res.id, this.images);
+      }
+      
       this.router.navigate(['/admin/fields']);
     } catch (e: any) {
-      this.error = e?.error?.message || e?.message || 'Lưu không thành công.';
+      const msg = e?.error?.message || e?.message || 'Lưu không thành công.';
+      console.error('[AdminFieldFormComponent] Save failed:', msg, e);
+      alert('Lỗi: ' + msg); // Show error in alert instead of UI
     } finally {
       this.saving = false;
     }
