@@ -1,76 +1,88 @@
-<div class="voucher-page">
-  <header class="page-header">
-    <h1>Kiểm tra mã giảm giá</h1>
-    <p class="subtitle">Nhập mã voucher để biết ngay số tiền được giảm và tổng phải thanh toán.</p>
+<div class="max-w-4xl mx-auto p-4 md:p-8 space-y-6">
+  <header class="mb-6">
+    <h1 class="text-3xl md:text-4xl font-bold text-slate-900 mb-2">Kiểm tra mã giảm giá</h1>
+    <p class="text-slate-600">Nhập mã voucher để biết ngay số tiền được giảm và tổng phải thanh toán.</p>
   </header>
 
-  <div *ngIf="error" class="alert alert-error">{{ error }}</div>
-  <div *ngIf="result && result.isValid" class="alert alert-success">{{ result.message }}</div>
+  <div *ngIf="error" class="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 flex items-center gap-3">
+    <i class="fa-solid fa-circle-exclamation"></i> {{ error }}
+  </div>
+  <div *ngIf="result && result.isValid" class="p-4 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200 flex items-center gap-3">
+    <i class="fa-solid fa-check-circle"></i> {{ result.message }}
+  </div>
 
-  <form class="card form-card" (ngSubmit)="checkVoucher()">
-    <div class="card__body grid two">
-      <label class="field">
-        <span>Mã voucher</span>
-        <input type="text" name="code" [(ngModel)]="code" placeholder="VD: SALE50K" required />
+  <form (ngSubmit)="checkVoucher()" class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <label class="block">
+        <span class="text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-ticket text-brand"></i> Mã voucher
+        </span>
+        <input type="text" name="code" [(ngModel)]="code" placeholder="VD: SALE50K" required 
+               class="w-full border border-slate-300 rounded-lg px-4 py-2.5 uppercase font-semibold focus:ring-2 focus:ring-brand focus:border-brand transition" />
       </label>
-      <label class="field">
-        <span>Giá trị đơn hàng (đ)</span>
-        <input type="number" name="orderValue" min="0" step="10000" [(ngModel)]="orderValue" required />
+      <label class="block">
+        <span class="text-sm font-medium text-slate-700 mb-2 flex items-center gap-2">
+          <i class="fa-solid fa-money-bill text-emerald-600"></i> Giá trị đơn hàng (đ)
+        </span>
+        <input type="number" name="orderValue" min="0" step="10000" [(ngModel)]="orderValue" required 
+               class="w-full border border-slate-300 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-brand focus:border-brand transition" />
       </label>
     </div>
-    <div class="card__footer">
-      <button type="submit" class="btn primary" [disabled]="loading">
-        {{ loading ? 'Đang kiểm tra...' : 'Kiểm tra ngay' }}
-      </button>
-    </div>
+    <button type="submit" [disabled]="loading" 
+            class="w-full bg-gradient-to-r from-brand to-purple-600 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+      <i class="fa-solid" [ngClass]="loading ? 'fa-spinner fa-spin' : 'fa-search'"></i>
+      {{ loading ? 'Đang kiểm tra...' : 'Kiểm tra ngay' }}
+    </button>
   </form>
 
-  <section class="card result-card" *ngIf="hasResult">
-    <div class="card__header result-header">
-      <h2>Kết quả</h2>
-      <span class="badge" [ngClass]="{'valid': result?.isValid, 'invalid': !result?.isValid}">
+  <section *ngIf="hasResult" class="bg-gradient-to-br from-white to-slate-50 rounded-2xl p-6 md:p-8 shadow-sm border-2" 
+           [ngClass]="result?.isValid ? 'border-emerald-300' : 'border-red-300'">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold text-slate-900">Kết quả</h2>
+      <span class="px-4 py-2 rounded-full text-sm font-bold" 
+            [ngClass]="result?.isValid ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'">
         {{ result?.isValid ? 'Hợp lệ' : 'Không hợp lệ' }}
       </span>
     </div>
 
-    <div class="card__body result-grid">
-      <div class="result-row">
-        <div class="label">Mã</div>
-        <div class="value">
-          <code class="code">{{ result?.code }}</code>
-          <button type="button" class="btn-ghost copy" (click)="copyCode(result?.code)">
-            Sao chép
+    <div class="space-y-4">
+      <div class="flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200">
+        <div class="text-sm text-slate-500">Mã</div>
+        <div class="flex items-center gap-3">
+          <code class="bg-slate-100 px-3 py-1 rounded font-mono font-bold text-slate-900">{{ result?.code }}</code>
+          <button type="button" (click)="copyCode(result?.code)" 
+                  class="text-brand hover:bg-brand/10 px-3 py-1 rounded-lg transition flex items-center gap-2 text-sm font-medium">
+            <i class="fa-solid fa-copy"></i> Sao chép
           </button>
         </div>
       </div>
 
-      <div class="result-row">
-        <div class="label">Số tiền giảm</div>
-        <div class="value highlight">{{ result?.discountAmount | number:'1.0-0' }} đ</div>
+      <div class="flex items-center justify-between p-4 bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl border border-amber-200">
+        <div class="text-sm text-slate-700 font-medium">Số tiền giảm</div>
+        <div class="text-2xl font-bold text-amber-600">{{ result?.discountAmount | number:'1.0-0' }} đ</div>
       </div>
 
-      <div class="result-row">
-        <div class="label">Thanh toán còn</div>
-        <div class="value strong">{{ result?.finalAmount | number:'1.0-0' }} đ</div>
+      <div class="flex items-center justify-between p-4 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-300">
+        <div class="text-sm text-slate-700 font-medium">Thanh toán còn</div>
+        <div class="text-3xl font-bold text-emerald-600">{{ result?.finalAmount | number:'1.0-0' }} đ</div>
       </div>
 
-      <div class="result-message" *ngIf="result?.message">
-        {{ result?.message }}
+      <div *ngIf="result?.message" class="p-4 bg-blue-50 text-blue-700 rounded-xl border border-blue-200 text-sm">
+        <i class="fa-solid fa-info-circle mr-2"></i> {{ result?.message }}
       </div>
     </div>
   </section>
 
-  <section class="card history-card" *ngIf="history && history.length > 0">
-    <div class="card__header"><h3>Lịch sử kiểm tra</h3></div>
-    <div class="card__body">
-      <ul class="history-list">
-        <li *ngFor="let h of history">
-          <span class="h-code">{{ h.code }}</span>
-          <span class="h-result" [ngClass]="{'valid': h.isValid, 'invalid': !h.isValid}">
-            {{ h.isValid ? (h.discountAmount | number:'1.0-0') + ' đ' : 'Không hợp lệ' }}
-          </span>
-        </li>
-      </ul>
-    </div>
+  <section *ngIf="history && history.length > 0" class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
+    <h3 class="text-xl font-bold text-slate-900 mb-4">Lịch sử kiểm tra</h3>
+    <ul class="divide-y divide-slate-200">
+      <li *ngFor="let h of history" class="py-3 flex items-center justify-between">
+        <span class="font-mono font-semibold text-slate-900 bg-slate-100 px-3 py-1 rounded">{{ h.code }}</span>
+        <span class="px-3 py-1 rounded-full text-sm font-semibold" 
+              [ngClass]="h.isValid ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'">
+          {{ h.isValid ? (h.discountAmount | number:'1.0-0') + ' đ' : 'Không hợp lệ' }}
+        </span>
+      </li>
+    </ul>
   </section>
 </div>

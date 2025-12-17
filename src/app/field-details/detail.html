@@ -110,42 +110,67 @@
         </label>
         <label>
           <span>Thời lượng (phút)</span>
-          <select [(ngModel)]="duration" (change)="checkAvailability()" class="form-select">
+          <select [(ngModel)]="duration" (change)="onScheduleChange()" class="form-select">
             <option [ngValue]="null">Chọn thời lượng</option>
             <option [ngValue]="60">60 phút</option>
             <option [ngValue]="90">90 phút</option>
             <option [ngValue]="120">120 phút</option>
           </select>
         </label>
-        <label>
-          <span>Mã giảm giá (nếu có)</span>
-          <input type="text" [(ngModel)]="voucherCode" placeholder="Nhập mã voucher" class="form-input" />
-        </label>
+        
+        <!-- Voucher Selection -->
+        <div class="voucher-selector">
+          <label>
+            <span>Ưu đãi</span>
+            <button 
+              type="button" 
+              class="voucher-btn" 
+              (click)="openVoucherModal()">
+              <i class="fa-solid fa-ticket"></i>
+              <span *ngIf="!selectedVoucher">Chọn ưu đãi</span>
+              <span *ngIf="selectedVoucher" class="selected-voucher">
+                {{ selectedVoucher.code }}
+                <i class="fa-solid fa-times-circle" (click)="removeVoucher(); $event.stopPropagation()"></i>
+              </span>
+            </button>
+          </label>
+        </div>
       </div>
 
       <!-- Schedule Grid -->
-      <div *ngIf="date && slots && slots.length > 0" class="schedule-grid mt-4">
+      <div *ngIf="date && slots && slots.length > 0" class="schedule-area mt-4">
         <div class="schedule-header">
-          <h4 class="text-sm font-semibold text-gray-700">Lịch sân ngày {{ date }}</h4>
+          <div class="schedule-title">
+            <h4>
+              Lịch sân ngày {{ date }}
+              <!-- <span class="live-badge">
+                <i class="fa-solid fa-circle"></i>
+                LIVE
+              </span> -->
+            </h4>
+            <span class="last-update" *ngIf="lastScheduleUpdate">
+              Cập nhật {{ lastScheduleUpdate | date:'HH:mm:ss' }}
+            </span>
+          </div>
           <div class="legend">
             <span class="legend-item"><span class="dot available"></span> Trống</span>
-            <span class="legend-item"><span class="dot selected"></span> Chọn</span>
+            <span class="legend-item"><span class="dot selected"></span> Đã chọn</span>
             <span class="legend-item"><span class="dot booked"></span> Đã đặt</span>
           </div>
         </div>
-        <div class="slots-container">
+        <div class="schedule-grid">
           <div 
             *ngFor="let slot of slots" 
-            class="slot-item"
-            [class.available]="slot.available && !slot.selected"
+            class="slot"
+            [class.available]="slot.available"
             [class.selected]="slot.selected"
             [class.booked]="!slot.available"
             (click)="onSlotClick(slot)">
             {{ slot.timeLabel }}
           </div>
         </div>
-        <p *ngIf="scheduleLoading" class="text-xs text-gray-500 mt-2 text-center">
-          <i class="fa-solid fa-spinner fa-spin mr-1"></i> Đang tải lịch...
+        <p *ngIf="scheduleLoading" class="schedule-loading">
+          <i class="fa-solid fa-spinner fa-spin"></i> Đang cập nhật lịch...
         </p>
       </div>
 
@@ -168,13 +193,48 @@
         <i class="fa-solid fa-check-circle mr-2"></i> {{ bookingMessage }}
       </div>
 
+      <!-- Voucher Display -->
+      <div *ngIf="selectedVoucher" class="voucher-applied mt-4 p-3 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-md">
+        <div class="flex justify-between items-center">
+          <div class="flex items-center">
+            <i class="fa-solid fa-ticket text-purple-600 mr-2"></i>
+            <span class="font-semibold text-purple-700">{{ selectedVoucher.code }}</span>
+            <span class="ml-2 text-sm text-gray-600">
+              -{{ selectedVoucher.discountPercentage ? (selectedVoucher.discountPercentage + '%') : ((selectedVoucher.discountAmount || 0) | currency:'VND':'symbol':'1.0-0') }}
+            </span>
+          </div>
+          <button 
+            type="button"
+            (click)="removeVoucher()"
+            class="text-red-500 hover:text-red-700 transition-colors">
+            <i class="fa-solid fa-times"></i>
+          </button>
+        </div>
+        <div *ngIf="pricing && pricing.pricing.discount" class="text-xs text-green-600 mt-1">
+          Tiết kiệm {{ pricing.pricing.discount | currency:'VND':'symbol':'1.0-0' }}
+        </div>
+      </div>
+
       <div class="actions mt-6">
         <button 
-          class="primary-btn w-full py-3 text-lg font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          class="pay-btn"
           (click)="submitBooking()"
           [disabled]="creatingBooking || !date || !time || !duration">
-          <span *ngIf="creatingBooking"><i class="fa-solid fa-spinner fa-spin mr-2"></i>Đang xử lý...</span>
-          <span *ngIf="!creatingBooking">Thanh toán ngay</span>
+          <span *ngIf="creatingBooking">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            Đang xử lý...
+          </span>
+          <span *ngIf="!creatingBooking && pricing">
+            <i class="fa-solid fa-credit-card"></i>
+            Thanh toán {{ pricing.pricing.total_price | currency:'VND':'symbol':'1.0-0' }}
+            <span *ngIf="pricing.pricing.original_price !== pricing.pricing.total_price" class="line-through text-sm opacity-60 ml-2">
+              {{ pricing.pricing.original_price | currency:'VND':'symbol':'1.0-0' }}
+            </span>
+          </span>
+          <span *ngIf="!creatingBooking && !pricing">
+            <i class="fa-solid fa-credit-card"></i>
+            Thanh toán ngay
+          </span>
         </button>
         <p *ngIf="!isLoggedIn" class="text-center text-sm text-gray-500 mt-2">
           Vui lòng <a routerLink="/login" class="text-primary hover:underline">đăng nhập</a> để đặt sân.
@@ -182,6 +242,68 @@
       </div>
     </aside>
   </section>
+
+  <!-- Voucher Modal -->
+  <div class="voucher-modal-overlay" *ngIf="showVoucherModal" (click)="closeVoucherModal()">
+    <div class="voucher-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Chọn ưu đãi</h3>
+        <button class="close-btn" (click)="closeVoucherModal()">
+          <i class="fa-solid fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="modal-body">
+        <div *ngIf="loadingVouchers" class="loading-state">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          Đang tải ưu đãi...
+        </div>
+
+        <div *ngIf="!loadingVouchers && availableVouchers.length === 0" class="empty-state">
+          <i class="fa-solid fa-ticket-simple"></i>
+          <p>Không có ưu đãi khả dụng</p>
+        </div>
+
+        <div class="vouchers-grid" *ngIf="!loadingVouchers && availableVouchers.length > 0">
+          <div 
+            class="voucher-card" 
+            *ngFor="let voucher of availableVouchers"
+            [class.selected]="selectedVoucher?.id === voucher.id"
+            [class.disabled]="selectedVoucher?.id === voucher.id">
+            <div class="voucher-header">
+              <span class="voucher-code">{{ voucher.code }}</span>
+              <span class="voucher-badge" *ngIf="voucher.discountPercentage">
+                -{{ voucher.discountPercentage }}%
+              </span>
+              <span class="voucher-badge" *ngIf="voucher.discountAmount">
+                -{{ voucher.discountAmount | number:'1.0-0' }}đ
+              </span>
+            </div>
+            <p class="voucher-desc">
+              <span *ngIf="voucher.discountPercentage">
+                Giảm {{ voucher.discountPercentage }}% 
+                <span *ngIf="voucher.maxDiscountAmount">(tối đa {{ voucher.maxDiscountAmount | number:'1.0-0' }}đ)</span>
+              </span>
+              <span *ngIf="voucher.discountAmount">
+                Giảm {{ voucher.discountAmount | number:'1.0-0' }}đ
+              </span>
+              <span *ngIf="voucher.minOrderValue > 0">
+                - Đơn tối thiểu {{ voucher.minOrderValue | number:'1.0-0' }}đ
+              </span>
+            </p>
+            <div class="voucher-footer">
+              <span class="voucher-expire">HSD: {{ voucher.validTo | date:'dd/MM/yyyy' }}</span>
+              <button class="apply-btn" (click)="applyVoucher(voucher)" [disabled]="selectedVoucher?.id === voucher.id">
+                <i class="fa-solid fa-check"></i>
+                <span *ngIf="selectedVoucher?.id === voucher.id">Đã áp dụng</span>
+                <span *ngIf="selectedVoucher?.id !== voucher.id">Áp dụng</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Reviews Section -->
   <section class="reviews-section" *ngIf="field">

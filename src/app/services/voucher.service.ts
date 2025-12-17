@@ -10,6 +10,21 @@ export interface VoucherCheckResponse {
   message: string;
 }
 
+export interface Voucher {
+  id: string;
+  code: string;
+  discountAmount: number | null;
+  discountPercentage: number | null;
+  maxDiscountAmount: number | null;
+  minOrderValue: number;
+  validFrom: Date;
+  validTo: Date;
+  quantity: number;
+  description?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 @Injectable({ providedIn: 'root' })
 export class VoucherService {
   constructor(private http: HttpClient) {}
@@ -20,6 +35,14 @@ export class VoucherService {
       .set('orderValue', String(orderValue));
     return firstValueFrom(
       this.http.get<VoucherCheckResponse>(`/voucher/check`, { params })
+    );
+  }
+
+  async getAvailableVouchers(orderValue: number): Promise<Voucher[]> {
+    const params = new HttpParams()
+      .set('orderValue', String(orderValue));
+    return firstValueFrom(
+      this.http.get<Voucher[]>(`/voucher/available`, { params })
     );
   }
 }

@@ -34,16 +34,23 @@ export class BookingsService {
 
   private authHeaders(): { headers: HttpHeaders } {
     // SSR safety check
-    if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-      console.warn('[BookingsService] Running in SSR context, no localStorage available');
+    if (!this.isBrowser) {
+      // Running on server (SSR) - do not attempt to access localStorage or log warnings
+      // Use debug-level log for diagnostics when needed
+      if (console && (console as any).debug) (console as any).debug('[BookingsService] SSR context detected - skipping localStorage access');
       return { headers: new HttpHeaders() };
     }
-    
-    const token = localStorage.getItem('accessToken') || '';
-    console.log('[BookingsService] Getting auth headers, token exists:', !!token);
-    if (!token) {
-      console.warn('[BookingsService] No access token found in localStorage');
+
+    let token = '';
+    try {
+      token = localStorage.getItem('accessToken') || '';
+      if (console && (console as any).debug) (console as any).debug('[BookingsService] Getting auth headers, token exists:', !!token);
+      if (!token && console && (console as any).debug) (console as any).debug('[BookingsService] No access token found in localStorage');
+    } catch (e) {
+      // localStorage may throw in restrictive browsers; fall back to empty token
+      token = '';
     }
+
     return { headers: new HttpHeaders({ Authorization: token ? `Bearer ${token}` : '' }) };
   }
 

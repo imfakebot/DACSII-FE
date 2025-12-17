@@ -1,138 +1,245 @@
-  <header class="navbar">
+﻿<header class="sticky top-0 z-50 w-full glass-effect shadow-sm transition-all duration-300 bg-white/90 backdrop-blur-md">
+  <div class="container mx-auto px-4 py-3 flex items-center justify-between">
     <!-- Logo -->
-    <div class="logo">
-      <!-- Dùng logo SVG mặc định trong assets; bạn có thể thay bằng PNG cùng tên nếu muốn -->
-      <img src="/assets/logoHaiAnhEm.png" alt="Hai Anh Em - Logo" style="border-radius: 60px; width: 70px; height: 60px;">
+    <div class="flex-shrink-0 cursor-pointer hover:scale-105 transition-transform duration-300">
+      <a [routerLink]="['/']">
+        <img src="/assets/logoHaiAnhEm.png" alt="Hai Anh Em - Logo" class="w-14 h-14 rounded-full object-cover shadow-md border-2 border-white ring-2 ring-brand/20">
+      </a>
     </div>
 
     <!-- Menu chính -->
-    <nav class="main-menu">
-    <a [routerLink]="['/']">Trang chủ</a>
-    <a [routerLink]="['/football']"><i class="fa-solid fa-futbol"></i> Bóng đá</a>
-      <a [routerLink]="['/tennis']"><i class="fa-solid fa-stopwatch"></i> Tennis</a>
-      <a [routerLink]="['/badminton']"><i class="fa-solid fa-badminton"></i> Cầu lông</a>
-      <a [routerLink]="['/table-tennis']"><i class="fa-solid fa-table-tennis-paddle-ball"></i> Bóng bàn</a>
-      <!-- User dropdown: group user-specific links (voucher, bookings, feedbacks) - only show for non-admin users -->
-      <div *ngIf="authReady && userName && !isAdmin" class="user-dropdown" (mouseenter)="showUserDropdown = true" (mouseleave)="showUserDropdown = false">
-        <a class="user-toggle" (click)="toggleUserDropdown()">
-          <i class="fa-solid fa-user"></i> Cá nhân
-          <i class="fa-solid fa-chevron-down" [class.rotate]="showUserDropdown"></i>
-        </a>
-        <div class="dropdown-menu" [class.show]="showUserDropdown">
-          <a [routerLink]="['/profile']" (click)="closeUserDropdown()">
-            <i class="fa-solid fa-id-badge"></i> Hồ sơ của tôi
-          </a>
-          <a [routerLink]="['/voucher']" (click)="closeUserDropdown()">
-            <i class="fa-solid fa-ticket"></i> Mã giảm giá
-          </a>
-          <a [routerLink]="['/bookings']" (click)="closeUserDropdown()">
-            <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử đặt sân
-          </a>
-          <a [routerLink]="['/feedbacks']" (click)="closeUserDropdown()">
-            <i class="fa-solid fa-comment-dots"></i> Phản hồi của tôi
-          </a>
+    <nav class="hidden lg:flex items-center gap-6 xl:gap-8">
+      <a [routerLink]="['/']" routerLinkActive="text-brand font-bold bg-brand/5" [routerLinkActiveOptions]="{exact: true}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 font-medium transition-all duration-300">
+        <i class="fa-solid fa-house"></i> Trang chủ
+      </a>
+      <a [routerLink]="['/football']" routerLinkActive="text-brand font-bold bg-brand/5" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 font-medium transition-all duration-300">
+        <i class="fa-solid fa-futbol"></i> Bóng đá
+      </a>
+      <a [routerLink]="['/tennis']" routerLinkActive="text-brand font-bold bg-brand/5" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 font-medium transition-all duration-300">
+        <i class="fa-solid fa-stopwatch"></i> Tennis
+      </a>
+      <a [routerLink]="['/badminton']" routerLinkActive="text-brand font-bold bg-brand/5" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 font-medium transition-all duration-300">
+        <i class="fa-solid fa-badminton"></i> Cầu lông
+      </a>
+      <a [routerLink]="['/table-tennis']" routerLinkActive="text-brand font-bold bg-brand/5" class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 font-medium transition-all duration-300">
+        <i class="fa-solid fa-table-tennis-paddle-ball"></i> Bóng bàn
+      </a>
+
+      <!-- User dropdown -->
+      <div *ngIf="authReady && userName && !isAdmin" class="relative group">
+        <button class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 font-medium transition-all duration-300 focus:outline-none">
+          <i class="fa-solid fa-user-circle text-xl"></i> 
+          <span class="max-w-[100px] truncate">Cá nhân</span>
+          <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300 group-hover:rotate-180"></i>
+        </button>
+        
+        <div class="absolute top-full right-0 mt-2 w-60 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right z-50 overflow-hidden">
+          <div class="p-2 space-y-1">
+            <a [routerLink]="['/profile']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+              <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-id-badge"></i></div>
+              Hồ sơ của tôi
+            </a>
+            <a [routerLink]="['/voucher']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+              <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-ticket"></i></div>
+              Mã giảm giá
+            </a>
+            <a [routerLink]="['/bookings']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+              <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-clock-rotate-left"></i></div>
+              Lịch sử đặt sân
+            </a>
+            <a [routerLink]="['/feedbacks']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+              <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-comment-dots"></i></div>
+              Phản hồi của tôi
+            </a>
+          </div>
         </div>
       </div>
-
-      <!-- Tiện ích Dropdown Menu  -->
-       <!-- <div *ngIf="userName" class="user-dropdown" (mouseenter)="showUserDropdown = true" (mouseleave)="showUserDropdown = false">
-        <a class="user-toggle" (click)="toggleUserDropdown()">
-          <i class="fa-solid fa-user"></i> Tài khoản
-          <i class="fa-solid fa-chevron-down" [class.rotate]="showUserDropdown"></i>
-        </a>
-        <div class="dropdown-menu" [class.show]="showUserDropdown">
-          <a [routerLink]="['/profile']" (click)="closeUserDropdown()">
-            <i class="fa-solid fa-id-badge"></i> Hồ sơ của tôi
-          </a>
-          <a [routerLink]="['/voucher']" (click)="closeUserDropdown()">
-            <i class="fa-solid fa-key"></i> Mã giảm giá
-          </a>
-          <a [routerLink]="['/bookings']" (click)="closeUserDropdown()">
-            <i class="fa-solid fa-key"></i> Lịch sử đặt sân
-          </a>
-          <a [routerLink]="['/feedbacks']" (click)="closeUserDropdown()">
-            <i class="fa-solid fa-key"></i> Phản hồi của tôi
-          </a>
-        </div>
-       </div> -->
       
-      <!-- Admin Dropdown Menu -->
-      <div *ngIf="authReady && isAdmin" class="admin-dropdown" (mouseenter)="showAdminDropdown = true" (mouseleave)="showAdminDropdown = false">
-        <a class="admin-toggle" (click)="toggleAdminDropdown()">
-          <i class="fa-solid fa-user-shield"></i> Quản lý
-          <i class="fa-solid fa-chevron-down" [class.rotate]="showAdminDropdown"></i>
-        </a>
-        <div class="dropdown-menu" [class.show]="showAdminDropdown">
-          <a [routerLink]="['/admin/dashboard']" (click)="closeAdminDropdown()">
-            <i class="fa-solid fa-chart-line"></i> Dashboard
-          </a>
-          <a [routerLink]="['/admin/bookings']" (click)="closeAdminDropdown()">
-            <i class="fa-solid fa-calendar-check"></i> Quản lý booking
-          </a>
-          <a [routerLink]="['/admin/users']" (click)="closeAdminDropdown()">
-            <i class="fa-solid fa-users"></i> Quản lý người dùng
-          </a>
-          <a [routerLink]="['/admin/fields']" (click)="closeAdminDropdown()">
-            <i class="fa-solid fa-futbol"></i> Quản lý sân
-          </a>
-          <a [routerLink]="['/admin/vouchers']" (click)="closeAdminDropdown()">
-            <i class="fa-solid fa-ticket"></i> Quản lý voucher
-          </a>
-          <a [routerLink]="['/admin/utilities']" (click)="closeAdminDropdown()">
-            <i class="fa-solid fa-wrench"></i> Quản lý tiện ích
-          </a>
-          <a [routerLink]="['/admin/reviews']" (click)="closeAdminDropdown()">
-            <i class="fa-solid fa-star"></i> Quản lý đánh giá
-          </a>
-          <a [routerLink]="['/admin/feedbacks']" (click)="closeAdminDropdown()">
-            <i class="fa-solid fa-comments"></i> Quản lý phản hồi
-          </a>
-          <a [routerLink]="['/admin/branches']" (click)="closeAdminDropdown()">
-            <i class="fa-solid fa-code-branch"></i> Quản lý chi nhánh
-          </a>
-          
-          
+      <!-- Admin Dropdown -->
+      <div *ngIf="authReady && isAdmin" class="relative group">
+        <button class="flex items-center gap-2 text-brand font-bold hover:text-brand-dark transition-colors duration-300 focus:outline-none bg-brand/10 px-4 py-2 rounded-full">
+          <i class="fa-solid fa-user-shield"></i> 
+          <span>Quản trị viên</span>
+          <i class="fa-solid fa-chevron-down text-xs transition-transform duration-300 group-hover:rotate-180"></i>
+        </button>
+        
+        <div class="absolute top-full right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-100 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform origin-top-right z-50 overflow-hidden">
+          <div class="p-2 max-h-[80vh] overflow-y-auto space-y-1">
+            <a [routerLink]="['/admin/dashboard']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+              <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-chart-line"></i></div>
+              Dashboard
+            </a>
+            <a [routerLink]="['/admin/bookings']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+              <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-calendar-check"></i></div>
+              Quản lý booking
+            </a>
+            <a [routerLink]="['/admin/users']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+              <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-users"></i></div>
+              Quản lý người dùng
+            </a>
+            <a [routerLink]="['/admin/fields']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+              <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-futbol"></i></div>
+              Quản lý sân
+            </a>
+            <a [routerLink]="['/admin/vouchers']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+              <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-ticket"></i></div>
+              Quản lý voucher
+            </a>
+            <a [routerLink]="['/admin/utilities']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+              <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-wrench"></i></div>
+              Quản lý tiện ích
+            </a>
+            <a [routerLink]="['/admin/reviews']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+              <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-star"></i></div>
+              Quản lý đánh giá
+            </a>
+            <a [routerLink]="['/admin/feedbacks']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+              <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-comments"></i></div>
+              Quản lý phản hồi
+            </a>
+            <a [routerLink]="['/admin/branches']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+              <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-code-branch"></i></div>
+              Quản lý chi nhánh
+            </a>
+          </div>
         </div>
       </div>
     </nav>
 
-    <!-- Khu vực và ngôn ngữ -->
-    <div class="right-section">
-      <!-- <div class="location">
-        <i class="fa-solid fa-location-dot"></i>
-        <div>
-          <span class="label">KHU VỰC</span><br>
-          <span class="value">Thanh Xuân, Hà Nội <i class="fa-solid fa-chevron-down"></i></span> -->
-        <!-- </div>
-      </div> --> 
+    <!-- Mobile Menu Button (visible on small screens) -->
+    <button (click)="toggleMobileMenu()" class="lg:hidden p-2 text-gray-600 hover:text-brand hover:bg-brand/5 rounded-lg transition-all duration-300">
+      <svg *ngIf="!showMobileMenu" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+      <svg *ngIf="showMobileMenu" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+    </button>
 
-      <div class="btn-login-logout" [class.register-active]="isRegister" *ngIf="authReady && !userName">
-        <a class="btn-login"  (click)="onLogin($event)">Đăng nhập</a>
-        <a class="btn-logout"  (click)="onRegister($event)">Đăng ký</a>
-      </div>
+    <!-- Right Section (Login/Logout) -->
+    <div class="hidden lg:flex items-center gap-4">
+      <!-- Login/Logout Button -->
+      <div *ngIf="!authReady" class="animate-pulse h-10 w-24 bg-gray-200 rounded-full"></div>
       
-      <div class="user-section" *ngIf="authReady && userName">
-        <!-- User Avatar -->
-        <a [routerLink]="['/profile']" class="user-avatar" title="{{ userName }}">
-          <img src="/assets/usericon.png" alt="Profile">
-        </a>
-        
-        <!-- Logout Button -->
-        <button class="btn-logout relative font-semibold border-2 px-6 py-2 border-brand overflow-hidden group rounded-full cursor-pointer" (click)="onLogout($event)">
-          <span class="absolute inset-0 bg-brand -translate-x-full rounded-full transition-transform duration-300 group-hover:translate-x-0 group-focus:translate-x-0"></span>
-          <span class="relative z-10 transition-colors duration-300 text-brand group-hover:text-white group-focus:text-white">Đăng xuất</span>
-        </button>
-      </div>
-      
-
-      <!-- <div class="language">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/2/21/Flag_of_Vietnam.svg" alt="VN">
-        <div>
-          <span class="label">Ngôn ngữ</span><br>
-          <span class="value">Tiếng Việt <i class="fa-solid fa-chevron-down"></i></span>
+      <ng-container *ngIf="authReady">
+        <div *ngIf="!userName" class="flex items-center gap-3">
+          <a (click)="onLogin($event)" class="cursor-pointer px-5 py-2 rounded-full text-brand font-semibold border border-brand hover:bg-brand hover:text-white transition-all duration-300">
+            Đăng nhập
+          </a>
+          <a (click)="onRegister($event)" class="cursor-pointer px-5 py-2 rounded-full bg-brand text-white font-semibold shadow-lg shadow-brand/30 hover:bg-brand-dark hover:shadow-brand/50 transition-all duration-300">
+            Đăng ký
+          </a>
         </div>
-      </div> -->
+
+        <div *ngIf="userName" class="flex items-center">
+          <button (click)="onLogout($event)" class="px-5 py-2 rounded-full text-red-500 font-semibold border border-red-100 hover:bg-red-50 hover:border-red-200 transition-all duration-300 flex items-center gap-2">
+            <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+          </button>
+        </div>
+      </ng-container>
     </div>
-  </header>
+  </div>
 
+  <!-- Mobile Menu Dropdown -->
+  <div *ngIf="showMobileMenu" class="lg:hidden bg-white border-t border-gray-100 shadow-lg">
+    <nav class="container mx-auto px-4 py-4 space-y-2">
+      <a [routerLink]="['/']" (click)="closeMobileMenu()" routerLinkActive="text-brand font-bold bg-brand/10" [routerLinkActiveOptions]="{exact: true}" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 font-medium transition-all duration-300">
+        <i class="fa-solid fa-house"></i> Trang chủ
+      </a>
+      <a [routerLink]="['/football']" (click)="closeMobileMenu()" routerLinkActive="text-brand font-bold bg-brand/10" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 font-medium transition-all duration-300">
+        <i class="fa-solid fa-futbol"></i> Bóng đá
+      </a>
+      <a [routerLink]="['/tennis']" (click)="closeMobileMenu()" routerLinkActive="text-brand font-bold bg-brand/10" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 font-medium transition-all duration-300">
+        <i class="fa-solid fa-stopwatch"></i> Tennis
+      </a>
+      <a [routerLink]="['/badminton']" (click)="closeMobileMenu()" routerLinkActive="text-brand font-bold bg-brand/10" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 font-medium transition-all duration-300">
+        <i class="fa-solid fa-badminton"></i> Cầu lông
+      </a>
+      <a [routerLink]="['/table-tennis']" (click)="closeMobileMenu()" routerLinkActive="text-brand font-bold bg-brand/10" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 font-medium transition-all duration-300">
+        <i class="fa-solid fa-table-tennis-paddle-ball"></i> Bóng bàn
+      </a>
 
+      <!-- Mobile User Menu -->
+      <div *ngIf="authReady && userName && !isAdmin" class="border-t border-gray-100 pt-2 mt-2">
+        <div class="px-4 py-2 text-sm font-semibold text-gray-500">Cá nhân</div>
+        <a [routerLink]="['/profile']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-id-badge"></i></div>
+          Hồ sơ của tôi
+        </a>
+        <a [routerLink]="['/voucher']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-ticket"></i></div>
+          Mã giảm giá
+        </a>
+        <a [routerLink]="['/bookings']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-clock-rotate-left"></i></div>
+          Lịch sử đặt sân
+        </a>
+        <a [routerLink]="['/feedbacks']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-comment-dots"></i></div>
+          Phản hồi của tôi
+        </a>
+      </div>
+
+      <!-- Mobile Admin Menu -->
+      <div *ngIf="authReady && isAdmin" class="border-t border-gray-100 pt-2 mt-2">
+        <div class="px-4 py-2 text-sm font-semibold text-brand flex items-center gap-2">
+          <i class="fa-solid fa-user-shield"></i> Quản trị viên
+        </div>
+        <a [routerLink]="['/admin/dashboard']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-chart-line"></i></div>
+          Dashboard
+        </a>
+        <a [routerLink]="['/admin/bookings']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-calendar-check"></i></div>
+          Quản lý booking
+        </a>
+        <a [routerLink]="['/admin/users']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-users"></i></div>
+          Quản lý người dùng
+        </a>
+        <a [routerLink]="['/admin/fields']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-futbol"></i></div>
+          Quản lý sân
+        </a>
+        <a [routerLink]="['/admin/vouchers']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-ticket"></i></div>
+          Quản lý voucher
+        </a>
+        <a [routerLink]="['/admin/utilities']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-wrench"></i></div>
+          Quản lý tiện ích
+        </a>
+        <a [routerLink]="['/admin/reviews']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-star"></i></div>
+          Quản lý đánh giá
+        </a>
+        <a [routerLink]="['/admin/feedbacks']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-comments"></i></div>
+          Quản lý phản hồi
+        </a>
+        <a [routerLink]="['/admin/branches']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-code-branch"></i></div>
+          Quản lý chi nhánh
+        </a>
+      </div>
+
+      <!-- Mobile Auth Buttons -->
+      <div class="border-t border-gray-100 pt-4 mt-4">
+        <div *ngIf="!userName" class="flex flex-col gap-3">
+          <a (click)="onLogin($event); closeMobileMenu()" class="cursor-pointer text-center px-5 py-3 rounded-lg text-brand font-semibold border border-brand hover:bg-brand hover:text-white transition-all duration-300">
+            Đăng nhập
+          </a>
+          <a (click)="onRegister($event); closeMobileMenu()" class="cursor-pointer text-center px-5 py-3 rounded-lg bg-brand text-white font-semibold shadow-lg shadow-brand/30 hover:bg-brand-dark transition-all duration-300">
+            Đăng ký
+          </a>
+        </div>
+
+        <div *ngIf="userName" class="flex flex-col gap-3">
+          <button (click)="onLogout($event); closeMobileMenu()" class="w-full px-5 py-3 rounded-lg text-red-500 font-semibold border border-red-200 hover:bg-red-50 transition-all duration-300 flex items-center justify-center gap-2">
+            <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+          </button>
+        </div>
+      </div>
+    </nav>
+  </div>
+</header>

@@ -19,6 +19,9 @@ export interface PricingDetailsDto {
   price_per_hour: number;
   total_price: number;
   currency: string;
+  // Optional fields returned when voucher is applied or client-side adjusted
+  original_price?: number;
+  discount?: number;
 }
 
 export interface CheckPriceResponseDto {
@@ -26,6 +29,11 @@ export interface CheckPriceResponseDto {
   field_name: string;
   booking_details: BookingDetailsDto;
   pricing: PricingDetailsDto;
+  // Optional voucher info (may be populated client-side)
+  voucher?: {
+    code: string;
+    discount: number;
+  } | null;
   message: string;
 }
 

@@ -111,7 +111,7 @@
                 {{ user.userProfile?.is_profile_complete ? 'Đã đủ' : 'Thiếu' }}
               </span>
             </td>
-            <td>{{ user.last_login || 'Chưa có' }}</td>
+            <td>{{ formatDateTime(user.last_login) }}</td>
             <td>
               <div class="action-buttons">
                 <button *ngIf="!(user.status === 'banned' || user.status === 'suspended')" class="btn btn-danger" (click)="banUser(user)" [disabled]="pendingBan === user.id">

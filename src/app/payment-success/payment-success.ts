@@ -2,6 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule, Router, ActivatedRoute } from '@angular/router';
 import { BookingsService } from '../services/bookings.service';
+import { PaymentService } from '../services/payment.service';
+import { formatVnpDate } from '../utils/date.util';
 
 @Component({
   selector: 'app-payment-success',
@@ -16,21 +18,27 @@ export class PaymentSuccessComponent implements OnInit {
   loading = true;
   error: string | null = null;
   downloadingTicket = false;
+  paymentVerified = false;
+  vnpayParams: any = null;
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
-    private bookingsService: BookingsService
+    private bookingsService: BookingsService,
+    private paymentService: PaymentService
   ) {}
 
   ngOnInit() {
-    // Get booking ID from query params (returned from VNPay)
+    // Get all query params from VNPay
     this.route.queryParams.subscribe(params => {
-      this.bookingId = params['bookingId'] || params['vnp_TxnRef'];
+      this.vnpayParams = params;
+      this.bookingId = params['vnp_TxnRef'] || params['bookingId'];
       
-      // Only load booking details in browser (not during SSR)
-      if (this.bookingId && typeof window !== 'undefined') {
-        this.loadBookingDetails(params);
+      console.log('[PaymentSuccess] Received query params:', params);
+      
+      // Only process in browser (not during SSR)
+      if (typeof window !== 'undefined' && this.bookingId) {
+        this.verifyAndLoadBooking();
       } else if (!this.bookingId) {
         this.loading = false;
         this.error = 'Không tìm thấy thông tin booking';
@@ -41,41 +49,75 @@ export class PaymentSuccessComponent implements OnInit {
     });
   }
 
-  async loadBookingDetails(vnpayParams?: any) {
-    if (!this.bookingId) return;
+  /**
+   * Verify payment with backend and load booking details
+   */
+  async verifyAndLoadBooking() {
+    if (!this.bookingId || !this.vnpayParams) return;
     
     this.loading = true;
     this.error = null;
 
     try {
-      // Use mock data but with real payment amount from VNPay
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate API call
+      // Step 1: Verify payment with backend
+      console.log('[PaymentSuccess] Verifying payment with backend...');
+      const verifyResult = await this.paymentService.verifyVnpayReturn(this.vnpayParams);
       
-      // Get amount from VNPay params (vnp_Amount is in VND * 100)
-      const vnpAmount = vnpayParams?.['vnp_Amount'] || 0;
-      const actualAmount = parseInt(vnpAmount) / 100;
+      console.log('[PaymentSuccess] Payment verification result:', verifyResult);
       
+      if (!verifyResult.data.isSuccess) {
+        this.error = verifyResult.data.message || 'Thanh toán không thành công';
+        this.loading = false;
+        return;
+      }
+
+      this.paymentVerified = true;
+
+      // Step 2: Load booking details from backend
+      console.log('[PaymentSuccess] Loading booking details...');
+      const booking = await this.bookingsService.getBookingById(this.bookingId);
+      
+      if (!booking) {
+        this.error = 'Không tìm thấy thông tin booking';
+        this.loading = false;
+        return;
+      }
+
+      // Map backend booking to display format
       this.bookingDetails = {
-        id: this.bookingId,
-        fieldName: 'Sân bóng đá',
-        fieldType: 'Bóng đá',
-        customerName: 'Khách hàng',
-        startTime: new Date().toISOString(),
-        endTime: new Date(Date.now() + 90 * 60 * 1000).toISOString(),
-        duration: 90,
-        totalAmount: actualAmount, // Use real amount from VNPay
-        status: 'completed',
+        id: booking.id,
+        code: booking.code,
+        fieldName: booking.field?.name || 'Sân bóng',
+        fieldType: booking.field?.fieldType || 'Bóng đá',
+        customerName: booking.userProfile?.full_name || 'Khách hàng',
+        startTime: booking.start_time,
+        endTime: booking.end_time,
+        startTimeVnp: formatVnpDate(booking.start_time),
+        endTimeVnp: formatVnpDate(booking.end_time),
+        duration: Math.round((new Date(booking.end_time).getTime() - new Date(booking.start_time).getTime()) / 60000),
+        totalAmount: verifyResult.data.amount || booking.total_price,
+        status: booking.status,
         paymentStatus: 'completed',
-        location: 'Hệ thống sân bóng',
+        location: booking.field?.branch?.name || 'Hệ thống sân bóng',
+        address: booking.field?.branch?.address ? 
+          `${booking.field.branch.address.street}, ${booking.field.branch.address.ward?.name || ''}, ${booking.field.branch.address.city?.name || ''}` : '',
         qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(this.bookingId)
       };
       
       this.loading = false;
+      console.log('[PaymentSuccess] Booking loaded successfully:', this.bookingDetails);
     } catch (err: any) {
-      console.error('[PaymentSuccess] Failed to load booking:', err);
-      this.error = err?.error?.message || err?.message || 'Không thể tải thông tin booking';
+      console.error('[PaymentSuccess] Failed to verify/load booking:', err);
+      this.error = err?.message || 'Không thể xác thực thanh toán';
       this.loading = false;
     }
+  }
+
+  async loadBookingDetails(vnpayParams?: any) {
+    // DEPRECATED - kept for backward compatibility
+    // Use verifyAndLoadBooking() instead
+    console.warn('[PaymentSuccess] loadBookingDetails is deprecated, use verifyAndLoadBooking');
+    await this.verifyAndLoadBooking();
   }
 
   /**

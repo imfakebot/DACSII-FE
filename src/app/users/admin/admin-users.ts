@@ -6,6 +6,7 @@ import { AdminUsersService } from '../../services/admin-users.service';
 import { AccountMeResponse } from '../../services/users.service';
 import { AuthStateService } from '../../services/auth-state.service';
 import { BranchesService, Branch } from '../../services/branches.service';
+import { formatDisplayDate } from '../../utils/date.util';
 
 @Component({
   selector: 'app-admin-users',
@@ -172,5 +173,9 @@ export class AdminUsersComponent implements OnInit {
 
   canGoNext(): boolean {
     return this.page < this.totalPages;
+  }
+
+  formatDateTime(iso?: string | null): string {
+    return formatDisplayDate(iso) || 'Chưa có';
   }
 }

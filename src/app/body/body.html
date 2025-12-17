@@ -1,121 +1,171 @@
-
-
-  <!-- Banner -->
-  <section class="banner">
-    <div class="banner-content">
-      <!-- <h1><span>Sport</span> - Trang web đặt sân tập thể thao </h1>
-      <p>Mang đến trải nghiệm đặt sân trực tuyến thuận tiện và linh hoạt cho người chơi thể thao.</p> -->
-      <!-- <div class="app-buttons">
-        <img src="https://developer.apple.com/assets/elements/badges/download-on-the-app-store.svg" alt="App Store">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/c/cd/Get_it_on_Google_play.svg" alt="Google Play">
-      </div> -->
+﻿  <!-- Banner -->
+  <section class="relative bg-gradient-to-br from-brand-dark via-brand to-brand-light text-white py-20 lg:py-32 overflow-hidden">
+    <div class="absolute inset-0 bg-[url('/assets/pattern.png')] opacity-10"></div>
+    <div class="container mx-auto px-4 flex flex-col lg:flex-row items-center justify-between relative z-10">
+      <div class="lg:w-1/2 text-center lg:text-left mb-10 lg:mb-0 animate-fade-in">
+        <h1 class="text-4xl lg:text-6xl font-bold mb-6 leading-tight">
+          <span class="text-secondary">Sport</span> - Đặt sân thể thao <br>nhanh chóng & tiện lợi
+        </h1>
+        <p class="text-lg lg:text-xl text-blue-50 mb-8 max-w-lg mx-auto lg:mx-0">
+          Trải nghiệm đặt sân trực tuyến dễ dàng, linh hoạt. Tìm sân, đặt lịch và thanh toán chỉ trong vài cú chạm.
+        </p>
+      </div>
+      <div class="lg:w-1/2 flex justify-center animate-slide-up">
+        <!-- <img class="w-64 h-64  drop-shadow-2xl animate-bounce-slow rounded-full" src="/assets/logoHaiAnhEm.png" alt="Phone App"> -->
+        <img class="w-64 h-64 rounded-full animate-bounce-slow object-cover shadow-md border-2 border-white ring-2 ring-brand/20" src="/assets/logoHaiAnhEm.png" alt="Phone App">
+      </div>
     </div>
-    <img class="banner-phone" src="/assets/logoHaiAnhEm.png" alt="Phone App">
   </section>
 
   <!-- Khung tìm kiếm -->
-  <section class="search-section">
-    <div class="search-box">
-      <input type="text" placeholder="Tìm kiếm sân thể thao, tên địa điểm, khu vực...">
-      <select>
-        <option>Chọn môn thể thao</option>
-        <option>Bóng đá</option>
-        <option>Tennis</option>
-        <option>Cầu lông</option>
-        <option>Bóng bàn</option>
-      </select>
-      <select>
-        <option>Tỉnh/Thành phố</option>
-        <option>Hà Nội</option>
-        <option>Đà Nẵng</option>
-        <option>TP. Hồ Chí Minh</option>
-      </select>
-      <button class="btn-search"><i class="fa-solid fa-magnifying-glass"></i> Tìm kiếm ngay</button>
+  <section class="relative z-20 -mt-10 px-4">
+    <div class="container mx-auto max-w-5xl bg-white rounded-2xl shadow-2xl p-4 lg:p-6 flex flex-col lg:flex-row gap-4 items-center border border-gray-100">
+      <div class="flex-1 w-full relative">
+        <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
+        <input type="text" placeholder="Tìm kiếm sân thể thao, tên địa điểm, khu vực..." class="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand/50 outline-none transition-all">
+      </div>
+      <div class="w-full lg:w-auto flex gap-4">
+        <select class="flex-1 lg:w-48 py-3 px-4 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand/50 outline-none cursor-pointer">
+          <option>Môn thể thao</option>
+          <option>Bóng đá</option>
+          <option>Tennis</option>
+          <option>Cầu lông</option>
+          <option>Bóng bàn</option>
+        </select>
+        <select class="flex-1 lg:w-48 py-3 px-4 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand/50 outline-none cursor-pointer">
+          <option>Khu vực</option>
+          <option>Hà Nội</option>
+          <option>Đà Nẵng</option>
+          <option>TP. Hồ Chí Minh</option>
+        </select>
+      </div>
+      <button class="w-full lg:w-auto px-8 py-3 bg-brand hover:bg-brand-dark text-white font-bold rounded-xl shadow-lg shadow-brand/30 transition-all duration-300 transform hover:-translate-y-1">
+        Tìm kiếm
+      </button>
     </div>
   </section>
 
   <!-- Ưu đãi -->
-  <section class="section">
-    <h2>🎁 Ưu đãi</h2>
-    <div class="promo-banner">
-      <img src="/assets/banner4.jpg" alt="Ưu đãi">
-      <div class="promo-text">
-        <h3>Tặng 1 giờ đá free</h3>
-        <p>Áp dụng cho khách hàng mới khi đặt sân lần đầu.</p>
-        <a class="book-now" href="search-section" >Đặt ngay</a>
+  <section class="py-16 container mx-auto px-4">
+    <h2 class="text-2xl font-bold mb-8 flex items-center gap-2 text-gray-800">
+      <span class="text-3xl"></span> Ưu đãi hấp dẫn
+    </h2>
+    <div class="relative rounded-2xl overflow-hidden shadow-xl group cursor-pointer">
+      <img src="/assets/banner4.jpg" alt="Ưu đãi" class="w-full h-64 lg:h-80 object-cover transition-transform duration-700 group-hover:scale-105">
+      <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-8">
+        <h3 class="text-3xl font-bold text-white mb-2">Tặng 1 giờ đá free</h3>
+        <p class="text-gray-200 mb-6 max-w-xl">Áp dụng cho khách hàng mới khi đặt sân lần đầu tiên tại hệ thống.</p>
+        <a class="inline-block w-fit px-6 py-2 bg-secondary hover:bg-secondary-light text-brand-dark font-bold rounded-full transition-colors" href="search-section">
+          Đặt ngay
+        </a>
       </div>
-      
     </div>
   </section>
 
   <!-- Sân tập gần bạn -->
-  <section class="section">
-    <div class="section-header">
-      <h2>Sân tập gần bạn</h2>
-      <div class="tags">
-        <span [class.active]="selectedNear==='football'" (click)="setNearSport('football')">Bóng đá</span>
-        <span [class.active]="selectedNear==='tennis'" (click)="setNearSport('tennis')">Tennis</span>
-        <span [class.active]="selectedNear==='badminton'" (click)="setNearSport('badminton')">Cầu lông</span>
-        <span [class.active]="selectedNear==='tabletennis'" (click)="setNearSport('tabletennis')">Bóng bàn</span>
+  <section class="py-12 bg-gray-50">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-brand pl-3">Sân tập gần bạn</h2>
+        <div class="flex flex-wrap gap-2">
+          <span (click)="setNearSport('football')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Bóng đá</span>
+          <span (click)="setNearSport('tennis')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Tennis</span>
+          <span (click)="setNearSport('badminton')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Cầu lông</span>
+          <span (click)="setNearSport('tabletennis')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Bóng bàn</span>
+        </div>
       </div>
-    </div>
-      <div class="card-list">
-        <div class="card" *ngFor="let f of nearFields">
-        <a [routerLink]="['/detail', f.id]">
-          <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}">
-        </a>
-        <h3>{{ f.name }}</h3>
-        <p><i class="fa-solid fa-location-dot"></i> {{ f.city || 'Địa điểm chưa rõ' }}</p>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div *ngFor="let f of nearFields" class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100">
+          <a [routerLink]="['/detail', f.id]" class="block relative overflow-hidden h-48">
+            <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+            <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
+          </a>
+          <div class="p-4">
+            <h3 class="font-bold text-lg text-gray-800 mb-2 truncate group-hover:text-brand transition-colors">{{ f.name }}</h3>
+            <p class="text-gray-500 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-location-dot text-brand"></i> {{ f.city || 'Địa điểm chưa rõ' }}
+            </p>
+          </div>
+        </div>
+        <div *ngIf="nearFields.length === 0" class="col-span-full text-center py-10 text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
+          <i class="fa-regular fa-face-frown text-4xl mb-3 block"></i>
+          Không có sân phù hợp với bộ lọc.
+        </div>
       </div>
-        <div *ngIf="nearFields.length === 0" class="empty">Không có sân phù hợp với bộ lọc.</div>
     </div>
   </section>
 
   <!-- Đề xuất cho bạn -->
-  <section class="section">
-    <div class="section-header">
-      <h2>Đề xuất cho bạn</h2>
-      <div class="tags">
-        <span [class.active]="selectedRecommend==='football'" (click)="setRecommendSport('football')">Bóng đá</span>
-        <span [class.active]="selectedRecommend==='tennis'" (click)="setRecommendSport('tennis')">Tennis</span>
-        <span [class.active]="selectedRecommend==='badminton'" (click)="setRecommendSport('badminton')">Cầu lông</span>
-        <span [class.active]="selectedRecommend==='tabletennis'" (click)="setRecommendSport('tabletennis')">Bóng bàn</span>
+  <section class="py-12">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-secondary pl-3">Đề xuất cho bạn</h2>
+        <div class="flex flex-wrap gap-2">
+          <span (click)="setRecommendSport('football')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:bg-brand/10 transition-all">Bóng đá</span>
+          <span (click)="setRecommendSport('tennis')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:bg-brand/10 transition-all">Tennis</span>
+          <span (click)="setRecommendSport('badminton')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:bg-brand/10 transition-all">Cầu lông</span>
+          <span (click)="setRecommendSport('tabletennis')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer hover:bg-brand/10 transition-all">Bóng bàn</span>
+        </div>
       </div>
-    </div>
-      <div class="card-list">
-        <div class="card" *ngFor="let f of recommendedFields">
-        <a [routerLink]="['/detail', f.id]">
-          <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}">
-        </a>
-        <h3>{{ f.name }}</h3>
-        <p><i class="fa-solid fa-location-dot"></i> {{ f.city || 'Địa điểm chưa rõ' }}</p>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div *ngFor="let f of recommendedFields" class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100">
+          <a [routerLink]="['/detail', f.id]" class="block relative overflow-hidden h-48">
+            <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+            <div class="absolute top-2 right-2 bg-secondary text-brand-dark text-xs font-bold px-2 py-1 rounded shadow-sm">Đề xuất</div>
+          </a>
+          <div class="p-4">
+            <h3 class="font-bold text-lg text-gray-800 mb-2 truncate group-hover:text-brand transition-colors">{{ f.name }}</h3>
+            <p class="text-gray-500 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-location-dot text-brand"></i> {{ f.city || 'Địa điểm chưa rõ' }}
+            </p>
+          </div>
+        </div>
+        <div *ngIf="recommendedFields.length === 0" class="col-span-full text-center py-10 text-gray-500 bg-gray-50 rounded-xl">
+          Không có đề xuất phù hợp với bộ lọc.
+        </div>
       </div>
-        <div *ngIf="recommendedFields.length === 0" class="empty">Không có đề xuất phù hợp với bộ lọc.</div>
     </div>
   </section>
 
   <!-- Sân hàng đầu -->
-  <section class="section">
-    <div class="section-header">
-      <h2>Sân hàng đầu</h2>
-      <div class="tags">
-        <span [class.active]="selectedTop==='football'" (click)="setTopSport('football')">Bóng đá</span>
-        <span [class.active]="selectedTop==='tennis'" (click)="setTopSport('tennis')">Tennis</span>
-        <span [class.active]="selectedTop==='badminton'" (click)="setTopSport('badminton')">Cầu lông</span>
-        <span [class.active]="selectedTop==='tabletennis'" (click)="setTopSport('tabletennis')">Bóng bàn</span>
+  <section class="py-12 bg-gray-50 mb-12">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-yellow-500 pl-3">Sân hàng đầu</h2>
+        <div class="flex flex-wrap gap-2">
+          <span (click)="setTopSport('football')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Bóng đá</span>
+          <span (click)="setTopSport('tennis')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Tennis</span>
+          <span (click)="setTopSport('badminton')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Cầu lông</span>
+          <span (click)="setTopSport('tabletennis')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Bóng bàn</span>
+        </div>
       </div>
-    </div>
-      <div class="card-list">
-        <div class="card top-card" *ngFor="let f of topFields; let i = index">
-        <div class="top-badge">Top {{ i + 1 }}</div>
-        <a [routerLink]="['/detail', f.id]">
-          <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}">
-        </a>
-        <h3>{{ f.name }}</h3>
-        <p><i class="fa-solid fa-location-dot"></i> {{ f.city || 'Địa điểm chưa rõ' }}</p>
+      
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div *ngFor="let f of topFields; let i = index" class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100 relative">
+          <div class="absolute top-0 left-0 z-10 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-br-xl shadow-md">Top {{ i + 1 }}</div>
+          <a [routerLink]="['/detail', f.id]" class="block relative overflow-hidden h-48">
+            <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+          </a>
+          <div class="p-4">
+            <h3 class="font-bold text-lg text-gray-800 mb-2 truncate group-hover:text-brand transition-colors">{{ f.name }}</h3>
+            <p class="text-gray-500 text-sm flex items-center gap-2">
+              <i class="fa-solid fa-location-dot text-brand"></i> {{ f.city || 'Địa điểm chưa rõ' }}
+            </p>
+            <div class="mt-3 flex items-center gap-1 text-yellow-500 text-sm">
+              <i class="fa-solid fa-star"></i>
+              <i class="fa-solid fa-star"></i>
+              <i class="fa-solid fa-star"></i>
+              <i class="fa-solid fa-star"></i>
+              <i class="fa-solid fa-star-half-stroke"></i>
+              <span class="text-gray-400 ml-1">(4.8)</span>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="topFields.length === 0" class="col-span-full text-center py-10 text-gray-500">
+          Không có dữ liệu top cho bộ lọc này.
+        </div>
       </div>
-        <div *ngIf="topFields.length === 0" class="empty">Không có dữ liệu top cho bộ lọc này.</div>
     </div>
   </section>
-
-

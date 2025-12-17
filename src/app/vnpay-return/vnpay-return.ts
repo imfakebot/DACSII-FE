@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
+import { formatVnpDate } from '../utils/date.util';
 
 @Component({
   selector: 'app-vnpay-return',
@@ -36,6 +37,12 @@ export class VnpayReturnComponent implements OnInit {
       console.log('[VNPay Return] Response Code:', responseCode);
       console.log('[VNPay Return] Transaction Status:', transactionStatus);
       console.log('[VNPay Return] Booking ID:', bookingId);
+        if (params['vnp_PayDate']) {
+          try {
+            console.log('[VNPay Return] Pay Date (VNPay format):', params['vnp_PayDate']);
+            console.log('[VNPay Return] Pay Date (formatted):', formatVnpDate(params['vnp_PayDate']));
+          } catch {};
+        }
 
       // Simulate processing delay
       setTimeout(() => {

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Inject, PLATFORM_ID } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +7,7 @@ import { PricingService, CheckPriceResponseDto } from '../services/pricing.servi
 import { BookingsService, BookingResponse, CreateBookingDto } from '../services/bookings.service';
 import { AuthStateService } from '../services/auth-state.service';
 import { FieldReviewsComponent } from '../review/field-reviews';
+import { VoucherService, Voucher } from '../services/voucher.service';
 
 /*
   DetailComponent (Tiếng Việt):
@@ -39,6 +40,11 @@ export class DetailComponent implements OnInit, OnDestroy {
   paymentUrl: string | null = null;
   checkingAvailability = false;
   pricingPending = false;
+  // Voucher modal
+  showVoucherModal = false;
+  availableVouchers: Voucher[] = [];
+  loadingVouchers = false;
+  selectedVoucher: Voucher | null = null;
   // schedule visualization - optimized to fetch all bookings in one call
   slots: Array<{ timeLabel: string; iso: string; available: boolean; selected?: boolean }> = [];
   scheduleLoading = false;
@@ -57,6 +63,8 @@ export class DetailComponent implements OnInit, OnDestroy {
     private pricingService: PricingService,
     private bookingsService: BookingsService,
     public authState: AuthStateService,
+    private voucherService: VoucherService,
+    @Inject(PLATFORM_ID) private platformId: Object,
   ) {}
 
   async ngOnInit(){
@@ -67,6 +75,11 @@ export class DetailComponent implements OnInit, OnDestroy {
     }
     try{
       this.field = await this.fieldsService.getFieldById(id);
+      // Set duration mặc định ngay khi load để pricing có thể hoạt động
+      if (!this.duration) {
+        this.duration = 60; // Mặc định 60 phút
+        console.log('[ngOnInit] Set default duration: 60 minutes');
+      }
       // Set default date to today
       this.date = new Date().toISOString().split('T')[0];
       this.onDateChange(); // Load schedule for today
@@ -85,7 +98,8 @@ export class DetailComponent implements OnInit, OnDestroy {
       const mm = this.timeMinute;
       this.time = `${hh}:${mm}`;
     }
-    // We don't need to re-fetch schedule on time change, just maybe validate
+    // Tự động check giá khi có đủ thông tin
+    this.onScheduleChange();
   }
 
 
@@ -109,7 +123,7 @@ export class DetailComponent implements OnInit, OnDestroy {
     }
 
     // Validate future time
-    const startDate = new Date(startIso);
+    const startDate = new Date(`${this.date}T${this.time}:00`);
     if (startDate.getTime() <= Date.now()) {
       this.bookingError = 'Vui lòng chọn khung giờ ở tương lai.';
       return;
@@ -125,6 +139,7 @@ export class DetailComponent implements OnInit, OnDestroy {
         startTime: startIso,
         durationMinutes: this.duration,
       };
+      console.debug('[DetailComponent] submitBooking payload:', payload);
 
       if (this.voucherCode && this.voucherCode.trim()) {
         payload.voucherCode = this.voucherCode.trim();
@@ -154,8 +169,10 @@ export class DetailComponent implements OnInit, OnDestroy {
 
       if (err.status === 401) {
         this.bookingError = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
+        if (this.isBrowser()) {
+          try { localStorage.removeItem('accessToken'); } catch {}
+          try { localStorage.removeItem('refreshToken'); } catch {}
+        }
         this.authState.setUser(null);
         setTimeout(() => this.router.navigate(['/login']), 1500);
       } else if (err.status === 409) {
@@ -190,19 +207,25 @@ export class DetailComponent implements OnInit, OnDestroy {
   get isLoggedIn(){ return this.authState.isLoggedIn(); }
 
   get hasToken(): boolean {
-    return !!localStorage.getItem('accessToken');
+    if (!this.isBrowser()) return false;
+    try { return !!localStorage.getItem('accessToken'); } catch { return false; }
   }
   
   get tokenPreview(): string {
-    const token = localStorage.getItem('accessToken');
-    return token ? token.substring(0, 30) + '...' : 'No token';
+    if (!this.isBrowser()) return 'No token';
+    try {
+      const token = localStorage.getItem('accessToken');
+      return token ? token.substring(0, 30) + '...' : 'No token';
+    } catch { return 'No token'; }
   }
 
   private buildIsoStart(): string | null {
-    if(!this.date || !this.time) return null;
-    const candidate = new Date(`${this.date}T${this.time}`);
-    if(Number.isNaN(candidate.getTime())) return null;
-    return candidate.toISOString();
+    if (!this.date || !this.time) return null;
+    // Format: YYYY-MM-DDTHH:mm:ss+07:00 (múi giờ Việt Nam)
+    // Backend sẽ parse bằng new Date() và lấy timeString để so với time_slots
+    const isoString = `${this.date}T${this.time}:00+07:00`;
+    console.log('[buildIsoStart] date:', this.date, 'time:', this.time, '=> ISO:', isoString);
+    return isoString;
   }
 
   async checkAvailability(){
@@ -215,7 +238,8 @@ export class DetailComponent implements OnInit, OnDestroy {
     const startIso = this.buildIsoStart();
     if(!startIso){ this.pricingError = 'Vui lòng chọn ngày và giờ bắt đầu'; return; }
     if(!this.duration || this.duration < 30){ this.pricingError = 'Vui lòng nhập thời lượng (tối thiểu 30 phút)'; return; }
-    const startDate = new Date(startIso);
+    // Validate using local date/time to avoid parsing non-ISO payload
+    const startDate = new Date(`${this.date}T${this.time}:00`);
     if(startDate.getTime() <= Date.now()){
       this.pricingError = 'Vui lòng chọn khung giờ ở tương lai.';
       return;
@@ -223,13 +247,64 @@ export class DetailComponent implements OnInit, OnDestroy {
     this.checkingAvailability = true;
     this.pricingPending = true;
     try{
-      this.pricing = await this.pricingService.checkAvailability({ fieldId: this.field.id, startTime: startIso, durationMinutes: this.duration });
+      // Tạo timeString (HH:mm:ss) để gửi cho BE, tránh vấn đề timezone parsing
+      const timeString = `${this.time}:00`;
+      
+      const payload: any = {
+        fieldId: this.field.id,
+        startTime: startIso,
+        durationMinutes: this.duration,
+        timeString: timeString, // Gửi HH:mm:ss trực tiếp để BE không cần parse timezone
+        fieldTypeId: this.field?.fieldType, // fieldType là string UUID
+      };
+      
+      console.log('=== PRICING CHECK START ===');
+      console.log('[Payload] fieldId:', payload.fieldId);
+      console.log('[Payload] startTime:', payload.startTime);
+      console.log('[Payload] timeString:', payload.timeString);
+      console.log('[Payload] durationMinutes:', payload.durationMinutes);
+      console.log('[Payload] fieldTypeId:', payload.fieldTypeId);
+      console.log('[Field Info] fieldType:', this.field?.fieldType);
+      console.log('[User Selection] date:', this.date, 'time:', this.time, 'duration:', this.duration);
+
+      // Gọi API lấy giá gốc (BE hiện tại không hỗ trợ áp voucher trên endpoint này)
+      this.pricing = await this.pricingService.checkAvailability(payload);
+      
+      console.log('[Response] pricing:', this.pricing?.pricing);
+      console.log('=== PRICING CHECK END ===');
+
+      // Nếu user đã chọn voucher hoặc có mã, kiểm tra voucher riêng và áp lên client-side
+      const voucherCodeToCheck = this.selectedVoucher?.code || this.voucherCode;
+      if (voucherCodeToCheck) {
+        try {
+          const orderValue = this.pricing?.pricing?.total_price ?? 0;
+          const voucherRes = await this.voucherService.checkVoucher(voucherCodeToCheck, orderValue);
+          // Cập nhật UI với giá đã giảm (tính trên client)
+          if (this.pricing && this.pricing.pricing) {
+            this.pricing.pricing.original_price = this.pricing.pricing.total_price;
+            this.pricing.pricing.discount = voucherRes.discountAmount;
+            this.pricing.pricing.total_price = voucherRes.finalAmount;
+          }
+          // Store applied voucher info for display
+          this.pricing.voucher = { code: voucherRes.code, discount: voucherRes.discountAmount } as any;
+        } catch (err: any) {
+          // Nếu voucher không hợp lệ thì hiển thị lỗi nhỏ nhưng vẫn giữ giá gốc
+          this.pricingError = (err?.error?.message) || err?.message || 'Mã voucher không hợp lệ';
+        }
+      }
       
       // Refresh schedule grid sau khi check để cập nhật trạng thái slots
       if (this.date) {
         await this.loadDailySchedule(this.date);
       }
     }catch(e: any){
+      console.error('[checkAvailability] Error:', e);
+      console.error('[checkAvailability] Error details:', {
+        status: e?.status,
+        statusText: e?.statusText,
+        errorMessage: e?.error?.message,
+        message: e?.message
+      });
       this.pricingError = (e?.error?.message) || e?.message || 'Không kiểm tra được giá/khả dụng';
     }finally{
       this.checkingAvailability = false;
@@ -280,6 +355,12 @@ export class DetailComponent implements OnInit, OnDestroy {
   }
 
   onScheduleChange(){
+    console.log('[onScheduleChange] Called with:', {
+      date: this.date,
+      time: this.time,
+      duration: this.duration
+    });
+    
     // Mark affected slots immediately when duration changes
     if (this.duration && this.date && this.time) {
       const startIso = new Date(`${this.date}T${this.time}:00`).toISOString();
@@ -290,8 +371,10 @@ export class DetailComponent implements OnInit, OnDestroy {
     
     if(this.autoCheckHandle){
       clearTimeout(this.autoCheckHandle);
+      console.log('[onScheduleChange] Cleared previous timeout');
     }
     this.autoCheckHandle = setTimeout(() => {
+      console.log('[onScheduleChange] Timeout fired after 400ms, calling checkAvailability()');
       this.autoCheckHandle = null;
       this.checkAvailability();
     }, 400);
@@ -306,7 +389,11 @@ export class DetailComponent implements OnInit, OnDestroy {
     if (!this.field || !date) return;
     this.scheduleLoading = true;
     this.scheduleError = null;
-    this.slots = [];
+
+    // LƯU STATE: Lưu lại các slot đã chọn trước khi refresh
+    const previousSelections = this.slots
+      .filter(s => s.selected)
+      .map(s => s.iso);
 
     try {
       // Fetch all bookings for this field on this date in ONE API call
@@ -343,6 +430,8 @@ export class DetailComponent implements OnInit, OnDestroy {
             timeLabel,
             iso: slotIso,
             available: !isBooked,
+            // KHÔI PHỤC STATE: Giữ lại selection nếu slot này đã được chọn trước đó
+            selected: previousSelections.includes(slotIso) && !isBooked,
           });
         }
       }
@@ -383,9 +472,11 @@ export class DetailComponent implements OnInit, OnDestroy {
    * Bắt đầu auto-refresh schedule mỗi 5 giây
    */
   private startScheduleAutoRefresh() {
+    // Only run auto-refresh in browser context (avoid SSR errors)
     // Clear existing interval
     this.stopScheduleAutoRefresh();
-    
+    if (!(typeof window !== 'undefined' && window && this.isBrowser())) return;
+
     // Refresh mỗi 5 giây
     this.scheduleRefreshInterval = setInterval(() => {
       if (this.date && this.field) {
@@ -393,6 +484,19 @@ export class DetailComponent implements OnInit, OnDestroy {
         this.loadDailySchedule(this.date);
       }
     }, 5000);
+  }
+
+  private isBrowser(): boolean {
+    // Use the Angular platform id to detect browser
+    try {
+      // lazy import to avoid bundling isPlatformBrowser in server builds
+      // but we can still use a runtime check here
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { isPlatformBrowser } = require('@angular/common');
+      return isPlatformBrowser(this.platformId);
+    } catch (e) {
+      return typeof window !== 'undefined';
+    }
   }
 
   /**
@@ -411,6 +515,8 @@ export class DetailComponent implements OnInit, OnDestroy {
   selectSlot(slot: any) {
     if (!slot.available) return; // Can't select booked slots
     
+    console.log('[selectSlot] Slot clicked:', slot.timeLabel, 'iso:', slot.iso);
+    
     // Parse slot time and populate form
     const slotDate = new Date(slot.iso);
     const hh = slotDate.getHours();
@@ -422,10 +528,15 @@ export class DetailComponent implements OnInit, OnDestroy {
     // Set default duration if not already set
     if (!this.duration) {
       this.duration = 60; // Default 1 hour
+      console.log('[selectSlot] Set default duration: 60 minutes');
     }
     
     // Mark all affected slots based on duration
     this.markAffectedSlots(slot.iso, this.duration);
+    
+    // Trigger pricing check
+    console.log('[selectSlot] Triggering onScheduleChange for pricing check');
+    this.onScheduleChange();
   }
 
   /**
@@ -434,4 +545,81 @@ export class DetailComponent implements OnInit, OnDestroy {
   onSlotClick(slot: any) {
     this.selectSlot(slot);
   }
+
+  /**
+   * Open voucher selection modal
+   */
+  async openVoucherModal() {
+    this.showVoucherModal = true;
+    await this.loadAvailableVouchers();
+  }
+
+  /**
+   * Close voucher modal
+   */
+  closeVoucherModal() {
+    this.showVoucherModal = false;
+  }
+
+  /**
+   * Load available vouchers from backend
+   */
+  async loadAvailableVouchers() {
+    this.loadingVouchers = true;
+    try {
+      // Lấy orderValue từ pricing hoặc tính từ field price
+      let orderValue = this.pricing?.pricing?.total_price || 0;
+      
+      // Nếu chưa có pricing, tính giá tạm từ field và duration
+      if (orderValue === 0 && this.field && this.duration) {
+        const pricePerHour = this.field.pricePerHour || 0;
+        const hours = this.duration / 60;
+        orderValue = pricePerHour * hours;
+      }
+
+      console.log('[VoucherModal] Loading vouchers for order value:', orderValue);
+      
+      const vouchers = await this.voucherService.getAvailableVouchers(orderValue);
+      this.availableVouchers = vouchers;
+      
+      console.log('[VoucherModal] Loaded vouchers:', vouchers);
+      
+      if (vouchers.length === 0) {
+        console.warn('[VoucherModal] No vouchers available for this order value');
+      }
+    } catch (error: any) {
+      console.error('[VoucherModal] Failed to load vouchers:', error);
+      this.availableVouchers = [];
+      
+      // Hiển thị thông báo lỗi cho user
+      if (error.status === 0) {
+        console.error('[VoucherModal] Backend không phản hồi. Kiểm tra server.');
+      }
+    } finally {
+      this.loadingVouchers = false;
+    }
+  }
+
+  /**
+   * Apply selected voucher
+   */
+  applyVoucher(voucher: Voucher) {
+    this.selectedVoucher = voucher;
+    this.voucherCode = voucher.code;
+    this.closeVoucherModal();
+    // Re-check availability with voucher
+    if (this.date && this.time && this.duration) {
+      this.checkAvailability();
+    }
+  }
+
+  /**
+   * Remove applied voucher
+   */
+  removeVoucher() {
+    this.selectedVoucher = null;
+    this.voucherCode = '';
+    this.checkAvailability();
+  }
+
 }

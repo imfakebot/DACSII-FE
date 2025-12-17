@@ -25,6 +25,8 @@ export class HeaderComponent implements OnDestroy {
   showAdminDropdown = false;
   // state for user dropdown (used by template)
   showUserDropdown = false;
+  // mobile menu state
+  showMobileMenu = false;
   
   private subs: Subscription[] = [];
 
@@ -78,6 +80,14 @@ export class HeaderComponent implements OnDestroy {
 
   closeUserDropdown() {
     this.showUserDropdown = false;
+  }
+
+  toggleMobileMenu() {
+    this.showMobileMenu = !this.showMobileMenu;
+  }
+
+  closeMobileMenu() {
+    this.showMobileMenu = false;
   }
 
   ngOnDestroy(){
