@@ -1,189 +1,221 @@
-<div class="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
-  <!-- Page Header -->
-  <div class="flex items-center justify-between">
-    <h1 class="text-3xl md:text-4xl font-bold text-slate-900 flex items-center gap-3">
-      <i class="fa-solid fa-clock-rotate-left text-brand"></i>
-      Lịch sử đặt sân
-    </h1>
-    <a routerLink="/" class="flex items-center gap-2 px-4 py-2 bg-white text-slate-600 hover:text-slate-900 font-medium rounded-lg border border-slate-300 hover:border-slate-400 transition">
-      <i class="fa-solid fa-arrow-left"></i>
-      Trang chủ
-    </a>
-  </div>
+<div class="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8">
+  <div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Page Header -->
+    <header class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-slate-900 flex items-center gap-3">
+            <span class="text-2xl">📋</span>
+            Lịch sử đặt sân
+          </h1>
+          <p class="text-slate-600 mt-1">Quản lý và theo dõi các đơn đặt sân của bạn</p>
+        </div>
+        <a routerLink="/" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+          <span>←</span>
+          Trang chủ
+        </a>
+      </div>
+    </header>
 
-  <!-- Success/Error Messages -->
-  <div class="p-4 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200 flex items-center gap-2" *ngIf="successMessage">
-    <i class="fa-solid fa-check-circle"></i>
-    {{ successMessage }}
-  </div>
-  
-  <div class="p-4 bg-red-50 text-red-700 rounded-lg border border-red-200 flex items-center gap-2" *ngIf="error">
-    <i class="fa-solid fa-exclamation-circle"></i>
-    {{ error }}
-  </div>
-
-  <!-- Filters -->
-  <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-    <div class="flex items-center gap-4">
-      <label for="statusFilter" class="font-semibold text-slate-700 flex items-center gap-2">
-        <i class="fa-solid fa-filter text-brand"></i>
-        Trạng thái:
-      </label>
-      <select id="statusFilter" [(ngModel)]="statusFilter" (change)="onFilterChange()"
-              class="border border-slate-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-brand focus:border-brand transition">
-        <option value="">Tất cả</option>
-        <option value="pending">Chờ thanh toán</option>
-        <option value="confirmed">Đã xác nhận</option>
-        <option value="checked_in">Đã check-in</option>
-        <option value="completed">Hoàn thành</option>
-        <option value="cancelled">Đã hủy</option>
-        <option value="finished">Đã kết thúc</option>
-      </select>
+    <!-- Success/Error Messages -->
+    <div class="bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200 p-4 flex items-center gap-3 shadow-sm" *ngIf="successMessage">
+      <span class="text-xl">✅</span>
+      <span class="font-medium">{{ successMessage }}</span>
     </div>
-  </div>
+    
+    <div class="bg-red-50 text-red-700 rounded-lg border border-red-200 p-4 flex items-center gap-3 shadow-sm" *ngIf="error">
+      <span class="text-xl">⚠️</span>
+      <span class="font-medium">{{ error }}</span>
+    </div>
 
-  <!-- Loading State -->
-  <div class="flex flex-col items-center justify-center py-20 text-slate-500" *ngIf="loading">
-    <div class="w-12 h-12 border-4 border-brand border-t-transparent rounded-full animate-spin mb-4"></div>
-    <p class="text-lg">Đang tải danh sách đặt sân...</p>
-  </div>
-
-  <!-- Bookings List -->
-  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6" *ngIf="!loading && bookings.length > 0">
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md transition" *ngFor="let booking of bookings">
-      <!-- Booking Header -->
-      <div class="flex items-center justify-between mb-4 pb-4 border-b border-slate-200">
-        <div class="flex items-center gap-2 text-slate-600">
-          <i class="fa-solid fa-hashtag"></i>
-          <span class="font-mono text-sm">{{ booking.id.substring(0, 8) }}</span>
-        </div>
-        <div class="px-3 py-1.5 rounded-full text-sm font-bold" [ngClass]="getStatusClass(booking.status)">
-          {{ getStatusLabel(booking.status) }}
-        </div>
-      </div>
-
-      <!-- Booking Body -->
-      <div class="space-y-3 mb-4">
-        <div class="flex items-center justify-between p-3 bg-gradient-to-br from-brand/5 to-brand/10 rounded-lg">
-          <span class="text-slate-600 flex items-center gap-2">
-            <i class="fa-solid fa-futbol text-brand"></i>
-            Sân:
-          </span>
-          <span class="font-semibold text-slate-900">{{ booking.field?.name || 'N/A' }}</span>
-        </div>
-
-        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-          <span class="text-slate-600 flex items-center gap-2">
-            <i class="fa-solid fa-map-marker-alt text-brand"></i>
-            Chi nhánh:
-          </span>
-          <span class="font-semibold text-slate-900">{{ booking.field?.branch?.name || 'N/A' }}</span>
-        </div>
-
-        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-          <span class="text-slate-600 flex items-center gap-2">
-            <i class="fa-solid fa-calendar text-brand"></i>
-            Bắt đầu:
-          </span>
-          <span class="font-semibold text-slate-900">{{ formatDateTime(booking.start_time) }}</span>
-        </div>
-
-        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-          <span class="text-slate-600 flex items-center gap-2">
-            <i class="fa-solid fa-clock text-brand"></i>
-            Kết thúc:
-          </span>
-          <span class="font-semibold text-slate-900">{{ formatDateTime(booking.end_time) }}</span>
-        </div>
-
-        <div class="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
-          <span class="text-slate-600 flex items-center gap-2">
-            <i class="fa-solid fa-hourglass-half text-brand"></i>
-            Thời lượng:
-          </span>
-          <span class="font-semibold text-slate-900">{{ booking.duration_minutes }} phút</span>
-        </div>
-
-        <div class="flex items-center justify-between p-4 bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg border border-emerald-200">
-          <span class="text-emerald-700 font-bold flex items-center gap-2">
-            <i class="fa-solid fa-money-bill-wave"></i>
-            Tổng tiền:
-          </span>
-          <span class="text-emerald-900 font-bold text-xl">{{ formatCurrency(booking.total_price) }}</span>
-        </div>
-
-        <div class="flex items-center justify-between p-3 bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg border border-amber-200" *ngIf="booking.voucher">
-          <span class="text-amber-700 font-medium flex items-center gap-2">
-            <i class="fa-solid fa-ticket"></i>
-            Voucher:
-          </span>
-          <span class="text-amber-900 font-mono font-bold">{{ booking.voucher.code }}</span>
-        </div>
-      </div>
-
-      <!-- Booking Footer -->
-      <div class="flex gap-3" *ngIf="canCancel(booking) || canPay(booking)">
-        <button class="flex-1 bg-gradient-to-r from-brand to-purple-600 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2" 
-                *ngIf="canPay(booking)" 
-                (click)="pay(booking.id)">
-          <i class="fa-solid fa-credit-card"></i>
-          Thanh toán
-        </button>
-        <button class="flex-1 bg-white text-red-600 hover:bg-red-50 font-bold py-3 rounded-xl border-2 border-red-600 transition-all flex items-center justify-center gap-2" 
-                *ngIf="canCancel(booking)" 
-                (click)="openCancelModal(booking.id)">
-          <i class="fa-solid fa-times-circle"></i>
-          Hủy đặt sân
-        </button>
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div class="flex flex-wrap items-center gap-4">
+        <label for="statusFilter" class="font-semibold text-slate-700 flex items-center gap-2">
+          <span class="text-lg">🔍</span>
+          Lọc theo trạng thái:
+        </label>
+        <select id="statusFilter" [(ngModel)]="statusFilter" (change)="onFilterChange()"
+                class="px-4 py-2.5 border-2 border-slate-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all font-medium bg-white">
+          <option value="">Tất cả</option>
+          <option value="pending">Chờ thanh toán</option>
+          <option value="confirmed">Đã xác nhận</option>
+          <option value="checked_in">Đã check-in</option>
+          <option value="completed">Hoàn thành</option>
+          <option value="cancelled">Đã hủy</option>
+          <option value="finished">Đã kết thúc</option>
+        </select>
       </div>
     </div>
-  </div>
 
-  <!-- Empty State -->
-  <div class="flex flex-col items-center justify-center py-20 text-center" *ngIf="!loading && bookings.length === 0">
-    <div class="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-      <i class="fa-solid fa-inbox text-slate-400 text-3xl"></i>
+    <!-- Loading State -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center" *ngIf="loading">
+      <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+      <p class="text-lg font-medium text-slate-600">Đang tải danh sách đặt sân...</p>
     </div>
-    <p class="text-xl font-semibold text-slate-600 mb-2">Bạn chưa có lịch sử đặt sân nào</p>
-    <a routerLink="/" class="mt-4 bg-gradient-to-r from-brand to-purple-600 text-white font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center gap-2">
-      <i class="fa-solid fa-plus"></i>
-      Đặt sân ngay
-    </a>
-  </div>
 
-  <!-- Pagination -->
-  <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex flex-wrap items-center justify-between gap-4" *ngIf="!loading && totalPages > 1">
-    <button class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" 
-            (click)="prevPage()" 
-            [disabled]="currentPage === 1">
-      <i class="fa-solid fa-chevron-left"></i>
-    </button>
+    <!-- Table -->
+    <div *ngIf="!loading && bookings.length > 0" class="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full">
+          <thead>
+            <tr class="bg-gradient-to-r from-slate-700 to-slate-800 text-white">
+              <th class="px-6 py-4 text-left font-bold text-sm uppercase tracking-wider">
+                <span class="flex items-center gap-2">
+                  <span>🆔</span>
+                  Mã đơn
+                </span>
+              </th>
+              <th class="px-6 py-4 text-left font-bold text-sm uppercase tracking-wider">
+                <span class="flex items-center gap-2">
+                  <span>⚽</span>
+                  Sân
+                </span>
+              </th>
+              <th class="px-6 py-4 text-left font-bold text-sm uppercase tracking-wider">
+                <span class="flex items-center gap-2">
+                  <span>🏢</span>
+                  Chi nhánh
+                </span>
+              </th>
+              <th class="px-6 py-4 text-left font-bold text-sm uppercase tracking-wider">
+                <span class="flex items-center gap-2">
+                  <span>🕒</span>
+                  Bắt đầu
+                </span>
+              </th>
+              <th class="px-6 py-4 text-left font-bold text-sm uppercase tracking-wider">
+                <span class="flex items-center gap-2">
+                  <span>⏱️</span>
+                  Kết thúc
+                </span>
+              </th>
+              <th class="px-6 py-4 text-center font-bold text-sm uppercase tracking-wider">
+                <span class="flex items-center justify-center gap-2">
+                  <span>⏳</span>
+                  Thời lượng
+                </span>
+              </th>
+              <th class="px-6 py-4 text-right font-bold text-sm uppercase tracking-wider">
+                <span class="flex items-center justify-end gap-2">
+                  <span>💰</span>
+                  Tổng tiền
+                </span>
+              </th>
+              <th class="px-6 py-4 text-center font-bold text-sm uppercase tracking-wider">
+                <span class="flex items-center justify-center gap-2">
+                  <span>🏷️</span>
+                  Trạng thái
+                </span>
+              </th>
+              <th class="px-6 py-4 text-center font-bold text-sm uppercase tracking-wider">
+                <span class="flex items-center justify-center gap-2">
+                  <span>⚙️</span>
+                  Hành động
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200">
+            <tr *ngFor="let booking of bookings; let i = index" 
+                class="hover:bg-blue-50 transition-colors duration-150"
+                [class.bg-slate-50]="i % 2 === 0">
+              <td class="px-6 py-4">
+                <div class="font-mono text-sm font-semibold text-slate-900">{{ booking.id?.substring(0, 8) }}...</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="font-medium text-slate-900">{{ booking.field?.name || booking.fieldName || '-' }}</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-slate-700 text-sm">{{ booking.field?.branch?.name || '-' }}</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm text-slate-900 whitespace-nowrap">{{ formatDateTime(booking.start_time || booking.startTime || booking.createdAt) }}</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm text-slate-900 whitespace-nowrap">{{ formatDateTime(booking.end_time) }}</div>
+              </td>
+              <td class="px-6 py-4 text-center">
+                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-amber-100 text-amber-800">
+                  {{ booking.duration_minutes || booking.duration || 0 }} phút
+                </span>
+              </td>
+              <td class="px-6 py-4 text-right">
+                <span class="text-emerald-700 font-bold text-base">{{ formatCurrency(booking.total_price || booking.finalAmount || 0) }}</span>
+              </td>
+              <td class="px-6 py-4 text-center">
+                <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold" [ngClass]="getStatusClass(booking.status)">
+                  {{ getStatusLabel(booking.status) }}
+                </span>
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center justify-center gap-2">
+                  <button *ngIf="canPay(booking)" 
+                          (click)="pay(booking.id)"
+                          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow-md transition-all"
+                          title="Thanh toán">
+                    💳 Thanh toán
+                  </button>
+                  <button *ngIf="canCancel(booking)" 
+                          (click)="openCancelModal(booking.id)"
+                          class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow-md transition-all"
+                          title="Hủy đơn">
+                    ❌ Hủy
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
-    <div class="flex gap-2">
-      <button 
-        *ngFor="let page of getPageNumbers()" 
-        class="px-4 py-2 border rounded-lg transition" 
-        [class.bg-brand]="page === currentPage"
-        [class.text-white]="page === currentPage"
-        [class.font-bold]="page === currentPage"
-        [class.border-brand]="page === currentPage"
-        [class.border-slate-300]="page !== currentPage"
-        [class.hover:bg-slate-50]="page !== currentPage"
-        (click)="goToPage(page)"
-      >
-        {{ page }}
+    <!-- Empty State -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center" *ngIf="!loading && bookings.length === 0">
+      <div class="text-6xl mb-4">📭</div>
+      <p class="text-xl font-semibold text-slate-700 mb-2">Bạn chưa có lịch sử đặt sân nào</p>
+      <p class="text-slate-500 mb-6">Hãy đặt sân ngay để bắt đầu!</p>
+      <a routerLink="/football" class="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold rounded-lg shadow-lg hover:shadow-xl transition-all">
+        <span>➕</span>
+        Đặt sân ngay
+      </a>
+    </div>
+
+    <!-- Pagination -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4" *ngIf="!loading && totalPages > 1">
+      <button class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+              (click)="prevPage()" 
+              [disabled]="currentPage === 1">
+        ← Trang trước
       </button>
+
+      <div class="flex gap-2">
+        <button 
+          *ngFor="let page of getPageNumbers()" 
+          class="px-4 py-2 rounded-lg font-semibold transition-all" 
+          [class.bg-blue-600]="page === currentPage"
+          [class.text-white]="page === currentPage"
+          [class.shadow-md]="page === currentPage"
+          [class.bg-slate-100]="page !== currentPage"
+          [class.text-slate-700]="page !== currentPage"
+          [class.hover:bg-slate-200]="page !== currentPage"
+          (click)="goToPage(page)">
+          {{ page }}
+        </button>
+      </div>
+
+      <button class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" 
+              (click)="nextPage()" 
+              [disabled]="currentPage === totalPages">
+        Trang sau →
+      </button>
+
+      <span class="text-slate-600 text-sm w-full md:w-auto text-center font-medium">
+        Trang {{ currentPage }} / {{ totalPages }} • Tổng {{ totalItems }} đơn
+      </span>
     </div>
-
-    <button class="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 transition disabled:opacity-50 disabled:cursor-not-allowed" 
-            (click)="nextPage()" 
-            [disabled]="currentPage === totalPages">
-      <i class="fa-solid fa-chevron-right"></i>
-    </button>
-
-    <span class="text-slate-600 text-sm w-full md:w-auto text-center">
-      Trang {{ currentPage }} / {{ totalPages }} ({{ totalItems }} kết quả)
-    </span>
+    
   </div>
 </div>
 

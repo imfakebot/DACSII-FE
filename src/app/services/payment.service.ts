@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { BaseUrlService } from '../base_url';
 
 export interface CreatePaymentUrlResponse { url: string }
 
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
 
   private authHeaders(): { headers: HttpHeaders } {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -14,7 +15,7 @@ export class PaymentService {
   }
 
   async createPaymentUrl(bookingId: string): Promise<CreatePaymentUrlResponse> {
-    return firstValueFrom(this.http.post<CreatePaymentUrlResponse>(`/payment/create_payment_url`, { bookingId }, this.authHeaders()));
+    return firstValueFrom(this.http.post<CreatePaymentUrlResponse>(`${this.baseUrl.getApiBaseUrl()}/payment/create_payment_url`, { bookingId }, this.authHeaders()));
   }
 
   /**
@@ -23,7 +24,7 @@ export class PaymentService {
    */
   async verifyVnpayReturn(queryParams: Record<string, any>): Promise<any> {
     const params = new HttpParams({ fromObject: queryParams });
-    const url = `/payment/vnpay_return`;
+    const url = `${this.baseUrl.getApiBaseUrl()}/payment/vnpay_return`;
     console.log('[PaymentService] Verifying VNPAY return with params:', queryParams);
 
     try {
@@ -49,7 +50,7 @@ export class PaymentService {
       .set('startDate', startDate ?? '')
       .set('endDate', endDate ?? '')
       .set('branchId', branchId ?? '');
-    return firstValueFrom(this.http.get<any>(`/payment/stats/overview`, { params, ...this.authHeaders() }));
+    return firstValueFrom(this.http.get<any>(`${this.baseUrl.getApiBaseUrl()}/payment/stats/overview`, { params, ...this.authHeaders() }));
   }
 
   // Backend exposes revenue chart at /payment/chart
@@ -57,6 +58,6 @@ export class PaymentService {
     const params = new HttpParams()
       .set('year', String(year ?? new Date().getFullYear()))
       .set('branchId', branchId ?? '');
-    return firstValueFrom(this.http.get<any>(`/payment/chart`, { params, ...this.authHeaders() }));
+    return firstValueFrom(this.http.get<any>(`${this.baseUrl.getApiBaseUrl()}/payment/chart`, { params, ...this.authHeaders() }));
   }
 }

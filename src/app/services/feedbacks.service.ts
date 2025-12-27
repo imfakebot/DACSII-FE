@@ -47,7 +47,19 @@ export interface FeedbackDto {
   submitter?: {
     id: string;
     full_name: string;
-    email: string;
+    // canonical email if present
+    email?: string;
+    // some backends embed a `user` object on submitter
+    user?: {
+      id?: string;
+      full_name?: string;
+      email?: string;
+    };
+    // alternate shapes used by other backends
+    contact_email?: string;
+    contact?: {
+      email?: string;
+    };
   };
   responses?: FeedbackResponseDto[];
 }

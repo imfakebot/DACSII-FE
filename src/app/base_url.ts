@@ -6,11 +6,17 @@ import { Injectable } from "@angular/core";
 export class BaseUrlService {
   // Base URL trỏ tới nhóm endpoint auth
   private authBaseUrl: string = "http://localhost:3000/auth"; // Dev
+  // Base URL trỏ tới API chính (dùng cho fetch trên server-side + client)
+  private apiBaseUrl: string = "http://localhost:3000"; // Dev
   // Có thể bật production bằng hàm setAuthBaseUrl
   // Ví dụ: "https://dacsii-backend.onrender.com/auth"
 
   getAuthBaseUrl(): string {
     return this.authBaseUrl;
+  }
+
+  getApiBaseUrl(): string {
+    return this.apiBaseUrl;
   }
 
   setAuthBaseUrl(url: string) {

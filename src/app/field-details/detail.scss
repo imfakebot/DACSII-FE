@@ -156,6 +156,7 @@
     padding: 1rem;
     border-radius: 16px;
     background: #f8fafc;
+    position: relative;
 }
 
 .info-item .label {
@@ -169,6 +170,36 @@
     margin: 0.4rem 0 0;
     font-weight: 600;
     color: #0f172a;
+}
+
+.directions-btn {
+    margin-top: 0.75rem;
+    padding: 0.6rem 1.2rem;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+    
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
+    }
+    
+    &:active {
+        transform: translateY(0);
+    }
+    
+    i {
+        font-size: 1rem;
+    }
 }
 
 .highlights {

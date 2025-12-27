@@ -3,11 +3,12 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { BranchAdminService, BranchDto, CreateBranchDto, UpdateBranchDto, AvailableManager } from '../services/branch-admin.service';
 import { LocationsService, City, Ward } from '../services/locations.service';
+import { LocationPickerComponent } from '../components/location-picker.component';
 
 @Component({
   selector: 'app-admin-branches',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, LocationPickerComponent],
   templateUrl: './admin-branches.html',
   styleUrls: ['./admin-branches.scss'],
 })
@@ -25,6 +26,7 @@ export class AdminBranchesComponent implements OnInit {
   showForm = false;
   editMode = false;
   currentBranch: BranchDto | null = null;
+  showMapPicker = false;
 
   form: CreateBranchDto & { id?: string } = {
     name: '',
@@ -238,5 +240,20 @@ export class AdminBranchesComponent implements OnInit {
   getCityCount(): number {
     const cities = new Set(this.branches.map(b => b.address?.cityId).filter(Boolean));
     return cities.size;
+  }
+
+  openMapPicker(): void {
+    this.showMapPicker = true;
+  }
+
+  onLocationSelected(location: { lat: number; lng: number; address?: string }): void {
+    this.form.latitude = location.lat;
+    this.form.longitude = location.lng;
+    this.showMapPicker = false;
+    console.log('[AdminBranches] Location selected:', location);
+  }
+
+  onMapPickerCancelled(): void {
+    this.showMapPicker = false;
   }
 }

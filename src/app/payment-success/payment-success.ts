@@ -35,13 +35,15 @@ export class PaymentSuccessComponent implements OnInit {
       this.bookingId = params['vnp_TxnRef'] || params['bookingId'];
       
       console.log('[PaymentSuccess] Received query params:', params);
+      console.log('[PaymentSuccess] Extracted booking ID:', this.bookingId);
       
       // Only process in browser (not during SSR)
       if (typeof window !== 'undefined' && this.bookingId) {
         this.verifyAndLoadBooking();
       } else if (!this.bookingId) {
         this.loading = false;
-        this.error = 'Không tìm thấy thông tin booking';
+        this.error = 'Không tìm thấy mã đặt sân (vnp_TxnRef)';
+        console.error('[PaymentSuccess] No booking ID found in params');
       } else {
         // SSR context - just set loading false
         this.loading = false;
@@ -73,23 +75,164 @@ export class PaymentSuccessComponent implements OnInit {
 
       this.paymentVerified = true;
 
-      // Step 2: Load booking details from backend
-      console.log('[PaymentSuccess] Loading booking details...');
-      const booking = await this.bookingsService.getBookingById(this.bookingId);
-      
+      // Step 2: Load booking details from /bookings/me endpoint
+      // BE doesn't have /bookings/:id endpoint, so we need to fetch user's bookings and try several matching strategies
+      console.log('[PaymentSuccess] Loading booking details from user bookings...');
+      let myBookingsResponse;
+      try {
+        myBookingsResponse = await this.bookingsService.getMyBookings(1, 100);
+        console.log('[PaymentSuccess] My bookings response:', myBookingsResponse);
+      } catch (bookingErr: any) {
+        console.error('[PaymentSuccess] Failed to fetch user bookings:', bookingErr);
+        myBookingsResponse = { data: [] };
+      }
+
+      // Normalize response: backend returns { data, meta }, older code expected { items }
+      const bookingsArray = myBookingsResponse?.data ?? myBookingsResponse?.items ?? [];
+
+      // Build candidate refs from vnp params and bookingId
+      const vnpRefRaw = String(this.vnpayParams?.['vnp_TxnRef'] || this.bookingId || '').toString();
+      const vnpOrderInfo = String(this.vnpayParams?.['vnp_OrderInfo'] || '').toString();
+      const candidateRefs = new Set<string>();
+      if (vnpRefRaw) candidateRefs.add(vnpRefRaw);
+      if (this.bookingId) candidateRefs.add(this.bookingId);
+      if (vnpOrderInfo) {
+        candidateRefs.add(vnpOrderInfo);
+        // If OrderInfo contains an id-like token, also add cleaned alphanum version
+        candidateRefs.add(vnpOrderInfo.replace(/[^a-zA-Z0-9]/g, ''));
+      }
+
+      // Also add the bookingId without hyphens if we have one
+      if (this.bookingId) candidateRefs.add((this.bookingId || '').replace(/-/g, ''));
+
+      const candidates = Array.from(candidateRefs).filter(Boolean);
+
+      // Try to find booking in user's bookings by any candidate
+      let booking: any = null;
+      for (const b of bookingsArray) {
+        if (!b) continue;
+        const bid = String(b.id || '').toString();
+        const bidNoHyphen = bid.replace(/-/g, '');
+        const code = String(b.code || '').toString();
+        for (const c of candidates) {
+          if (!c) continue;
+          if (bid === c || bidNoHyphen === c || code === c) {
+            booking = b;
+            console.log('[PaymentSuccess] Matched booking by candidate:', { candidate: c, bid, bidNoHyphen, code });
+            break;
+          }
+        }
+        if (booking) break;
+      }
+
+      // If booking not found in backend list, try local pendingBooking stored at booking time
+      const vnpRef = String(this.vnpayParams?.['vnp_TxnRef'] || this.bookingId || '').toString();
+      let pendingBooking: any = null;
+      try {
+        if (typeof window !== 'undefined') {
+          const possibleKeys = [] as string[];
+          if (vnpRef) possibleKeys.push(`pendingBooking_${vnpRef}`);
+          if (this.bookingId) possibleKeys.push(`pendingBooking_${this.bookingId}`);
+          if (this.bookingId) possibleKeys.push(`pendingBooking_${(this.bookingId || '').replace(/-/g, '')}`);
+          // Also try orderInfo cleaned
+          if (vnpOrderInfo) possibleKeys.push(`pendingBooking_${vnpOrderInfo}`);
+          possibleKeys.forEach(k => {
+            if (!pendingBooking) {
+              const raw = localStorage.getItem(k);
+              if (raw) {
+                try { pendingBooking = JSON.parse(raw); } catch (e) { pendingBooking = null; }
+              }
+            }
+          });
+        }
+      } catch (e) {
+        pendingBooking = null;
+      }
+
+      if (!booking && pendingBooking) {
+        console.log('[PaymentSuccess] Using pendingBooking from localStorage as booking fallback', pendingBooking);
+        booking = pendingBooking;
+      }
+
       if (!booking) {
-        this.error = 'Không tìm thấy thông tin booking';
+        // If booking still not found, create minimal details from VNPAY response
+        console.warn('[PaymentSuccess] Booking not found in user bookings or pending storage, using VNPAY data only');
+        const currentDate = new Date();
+        const payDate = this.vnpayParams['vnp_PayDate'];
+        let displayDate = currentDate;
+
+        // Parse VNPAY date if available (format: yyyyMMddHHmmss)
+        if (payDate && payDate.length === 14) {
+          try {
+            const year = parseInt(payDate.substring(0, 4));
+            const month = parseInt(payDate.substring(4, 6)) - 1;
+            const day = parseInt(payDate.substring(6, 8));
+            const hour = parseInt(payDate.substring(8, 10));
+            const minute = parseInt(payDate.substring(10, 12));
+            const second = parseInt(payDate.substring(12, 14));
+            displayDate = new Date(year, month, day, hour, minute, second);
+          } catch (e) {
+            console.warn('[PaymentSuccess] Failed to parse VNPAY date:', e);
+          }
+        }
+
+        this.bookingDetails = {
+          id: this.bookingId,
+          code: this.vnpayParams['vnp_TxnRef'] || this.bookingId,
+          fieldName: 'Đang cập nhật...',
+          fieldType: 'Sân thể thao',
+          customerName: 'Vui lòng kiểm tra trong "Lịch sử đặt sân"',
+          startTime: displayDate.toISOString(),
+          endTime: displayDate.toISOString(),
+          startTimeVnp: formatVnpDate(displayDate.toISOString()),
+          endTimeVnp: formatVnpDate(displayDate.toISOString()),
+          duration: 0,
+          totalAmount: verifyResult.data.amount || 0,
+          status: 'COMPLETED',
+          paymentStatus: 'completed',
+          location: 'Hệ thống sân bóng Hai Anh Em',
+          address: 'Chi tiết sẽ được cập nhật trong lịch sử đặt sân',
+          qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(this.bookingId)
+        };
         this.loading = false;
+        console.log('[PaymentSuccess] Using fallback booking details');
         return;
       }
+
+      // Attempt to read any pending booking stored locally (created just before redirect to payment)
+      // Reuse previously-read `pendingBooking` (if any) to avoid redeclaration
+      if (typeof pendingBooking === 'undefined' || pendingBooking === null) {
+        try {
+          if (typeof window !== 'undefined') {
+            const k1 = `pendingBooking_${vnpRef}`;
+            const k2 = `pendingBooking_${booking.id}`;
+            const raw = localStorage.getItem(k1) || localStorage.getItem(k2) || null;
+            if (raw) pendingBooking = JSON.parse(raw);
+            else pendingBooking = null;
+          }
+        } catch (e) {
+          pendingBooking = null;
+        }
+      }
+
+      // Prefer account name if backend included it, then userProfile.full_name, then customerName, then pending booking
+      const customerName = (
+        booking?.userProfile?.account?.userProfile?.full_name ||
+        booking?.userProfile?.full_name ||
+        booking?.customerName ||
+        pendingBooking?.userProfile?.account?.userProfile?.full_name ||
+        pendingBooking?.userProfile?.full_name ||
+        pendingBooking?.customerName ||
+        'Khách hàng'
+      );
 
       // Map backend booking to display format
       this.bookingDetails = {
         id: booking.id,
         code: booking.code,
         fieldName: booking.field?.name || 'Sân bóng',
-        fieldType: booking.field?.fieldType || 'Bóng đá',
-        customerName: booking.userProfile?.full_name || 'Khách hàng',
+        fieldType: booking.field?.fieldType?.name || 'Bóng đá',
+        customerName: customerName,
         startTime: booking.start_time,
         endTime: booking.end_time,
         startTimeVnp: formatVnpDate(booking.start_time),
@@ -106,6 +249,16 @@ export class PaymentSuccessComponent implements OnInit {
       
       this.loading = false;
       console.log('[PaymentSuccess] Booking loaded successfully:', this.bookingDetails);
+            this.loading = false;
+            try {
+              // cleanup pending entries
+              if (typeof window !== 'undefined') {
+                const k1 = `pendingBooking_${vnpRef}`;
+                const k2 = `pendingBooking_${booking.id}`;
+                try { localStorage.removeItem(k1); } catch (_) {}
+                try { localStorage.removeItem(k2); } catch (_) {}
+              }
+            } catch (_) {}
     } catch (err: any) {
       console.error('[PaymentSuccess] Failed to verify/load booking:', err);
       this.error = err?.message || 'Không thể xác thực thanh toán';
@@ -162,6 +315,7 @@ export class PaymentSuccessComponent implements OnInit {
            VÉ ĐẶT SÂN - HAI ANH EM
 ═══════════════════════════════════════════════
 
+            console.warn('[PaymentSuccess] Booking not found in user bookings, trying localStorage pending booking');
 Mã đặt chỗ: ${booking.id}
 Trạng thái: ĐÃ THANH TOÁN
 

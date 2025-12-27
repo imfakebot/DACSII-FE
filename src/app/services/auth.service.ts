@@ -101,14 +101,27 @@ export class AuthService {
       throw new Error('Đăng nhập Google chỉ khả dụng trên trình duyệt.');
     }
 
-    const authUrl = `${this.baseUrl.getAuthBaseUrl()}/google`;
+    // Request account chooser from Google so user can pick an account.
+    // Use 'select_account' to force the account chooser.
+    // Backend will receive these params and pass them to Google OAuth.
+    const oauthParams = new URLSearchParams({
+      prompt: 'select_account',
+      access_type: 'offline',
+      include_granted_scopes: 'true',
+    }).toString();
+    
+    // Construct auth URL properly
+    const baseAuthUrl = this.baseUrl.getAuthBaseUrl();
+    const authUrl = `${baseAuthUrl}/google?${oauthParams}`;
+    
     const width = 500;
     const height = 650;
     const left = window.screenX + (window.outerWidth - width) / 2;
     const top = window.screenY + (window.outerHeight - height) / 2;
 
+    // Open a same-origin blank popup first so window.opener is preserved across navigations
     const popup = window.open(
-      authUrl,
+      '',
       'google-oauth',
       `width=${width},height=${height},left=${left},top=${top}`,
     );
@@ -116,6 +129,16 @@ export class AuthService {
     if (!popup) {
       throw new Error('Vui lòng bật pop-up để tiếp tục đăng nhập với Google.');
     }
+
+    try {
+      popup.document.write('<!doctype html><html><head><title>Đang chuyển hướng...</title></head><body><p>Đang chuyển hướng tới Google...</p></body></html>');
+      popup.document.close();
+    } catch (e) {
+      // ignore write errors in restricted environments
+    }
+
+    // We'll add the message listener first, then navigate the popup to backend auth URL.
+    // This avoids a race where the backend callback posts a message before the listener is registered.
 
     const backendOrigin = new URL(this.baseUrl.getAuthBaseUrl()).origin;
 
@@ -125,24 +148,51 @@ export class AuthService {
         reject(new Error('Quá trình đăng nhập Google đã hết thời gian.'));
       }, 2 * 60 * 1000);
 
-      const closeWatcher = window.setInterval(() => {
-        if (popup.closed) {
-          cleanup();
-          reject(new Error('Cửa sổ đăng nhập Google đã bị đóng trước khi hoàn tất.'));
-        }
-      }, 500);
+      // Add a periodic refresh-poll fallback: some environments block postMessage
+      // but the backend may still set the httpOnly cookie in the popup response.
+      const refreshPollInterval = 1000;
+      let refreshPollId: number | null = null;
+      const startRefreshPoll = () => {
+        try {
+          refreshPollId = window.setInterval(async () => {
+            try {
+              const result = await this.refreshTokens();
+              if (result?.accessToken) {
+                console.debug('[Google OAuth] refreshTokens poll detected login');
+                try { await this.meState.load(true); } catch (_) {}
+                cleanup();
+                resolve();
+              }
+            } catch (_) {
+              // ignore until timeout
+            }
+          }, refreshPollInterval) as unknown as number;
+        } catch (_) {}
+      };
+      startRefreshPoll();
+
+      // NOTE: avoid polling `popup.closed` or other cross-origin properties here.
+      // Accessing those can trigger Cross-Origin-Opener-Policy warnings in modern browsers.
+      // We rely on `postMessage` from the callback and a server-side cookie refresh poll
+      // as fallbacks. The overall `timeoutId` will reject if neither occurs in time.
 
       const cleanup = () => {
         window.removeEventListener('message', handleMessage);
         window.clearTimeout(timeoutId);
-        window.clearInterval(closeWatcher);
-        if (popup && !popup.closed) {
-          popup.close();
-        }
+        try { if (refreshPollId) { window.clearInterval(refreshPollId); refreshPollId = null; } } catch (_) {}
+        try {
+          // Attempt to close popup by name without reading cross-origin properties.
+          const sameNamed = window.open('', 'google-oauth');
+          if (sameNamed && typeof sameNamed.close === 'function') {
+            sameNamed.close();
+          }
+        } catch (_) {}
       };
 
       const handleMessage = async (event: MessageEvent) => {
+        console.debug('[Google OAuth] postMessage received', event.origin, event.data);
         if (event.origin !== backendOrigin) {
+          console.warn('[Google OAuth] Ignoring message from unexpected origin', event.origin);
           return;
         }
 
@@ -154,8 +204,8 @@ export class AuthService {
         }
 
         if (!data?.accessToken) {
-          cleanup();
-          reject(new Error('Không nhận được token hợp lệ từ Google.'));
+          // if no token in message, rely on refresh-poll to detect login
+          console.warn('[Google OAuth] postMessage contains no accessToken, will rely on refresh poll');
           return;
         }
 
@@ -189,8 +239,18 @@ export class AuthService {
         }
       };
 
-      window.addEventListener('message', handleMessage);
-      popup.focus();
+      // Register listener before navigating popup to avoid race conditions
+      window.addEventListener('message', handleMessage, false);
+
+      // Navigate popup to backend auth URL (backend will redirect to Google)
+      try {
+        popup.location.href = authUrl;
+      } catch (e) {
+        // fallback if direct assignment blocked
+        try { popup.location.replace(authUrl); } catch (_) { }
+      }
+
+      try { popup.focus(); } catch (_) {}
     });
   }
 }

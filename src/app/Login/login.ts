@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../services/auth.service';
+import { MeStateService } from '../services/me-state.service';
+import { AuthStateService } from '../services/auth-state.service';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
@@ -22,7 +24,12 @@ export class LoginComponent {
   devOtpVisible = false;
   devOtp: string | null = null;
 
-  constructor(private router: Router, private auth: AuthService) {}
+  constructor(
+    private router: Router,
+    private auth: AuthService,
+    private meState: MeStateService,
+    private authState: AuthStateService,
+  ) {}
 
   async submit() {
     if (!this.email || !this.password) {
@@ -87,7 +94,25 @@ export class LoginComponent {
     this.error = null;
     try {
       await this.auth.loginWithGoogle();
-      this.router.navigate(['/']);
+      // After login attempt, explicitly try to load current user data.
+      // Only navigate home when we successfully have an authenticated user.
+      try {
+        const me = await this.meState.load(true);
+        if (me && me.id) {
+          this.router.navigate(['/']);
+          return;
+        }
+      } catch (loadErr) {
+        console.warn('meState.load after Google login failed', loadErr);
+      }
+
+      // As a final check, use authState to determine whether a user exists
+      if (this.authState.isLoggedIn()) {
+        this.router.navigate(['/']);
+        return;
+      }
+
+      throw new Error('Đăng nhập Google không hoàn tất. Vui lòng thử lại.');
     } catch (e: any) {
       console.error('Google login error', e);
       this.error = this.extractErrorMessage(e) || 'Đăng nhập Google thất bại';

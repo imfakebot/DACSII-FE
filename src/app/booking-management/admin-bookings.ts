@@ -10,8 +10,7 @@ import { AuthStateService } from '../services/auth-state.service';
   selector: 'app-admin-bookings',
   standalone: true,
   imports: [CommonModule, RouterModule, FormsModule],
-  templateUrl: './admin-bookings.html',
-  styleUrls: ['./admin-bookings.scss']
+  templateUrl: './admin-bookings.html'
 })
 export class AdminBookingsComponent implements OnInit {
   bookings: any[] = [];
@@ -56,13 +55,56 @@ export class AdminBookingsComponent implements OnInit {
     try {
       // Use BookingsService.getAdminBookings with status filter
       const res = await this.bookingsSrv.getAdminBookings(this.page, this.limit, this.statusFilter || undefined);
+      console.log('[AdminBookings] raw response:', res);
+      if (Array.isArray(res?.data) && res.data.length > 0) console.log('[AdminBookings] sample booking:', res.data[0]);
       // backend shape: { data: [], meta: { totalPages, totalItems } }
-      this.bookings = res.data || [];
+      this.bookings = (res.data || []).map((b: any) => {
+        // normalize user/customer display
+        const userFromAccount = b?.userProfile?.account || b?.user || null;
+        const userFullName = b?.userProfile?.account?.userProfile?.full_name || b?.userProfile?.full_name || userFromAccount?.full_name || userFromAccount?.fullName || userFromAccount?.name || null;
+        const userEmail = b?.userProfile?.account?.email || userFromAccount?.email || b?.user?.email || null;
+
+        // normalize field name and start time keys
+        const fieldName = b?.field?.name || b?.fieldName || b?.field?.title || null;
+        const startTime = b?.start_time || b?.startTime || b?.createdAt || null;
+
+        const rawStatus = this.resolveStatus(b);
+        const statusNormalized = this.normalizeStatus(rawStatus);
+        const statusLabel = this.getStatusLabel(rawStatus || statusNormalized || '');
+
+        // If we still couldn't determine a label, log the booking for debugging
+        if (!statusLabel || statusLabel === '-') {
+          console.debug('[AdminBookings] unknown status for booking', { id: b?.id, rawStatus, statusNormalized, booking: b });
+        }
+
+        return {
+          ...b,
+          user: {
+            fullName: userFullName || b?.customerName || 'Khách',
+            email: userEmail || b?.customerEmail || ''
+          },
+          fieldName,
+          startTime,
+          statusNormalized,
+          statusLabel,
+          // ensure `status` property exists for other logic
+          status: b?.status ?? b?.bookingStatus ?? b?.booking_status ?? rawStatus,
+        };
+      });
       this.total = res.meta?.totalItems || 0;
       this.totalPages = res.meta?.totalPages || 1;
     } catch (e: any) {
       console.warn('load bookings failed', e);
-      this.error = e?.error?.message || e?.message || 'Không tải được danh sách đặt sân.';
+      // Map HTTP 401 / Unauthorized to friendly Vietnamese message and clear client auth state
+      const statusCode = e?.status || e?.error?.status || null;
+      const errMsg = e?.error?.message || e?.message || '';
+      if (statusCode === 401 || /unauthor/i.test(String(errMsg))) {
+        this.error = 'Bạn chưa đăng nhập.';
+        // Clear client auth state so header updates (hides Đăng xuất)
+        try { this.authState.setUser(null); } catch (_) {}
+      } else {
+        this.error = errMsg || 'Không tải được danh sách đặt sân.';
+      }
     } finally {
       this.loading = false;
     }
@@ -83,8 +125,15 @@ export class AdminBookingsComponent implements OnInit {
       await this.bookingsSrv.checkIn(b.id);
       alert('Check-in thành công!');
       await this.load();
-    } catch (e: any) { 
-      alert(e?.error?.message || e?.message || 'Check-in thất bại'); 
+    } catch (e: any) {
+      const statusCode = e?.status || e?.error?.status || null;
+      const errMsg = e?.error?.message || e?.message || '';
+      if (statusCode === 401 || /unauthor/i.test(String(errMsg))) {
+        alert('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
+        try { this.authState.setUser(null); } catch (_) {}
+      } else {
+        alert(errMsg || 'Check-in thất bại');
+      }
     }
     finally { this.pendingAction = null; }
   }
@@ -95,7 +144,16 @@ export class AdminBookingsComponent implements OnInit {
     try {
       await this.bookingsSrv.cancel(b.id);
       await this.load();
-    } catch (e: any) { alert(e?.error?.message || e?.message || 'Hủy thất bại'); }
+    } catch (e: any) {
+      const statusCode = e?.status || e?.error?.status || null;
+      const errMsg = e?.error?.message || e?.message || '';
+      if (statusCode === 401 || /unauthor/i.test(String(errMsg))) {
+        alert('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
+        try { this.authState.setUser(null); } catch (_) {}
+      } else {
+        alert(errMsg || 'Hủy thất bại');
+      }
+    }
     finally { this.pendingAction = null; }
   }
 
@@ -146,26 +204,36 @@ export class AdminBookingsComponent implements OnInit {
         this.successMessage = null;
       }, 5000);
     } catch (err: any) {
-      this.error = err?.error?.message || err?.message || 'Tạo booking thất bại';
+      const statusCode = err?.status || err?.error?.status || null;
+      const errMsg = err?.error?.message || err?.message || '';
+      if (statusCode === 401 || /unauthor/i.test(String(errMsg))) {
+        this.error = 'Bạn chưa đăng nhập.';
+        try { this.authState.setUser(null); } catch (_) {}
+      } else {
+        this.error = errMsg || 'Tạo booking thất bại';
+      }
     } finally {
       this.creatingBooking = false;
     }
   }
 
   getStatusClass(status: string): string {
+    const key = this.normalizeStatus(status);
     const statusMap: Record<string, string> = {
       'PENDING_PAYMENT': 'status-pending',
+      'PENDING': 'status-pending',
       'CONFIRMED': 'status-confirmed',
       'CHECKED_IN': 'status-checked-in',
       'COMPLETED': 'status-completed',
       'CANCELLED': 'status-cancelled',
       'EXPIRED': 'status-expired'
     };
-    return statusMap[status] || 'status-default';
+    return statusMap[key] || 'status-default';
   }
 
   getStatusCount(status: string): number {
-    return this.bookings.filter(b => (b.status || '').toLowerCase() === status.toLowerCase()).length;
+    const key = this.normalizeStatus(status);
+    return this.bookings.filter(b => this.normalizeStatus(b.status || b.bookingStatus || b.statusNormalized) === key).length;
   }
 
   formatTime(time: string): string {
@@ -185,24 +253,102 @@ export class AdminBookingsComponent implements OnInit {
   }
 
   getStatusLabel(status: string): string {
+    const key = this.normalizeStatus(status);
     const labelMap: Record<string, string> = {
       'PENDING_PAYMENT': 'Chờ thanh toán',
+      'PENDING': 'Chờ thanh toán',
       'CONFIRMED': 'Đã xác nhận',
       'CHECKED_IN': 'Đã check-in',
-      'COMPLETED': 'Hoàn thành',
+      'COMPLETED': 'Đã thanh toán',
       'CANCELLED': 'Đã hủy',
       'EXPIRED': 'Hết hạn'
     };
-    return labelMap[status] || status;
+    return labelMap[key] || (status || '-');
+  }
+
+  normalizeStatus(status: string): string {
+    if (!status) return '';
+    let s = status.toString().trim().toUpperCase();
+    // Replace any non-alphanumeric sequence (spaces, hyphens, etc.) with underscore
+    s = s.replace(/[^A-Z0-9]+/g, '_');
+    // Trim leading/trailing underscores
+    s = s.replace(/^_+|_+$/g, '');
+    // Canonicalize common variants to single token
+    if (['CHECKED', 'CHECKIN', 'CHECKEDIN', 'CHECK_IN'].includes(s)) return 'CHECKED_IN';
+    return s;
+  }
+
+  /**
+   * Resolve the status string from various possible booking shapes.
+   * Accepts either a raw status value or a booking object.
+   */
+  resolveStatus(val: any): string {
+    if (!val) return '';
+    if (typeof val === 'string' || typeof val === 'number') return String(val);
+    const b = val;
+    const tryStrings = (v: any) => {
+      if (v === null || v === undefined) return '';
+      if (typeof v === 'string' || typeof v === 'number') return String(v);
+      if (typeof v === 'object') {
+        if (v.name) return String(v.name);
+        if (v.value) return String(v.value);
+        if (v.code) return String(v.code);
+        if (v.status) return tryStrings(v.status);
+        if (v.label) return String(v.label);
+      }
+      return '';
+    };
+
+    const candidates = [
+      b.status, b.bookingStatus, b.booking_status, b.status_code, b.statusCode, b.state,
+      b.status?.name, b.bookingStatus?.name, b.booking_status?.name, b.state?.name,
+      b.status?.value, b.bookingStatus?.value, b.status?.label, b.bookingStatus?.label,
+      b.status?.status, b.bookingStatus?.status, b.statusId, b.status_id
+    ];
+
+    for (const c of candidates) {
+      const s = tryStrings(c);
+      if (s) return s;
+    }
+
+    // Some backends return boolean flags instead of a status string.
+    // Check common boolean properties and map them to canonical statuses.
+    const boolChecks = [
+      'checkedIn', 'checked_in', 'isCheckedIn', 'is_checked_in', 'checked', 'is_checked',
+      'paid', 'isPaid', 'is_paid', 'completed'
+    ];
+    for (const flag of boolChecks) {
+      if (Object.prototype.hasOwnProperty.call(b, flag)) {
+        const val = (b as any)[flag];
+        if (val === true || String(val) === '1' || String(val).toLowerCase() === 'true') {
+          if (flag.includes('paid') || flag === 'completed' || flag === 'isPaid' || flag === 'is_paid') return 'COMPLETED';
+          return 'CHECKED_IN';
+        }
+      }
+    }
+
+    return '';
   }
 
   canCheckIn(booking: any): boolean {
-    return booking.status === 'CONFIRMED' || booking.status === 'PENDING_PAYMENT';
+    // Use normalized status to decide
+    const normalized = this.normalizeStatus(booking.status || booking.statusNormalized || booking.bookingStatus || '');
+    // Allow check-in only for bookings that are confirmed or pending (not already completed)
+    const allowed = ['CONFIRMED', 'PENDING_PAYMENT', 'PENDING'];
+    const can = allowed.includes(normalized);
+    console.log('🔍 canCheckIn debug:', { bookingId: booking.id, normalized, can });
+    return can && normalized !== 'CHECKED_IN';
   }
 
   canCancel(booking: any): boolean {
-    const cancelableStatuses = ['PENDING_PAYMENT', 'CONFIRMED'];
-    return cancelableStatuses.includes(booking.status);
+    const normalized = this.normalizeStatus(booking.status || booking.statusNormalized || booking.bookingStatus || '');
+    const cancelable = ['PENDING_PAYMENT', 'PENDING', 'CONFIRMED', 'COMPLETED'];
+    return cancelable.includes(normalized);
+  }
+
+  showActions(booking: any): boolean {
+    // Luôn hiện nút hành động
+    return true;
   }
 
   formatDateTime(isoString: string): string {

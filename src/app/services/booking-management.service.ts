@@ -16,7 +16,8 @@ export class BookingManagementService {
   }
 
   async checkIn(bookingId: string): Promise<any> {
-    return firstValueFrom(this.http.post(`/bookings/check-in`, { bookingId }, this.authHeaders()));
+    // Backend expects { identifier: string }
+    return firstValueFrom(this.http.post(`/bookings/check-in`, { identifier: bookingId }, this.authHeaders()));
   }
 
   async getAll(page = 1, limit = 10, status?: string): Promise<any> {

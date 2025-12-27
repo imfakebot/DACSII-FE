@@ -26,6 +26,8 @@ export class ProfileComponent implements OnInit, OnDestroy {
   avatar_url: string = '';
   avatarFile: File | null = null;
   avatarPreviewUrl: string | null = null;
+  avatarLoadFailed = false;
+  avatarRetryAttempted = false;
   private previousAvatarUrl: string | null = null;
   is_profile_complete = false;
   roleName: string = '';
@@ -201,6 +203,9 @@ export class ProfileComponent implements OnInit, OnDestroy {
       this.bio = profile.bio || '';
       this.date_of_birth = profile.date_of_birth ? profile.date_of_birth.substring(0, 10) : '';
       this.avatar_url = this.normalizeAvatarUrl(profile.avatar_url) || '';
+      // Reset avatar load state when applying account data
+      this.avatarLoadFailed = false;
+      this.avatarRetryAttempted = false;
       // Debug log to help diagnose missing avatar issues
       // eslint-disable-next-line no-console
       console.log('[ProfileComponent] applyAccount avatar_url =>', this.avatar_url);
@@ -270,24 +275,61 @@ export class ProfileComponent implements OnInit, OnDestroy {
     console.log('[ProfileComponent] uploadSelectedAvatar response', updatedProfile);
     if (updatedProfile?.avatar_url) {
       this.avatar_url = this.normalizeAvatarUrl(updatedProfile.avatar_url);
+      this.avatarLoadFailed = false;
       // eslint-disable-next-line no-console
       console.log('[ProfileComponent] uploadSelectedAvatar avatar_url =>', this.avatar_url);
     }
     this.clearAvatarSelection();
   }
 
+  onAvatarLoadError(event: Event) {
+    // If remote image fails to load, show initials fallback and surface URL for debugging
+    // eslint-disable-next-line no-console
+    console.warn('[ProfileComponent] avatar image failed to load', { url: this.avatar_url, event });
+    // If we haven't attempted to repair a known backend 'undefined' bug, try once
+    if (!this.avatarRetryAttempted && this.avatar_url && this.avatar_url.includes('/undefined/')) {
+      const alt = this.avatar_url.replace('/undefined/', '/');
+      // eslint-disable-next-line no-console
+      console.log('[ProfileComponent] retrying avatar with cleaned URL ->', alt);
+      this.avatarRetryAttempted = true;
+      this.avatar_url = alt;
+      return; // let the image try to load again
+    }
+    this.avatarLoadFailed = true;
+    // keep avatar_url so developer can inspect it; UI will show initials when avatarLoadFailed
+  }
+
   private normalizeAvatarUrl(url?: string | null): string {
     if (!url) return '';
     // Normalize backslashes to forward slashes (Windows paths)
     url = url.replace(/\\/g, '/');
-    // If already absolute, return as-is
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    // If URL contains leftover 'undefined' segment from backend, remove it
+    if (url.includes('/undefined/')) {
+      url = url.replace('/undefined/', '/');
+    }
+    // If it's an absolute URL (likely from backend), and it contains '/uploads/',
+    // convert it to a relative path so the browser requests it from the FE origin
+    // (dev proxy will forward /uploads -> backend). This avoids NotSameOrigin errors.
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      const uploadsIndex = url.indexOf('/uploads/');
+      if (uploadsIndex !== -1) {
+        return url.substring(uploadsIndex); // returns '/uploads/xxx'
+      }
+      // If it is absolute but not under /uploads, just return as-is
+      return url;
+    }
+
     try {
       const backendOrigin = new URL(this.baseUrl.getAuthBaseUrl()).origin;
-      // If url already begins with '/', join with origin
-      if (url.startsWith('/')) return `${backendOrigin}${url}`;
-      // Otherwise assume relative path under backend
-      return `${backendOrigin}/${url}`;
+      // If url already begins with '/', join with origin (for other uses),
+      // but prefer returning relative /uploads path when possible.
+      if (url.startsWith('/')) {
+        // if it's an uploads path, keep it relative (so proxy handles it)
+        if (url.startsWith('/uploads/')) return url;
+        return `${backendOrigin}${url}`;
+      }
+      // Otherwise assume relative path under backend; prefer leading slash
+      return `/${url}`;
     } catch {
       return url;
     }

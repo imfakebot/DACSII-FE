@@ -3,9 +3,9 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --proxy-config proxy.conf.js",
+    "start": "ng serve --proxy-config proxy.conf.json",
     "build": "ng build",
-    "watch": "ng build --watch --configuration development",
+    "watch": "ng serve --proxy-config proxy.conf.json --configuration development",
     "test": "ng test",
     "serve:ssr:frontend": "node dist/frontend/server/server.mjs"
   },
@@ -36,6 +36,7 @@
     "@zxing/library": "^0.21.3",
     "@zxing/ngx-scanner": "^20.0.0",
     "express": "^5.1.0",
+    "leaflet": "^1.9.4",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -47,6 +48,7 @@
     "@tailwindcss/postcss": "^4.1.17",
     "@types/express": "^5.0.1",
     "@types/jasmine": "~5.1.0",
+    "@types/leaflet": "^1.9.14",
     "@types/node": "^20.17.19",
     "autoprefixer": "^10.4.22",
     "jasmine-core": "~5.9.0",

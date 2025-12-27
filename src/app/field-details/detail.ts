@@ -149,6 +149,19 @@ export class DetailComponent implements OnInit, OnDestroy {
 
       this.bookingMessage = res.message || 'Đặt sân thành công!';
 
+      // Persist the newly created booking locally so payment callback can display details
+      try {
+        if (res && res.booking && typeof window !== 'undefined') {
+          const key = `pendingBooking_${(res.booking.id || '').replace(/-/g, '')}`;
+          localStorage.setItem(key, JSON.stringify(res.booking));
+          // also store by full id for convenience
+          const keyFull = `pendingBooking_${res.booking.id}`;
+          localStorage.setItem(keyFull, JSON.stringify(res.booking));
+        }
+      } catch (e) {
+        console.warn('[DetailComponent] Failed to persist pending booking to localStorage', e);
+      }
+
       // Refresh schedule to show newly booked slot
       if (this.date) {
         await this.loadDailySchedule(this.date);
@@ -219,6 +232,43 @@ export class DetailComponent implements OnInit, OnDestroy {
     } catch { return 'No token'; }
   }
 
+  /**
+   * Calculate price per hour based on time slot rules
+   * 07:00-12:00: 100,000 VND/hour
+   * 12:00-17:00: 80,000 VND/hour  
+   * 17:00-21:00: 150,000 VND/hour
+   */
+  private calculatePricePerHour(timeString: string): number {
+    const [hour] = timeString.split(':').map(Number);
+    
+    if (hour >= 7 && hour < 12) {
+      return 100000; // 07:00-11:59
+    } else if (hour >= 12 && hour < 17) {
+      return 80000;  // 12:00-16:59
+    } else if (hour >= 17 && hour < 21) {
+      return 150000; // 17:00-20:59
+    }
+    return 100000; // Default fallback
+  }
+
+  /**
+   * Get total price - prefer pricing object (with voucher applied) over calculated price
+   */
+  get estimatedTotal(): number | null {
+    // If pricing object exists (with or without voucher), use its total_price
+    if (this.pricing && this.pricing.pricing && typeof this.pricing.pricing.total_price === 'number') {
+      return this.pricing.pricing.total_price;
+    }
+    
+    // Fallback: calculate from time slots if no pricing object yet
+    if (!this.time || !this.duration) return null;
+    
+    const pricePerHour = this.calculatePricePerHour(this.time);
+    const hours = this.duration / 60;
+    const total = pricePerHour * hours;
+    return Math.ceil(total / 1000) * 1000; // Round to nearest 1000
+  }
+
   private buildIsoStart(): string | null {
     if (!this.date || !this.time) return null;
     // Format: YYYY-MM-DDTHH:mm:ss+07:00 (múi giờ Việt Nam)
@@ -234,41 +284,72 @@ export class DetailComponent implements OnInit, OnDestroy {
       return;
     }
     this.pricingError = null; this.bookingMessage = null; this.bookingError = null;
-    if(!this.field){ this.pricingError = 'Thiếu thông tin sân'; return; }
+    if(!this.field){ this.pricingError = 'Thiếu thông tin sân'; this.pricing = null; return; }
     const startIso = this.buildIsoStart();
-    if(!startIso){ this.pricingError = 'Vui lòng chọn ngày và giờ bắt đầu'; return; }
-    if(!this.duration || this.duration < 30){ this.pricingError = 'Vui lòng nhập thời lượng (tối thiểu 30 phút)'; return; }
+    if(!startIso){ this.pricingError = 'Vui lòng chọn ngày và giờ bắt đầu'; this.pricing = null; return; }
+    if(!this.duration || this.duration < 30){ this.pricingError = 'Vui lòng nhập thời lượng (tối thiểu 30 phút)'; this.pricing = null; return; }
     // Validate using local date/time to avoid parsing non-ISO payload
     const startDate = new Date(`${this.date}T${this.time}:00`);
     if(startDate.getTime() <= Date.now()){
-      this.pricingError = 'Vui lòng chọn khung giờ ở tương lai.';
+      this.pricingError = '🕒 Vui lòng chọn khung giờ ở tương lai (không thể đặt giờ quá khứ).';
+      this.pricing = null;
       return;
     }
     this.checkingAvailability = true;
     this.pricingPending = true;
     try{
-      // Tạo timeString (HH:mm:ss) để gửi cho BE, tránh vấn đề timezone parsing
-      const timeString = `${this.time}:00`;
+      // Tính giá client-side dựa trên time_slots
+      const pricePerHour = this.calculatePricePerHour(this.time);
+      const hours = this.duration / 60;
+      const totalPrice = Math.ceil((pricePerHour * hours) / 1000) * 1000;
       
+      // Tính end time
+      const startDate = new Date(`${this.date}T${this.time}:00`);
+      const endDate = new Date(startDate.getTime() + this.duration * 60000);
+      const endTime = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+      
+      console.log('=== CLIENT-SIDE PRICING ===');
+      console.log('[Time]:', this.time);
+      console.log('[Price/hour]:', pricePerHour, 'VND');
+      console.log('[Duration]:', this.duration, 'minutes');
+      console.log('[Total]:', totalPrice, 'VND');
+      
+      // Build pricing object client-side
+      this.pricing = {
+        available: true,
+        field_name: this.field?.name || '',
+        booking_details: {
+          date: this.date,
+          start_time: this.time + ':00',
+          end_time: endTime + ':00',
+          duration: `${this.duration} phút`
+        },
+        pricing: {
+          price_per_hour: pricePerHour,
+          total_price: totalPrice,
+          currency: 'VND'
+        },
+        message: 'Giá đã được tính theo khung giờ'
+      } as any;
+      
+      // Gọi API chỉ để check availability (không dùng giá từ BE nữa)
       const payload: any = {
         fieldId: this.field.id,
         startTime: startIso,
         durationMinutes: this.duration,
-        timeString: timeString, // Gửi HH:mm:ss trực tiếp để BE không cần parse timezone
-        fieldTypeId: this.field?.fieldType, // fieldType là string UUID
       };
       
-      console.log('=== PRICING CHECK START ===');
-      console.log('[Payload] fieldId:', payload.fieldId);
-      console.log('[Payload] startTime:', payload.startTime);
-      console.log('[Payload] timeString:', payload.timeString);
-      console.log('[Payload] durationMinutes:', payload.durationMinutes);
-      console.log('[Payload] fieldTypeId:', payload.fieldTypeId);
-      console.log('[Field Info] fieldType:', this.field?.fieldType);
-      console.log('[User Selection] date:', this.date, 'time:', this.time, 'duration:', this.duration);
-
-      // Gọi API lấy giá gốc (BE hiện tại không hỗ trợ áp voucher trên endpoint này)
-      this.pricing = await this.pricingService.checkAvailability(payload);
+      try {
+        await this.pricingService.checkAvailability(payload);
+        // Nếu API success thì giữ nguyên pricing đã tính
+      } catch (apiError: any) {
+        // Nếu API trả conflict/error thì throw để hiển thị lỗi
+        if (apiError.status === 409) {
+          throw apiError;
+        }
+        // Các lỗi khác thì vẫn giữ pricing client-side
+        console.warn('[API Check] Failed but keeping client-side pricing:', apiError);
+      }
       
       console.log('[Response] pricing:', this.pricing?.pricing);
       console.log('=== PRICING CHECK END ===');
@@ -284,9 +365,9 @@ export class DetailComponent implements OnInit, OnDestroy {
             this.pricing.pricing.original_price = this.pricing.pricing.total_price;
             this.pricing.pricing.discount = voucherRes.discountAmount;
             this.pricing.pricing.total_price = voucherRes.finalAmount;
+            // Store applied voucher info for display
+            this.pricing.voucher = { code: voucherRes.code, discount: voucherRes.discountAmount } as any;
           }
-          // Store applied voucher info for display
-          this.pricing.voucher = { code: voucherRes.code, discount: voucherRes.discountAmount } as any;
         } catch (err: any) {
           // Nếu voucher không hợp lệ thì hiển thị lỗi nhỏ nhưng vẫn giữ giá gốc
           this.pricingError = (err?.error?.message) || err?.message || 'Mã voucher không hợp lệ';
@@ -534,9 +615,9 @@ export class DetailComponent implements OnInit, OnDestroy {
     // Mark all affected slots based on duration
     this.markAffectedSlots(slot.iso, this.duration);
     
-    // Trigger pricing check
-    console.log('[selectSlot] Triggering onScheduleChange for pricing check');
-    this.onScheduleChange();
+    // Trigger pricing check IMMEDIATELY
+    console.log('[selectSlot] Calling checkAvailability immediately');
+    this.checkAvailability();
   }
 
   /**
@@ -620,6 +701,41 @@ export class DetailComponent implements OnInit, OnDestroy {
     this.selectedVoucher = null;
     this.voucherCode = '';
     this.checkAvailability();
+  }
+
+  /**
+   * Open Google Maps with directions to the field
+   */
+  getDirections(): void {
+    if (!this.field) return;
+
+    // Get coordinates from field (mapped from branch.address)
+    const lat = this.field.latitude;
+    const lng = this.field.longitude;
+
+    let url = '';
+    
+    if (lat && lng) {
+      // Use coordinates if available (most accurate)
+      url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
+    } else {
+      // Fallback to address string search
+      const addressParts = [
+        this.field.street,
+        this.field.ward,
+        this.field.city
+      ].filter(Boolean);
+      
+      if (addressParts.length > 0) {
+        const address = addressParts.join(', ');
+        url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
+      } else {
+        alert('Không có thông tin địa chỉ để chỉ đường');
+        return;
+      }
+    }
+
+    window.open(url, '_blank');
   }
 
 }

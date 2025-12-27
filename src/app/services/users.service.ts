@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { BaseUrlService } from '../base_url';
 
 export type GenderType = 'male' | 'female' | 'other';
 export type AccountStatus = 'active' | 'inactive' | 'banned' | 'suspended' | 'deleted';
@@ -47,7 +48,7 @@ export interface UpdateUserProfileDto {
 
 @Injectable({ providedIn: 'root' })
 export class UsersApiService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
 
   private isBrowser(): boolean {
     return typeof window !== 'undefined';
@@ -75,8 +76,9 @@ export class UsersApiService {
   async getMe(): Promise<AccountMeResponse | null> {
     try {
       // Use full response so we can detect an empty body (200 with no content)
+      const url = `${this.baseUrl.getApiBaseUrl()}/users/me`;
       const httpResp: any = await firstValueFrom(
-        this.http.get(`/users/me`, { ...(this.requireAuthHeaders()), observe: 'response' } as any)
+        this.http.get(url, { ...(this.requireAuthHeaders()), observe: 'response' } as any)
       );
       const body = httpResp?.body ?? null;
       if (!body || (typeof body === 'object' && Object.keys(body).length === 0)) {
@@ -92,23 +94,26 @@ export class UsersApiService {
   }
 
   async updateMyProfile(payload: UpdateUserProfileDto): Promise<{ message: string }> {
+    const url = `${this.baseUrl.getApiBaseUrl()}/users/me/profile`;
     return firstValueFrom(
-      this.http.put<{ message: string }>(`/users/me/profile`, payload, this.requireAuthHeaders())
+      this.http.put<{ message: string }>(url, payload, this.requireAuthHeaders())
     );
   }
 
   async changePassword(oldPassword: string, newPassword: string): Promise<{ message: string }> {
     const payload = { oldPassword, newPassword };
+    const url = `${this.baseUrl.getApiBaseUrl()}/users/me/password`;
     return firstValueFrom(
-      this.http.patch<{ message: string }>(`/users/me/password`, payload, this.requireAuthHeaders())
+      this.http.patch<{ message: string }>(url, payload, this.requireAuthHeaders())
     );
   }
 
   async uploadAvatar(file: File): Promise<UserProfileDto> {
     const formData = new FormData();
     formData.append('avatar', file);
+    const url = `${this.baseUrl.getApiBaseUrl()}/users/me/avatar`;
     return firstValueFrom(
-      this.http.patch<UserProfileDto>(`/users/me/avatar`, formData, this.requireAuthHeaders())
+      this.http.patch<UserProfileDto>(url, formData, this.requireAuthHeaders())
     );
   }
 }

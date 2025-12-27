@@ -605,3 +605,39 @@
     grid-template-columns: 1fr;
   }
 }
+
+.btn-map {
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+  }
+  
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.field-hint {
+  margin: 0.5rem 0 0 0;
+  font-size: 0.85rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.modal-large {
+  max-width: 950px;
+  width: 95vw;
+}
+

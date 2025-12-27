@@ -69,6 +69,14 @@
         <div class="info-item">
           <span class="label">Địa chỉ</span>
           <p>{{ (field.street || field.ward || field.city) ? ((field.street ? field.street + ', ' : '') + (field.ward ? field.ward + ', ' : '') + (field.city || '')) : 'Chưa cập nhật địa chỉ' }}</p>
+          <button 
+            type="button" 
+            class="directions-btn" 
+            (click)="getDirections()"
+            title="Chỉ đường đến sân">
+            <i class="fa-solid fa-location-arrow"></i>
+            Chỉ đường
+          </button>
         </div>
       </div>
 
@@ -174,15 +182,48 @@
         </p>
       </div>
 
-      <div *ngIf="pricing" class="pricing-summary mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <div class="flex justify-between mb-2">
-          <span>Đơn giá:</span>
-          <span class="font-medium">{{ pricing.pricing.price_per_hour | currency:'VND':'symbol':'1.0-0' }}/giờ</span>
-        </div>
-        <div class="flex justify-between text-lg font-bold text-primary">
-          <span>Tổng cộng:</span>
-          <span>{{ pricing.pricing.total_price | currency:'VND':'symbol':'1.0-0' }}</span>
-        </div>
+      <div *ngIf="pricingError" class="error-message mt-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
+        <i class="fa-solid fa-circle-exclamation mr-2"></i> {{ pricingError }}
+      </div>
+
+      <div *ngIf="pricing as p" class="pricing-summary mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+        <h4 class="mb-2">Chi tiết giá</h4>
+        <table class="w-full text-sm">
+          <tbody>
+            <tr>
+              <td>Ngày</td>
+              <td class="text-right">{{ p.booking_details.date }}</td>
+            </tr>
+            <tr>
+              <td>Giờ bắt đầu</td>
+              <td class="text-right">{{ p.booking_details.start_time }}</td>
+            </tr>
+            <tr>
+              <td>Giờ kết thúc</td>
+              <td class="text-right">{{ p.booking_details.end_time }}</td>
+            </tr>
+            <tr>
+              <td>Đơn giá</td>
+              <td class="text-right">{{ p.pricing.price_per_hour | currency:'VND':'symbol':'1.0-0' }}/giờ</td>
+            </tr>
+            <tr>
+              <td>Thời lượng</td>
+              <td class="text-right">{{ p.booking_details.duration }}</td>
+            </tr>
+            <tr *ngIf="p.pricing.original_price !== undefined">
+              <td>Giá gốc</td>
+              <td class="text-right line-through">{{ p.pricing.original_price | currency:'VND':'symbol':'1.0-0' }}</td>
+            </tr>
+            <tr *ngIf="p.pricing.discount">
+              <td>Giảm giá</td>
+              <td class="text-right text-green-600">-{{ p.pricing.discount | currency:'VND':'symbol':'1.0-0' }}</td>
+            </tr>
+            <tr class="font-bold">
+              <td>Tổng phải trả</td>
+              <td class="text-right">{{ p.pricing.total_price | currency:'VND':'symbol':'1.0-0' }}</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
 
       <div *ngIf="bookingError" class="error-message mt-4 p-3 bg-red-50 text-red-600 rounded-md text-sm">
@@ -224,20 +265,16 @@
             <i class="fa-solid fa-spinner fa-spin"></i>
             Đang xử lý...
           </span>
-          <span *ngIf="!creatingBooking && pricing">
+          <ng-container *ngIf="!creatingBooking">
             <i class="fa-solid fa-credit-card"></i>
-            Thanh toán {{ pricing.pricing.total_price | currency:'VND':'symbol':'1.0-0' }}
-            <span *ngIf="pricing.pricing.original_price !== pricing.pricing.total_price" class="line-through text-sm opacity-60 ml-2">
-              {{ pricing.pricing.original_price | currency:'VND':'symbol':'1.0-0' }}
+            <span *ngIf="estimatedTotal !== null">
+              Thanh toán {{ estimatedTotal | currency:'VND':'symbol':'1.0-0' }}
             </span>
-          </span>
-          <span *ngIf="!creatingBooking && !pricing">
-            <i class="fa-solid fa-credit-card"></i>
-            Thanh toán ngay
-          </span>
+            <span *ngIf="estimatedTotal === null">Chọn giờ và thời lượng để xem giá</span>
+          </ng-container>
         </button>
         <p *ngIf="!isLoggedIn" class="text-center text-sm text-gray-500 mt-2">
-          Vui lòng <a routerLink="/login" class="text-primary hover:underline">đăng nhập</a> để đặt sân.
+          Vui lòng <a [routerLink]="['/Login/login']" class="text-primary hover:underline">đăng nhập</a> để đặt sân.
         </p>
       </div>
     </aside>

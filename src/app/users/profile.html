@@ -129,16 +129,24 @@
         </div>
         <div class="flex flex-col items-center">
           <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-slate-100 shadow-lg">
-            <img *ngIf="avatarPreviewUrl; else remoteAvatar" [src]="avatarPreviewUrl" alt="avatar preview" class="w-full h-full object-cover" />
-            <ng-template #remoteAvatar>
-              <img *ngIf="avatar_url" [src]="avatar_url" alt="avatar preview" class="w-full h-full object-cover" />
-              <div *ngIf="!avatar_url" class="w-full h-full bg-gradient-to-br from-brand to-purple-600 text-white flex items-center justify-center text-3xl font-bold">
-                {{ profileInitials }}
+              <img *ngIf="avatarPreviewUrl; else remoteAvatar" [src]="avatarPreviewUrl" alt="avatar preview" class="w-full h-full object-cover" />
+              <ng-template #remoteAvatar>
+                <img *ngIf="avatar_url && !avatarLoadFailed" [src]="avatar_url" alt="avatar preview" class="w-full h-full object-cover" (error)="onAvatarLoadError($event)" />
+                <div *ngIf="!avatar_url || avatarLoadFailed" class="w-full h-full bg-gradient-to-br from-brand to-purple-600 text-white flex items-center justify-center text-3xl font-bold">
+                  {{ profileInitials }}
+                </div>
+              </ng-template>
+            </div>
+            <p class="text-xs text-slate-500 mt-3 text-center" *ngIf="avatarFile">Ảnh mới chỉ hiển thị trên máy bạn cho tới khi lưu thay đổi.</p>
+            <div class="text-xs text-slate-500 mt-3 text-center">
+              <div *ngIf="!avatarFile">
+                <span>Ảnh hiện tại:</span>
+                <!-- <div class="mt-1">
+                  <code class="bg-slate-100 px-1 rounded text-xs break-all">{{ avatar_url || '(chưa có URL)' }}</code>
+                </div> -->
+                <div *ngIf="avatarLoadFailed" class="mt-1 text-amber-700">Không thể tải ảnh — vui lòng kiểm tra URL hoặc xác thực rằng backend đang phục vụ /uploads.</div>
               </div>
-            </ng-template>
-          </div>
-          <p class="text-xs text-slate-500 mt-3 text-center" *ngIf="avatarFile">Ảnh mới chỉ hiển thị trên máy bạn cho tới khi lưu thay đổi.</p>
-          <p class="text-xs text-slate-500 mt-3 text-center" *ngIf="!avatarFile">Ảnh hiện tại từ <code class="bg-slate-100 px-1 rounded">avatar_url</code>.</p>
+            </div>
         </div>
         <label class="block md:col-span-2">
           <span class="text-sm font-medium text-slate-700 mb-2 block">Giới thiệu bản thân</span>

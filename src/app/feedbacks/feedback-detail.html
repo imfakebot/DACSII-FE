@@ -45,7 +45,14 @@
           </div>
           <div>
             <div class="text-xs text-slate-500 mb-1">Email</div>
-            <div class="font-semibold text-slate-900 truncate">{{ feedback.user?.email || feedback.submitter?.email || '-' }}</div>
+            <div class="font-semibold text-slate-900 truncate">
+              {{ feedback.user?.email
+                 || feedback.submitter?.email
+                 || feedback.submitter?.user?.email
+                 || feedback.submitter?.contact_email
+                 || feedback.submitter?.contact?.email
+                 || '-' }}
+            </div>
           </div>
         </div>
         <div class="flex items-center gap-3 p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl">

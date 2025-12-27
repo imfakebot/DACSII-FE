@@ -190,6 +190,13 @@
           </label>
         </div>
 
+        <div class="field">
+          <button type="button" class="btn btn-map" (click)="openMapPicker()">
+            🗺️ Chọn vị trí trên bản đồ
+          </button>
+          <p class="field-hint">Click để mở bản đồ và chọn vị trí chính xác</p>
+        </div>
+
         <div class="modal-footer">
           <button type="button" class="btn secondary" (click)="closeForm()">Hủy</button>
           <button type="submit" class="btn primary" [disabled]="loading">
@@ -197,6 +204,18 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Map Picker Modal -->
+  <div *ngIf="showMapPicker" class="modal-overlay" (click)="onMapPickerCancelled()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <app-location-picker
+        [initialLat]="form.latitude"
+        [initialLng]="form.longitude"
+        (locationSelected)="onLocationSelected($event)"
+        (cancelled)="onMapPickerCancelled()">
+      </app-location-picker>
     </div>
   </div>
 </div>

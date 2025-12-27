@@ -39,26 +39,84 @@ export class MyBookingsComponent implements OnInit {
   ) {}
 
   ngOnInit() {
-    this.loadBookings();
+    // Only load bookings after auth state is ready and user has a valid id
+    this.authState.ready$.subscribe((r) => {
+      if (!r) return;
+      const user = this.authState.getCurrentUser();
+      // Basic UUID v4-ish check (36 chars, hex + dashes)
+      const isValidId = !!user && typeof user.id === 'string' && /^[0-9a-fA-F-]{36}$/.test(user.id);
+      if (!isValidId) {
+        this.error = 'Vui lòng đăng nhập để xem lịch sử đặt sân.';
+        // Don't auto-logout - just show message
+        return;
+      }
+      this.loadBookings();
+    });
+
+    // Also react to user changes (e.g., login/logout) and reload when valid
+    this.authState.user$.subscribe((u) => {
+      const isValid = !!u && typeof u.id === 'string' && /^[0-9a-fA-F-]{36}$/.test(u.id);
+      if (isValid) {
+        this.error = null;
+        this.loadBookings();
+      } else {
+        // Ensure UI won't attempt API calls with bad id
+        this.bookings = [];
+        this.totalPages = 1;
+        this.totalItems = 0;
+        if (u === null) this.error = null; // no message when explicitly logged out
+      }
+    });
   }
 
   async loadBookings() {
     this.loading = true;
     this.error = null;
     
+    // Debug auth state
+    const user = this.authState.getCurrentUser();
+    console.log('[MyBookings] Current user:', user);
+    console.log('[MyBookings] Is logged in:', this.authState.isLoggedIn());
+    
     try {
       const filters: any = {};
-      if (this.statusFilter) {
+      if (this.statusFilter && this.statusFilter.trim()) {
         filters.status = this.statusFilter;
       }
       
-      const response = await this.bookingsService.getMyBookings(this.currentPage, this.limit, filters);
+      // Only pass filters if it has properties
+      const hasFilters = Object.keys(filters).length > 0;
+      const response = await this.bookingsService.getMyBookings(
+        this.currentPage, 
+        this.limit, 
+        hasFilters ? filters : undefined
+      );
       this.bookings = response.data || [];
       this.totalPages = response.meta?.totalPages || 1;
       this.totalItems = response.meta?.totalItems || 0;
     } catch (e: any) {
-      console.error('Error loading bookings:', e);
-      this.error = e?.error?.message || e?.message || 'Không thể tải danh sách đặt sân';
+      console.error('[MyBookings] Error loading bookings:', e);
+      console.error('[MyBookings] Error details:', {
+        status: e?.status,
+        statusText: e?.statusText,
+        error: e?.error,
+        message: e?.message,
+        url: e?.url
+      });
+      const statusCode = e?.status || e?.error?.status || null;
+      const errMsg = e?.error?.message || e?.message || '';
+      
+      // Only clear auth on explicit 401 Unauthorized
+      if (statusCode === 401 || /unauthor/i.test(String(errMsg))) {
+        this.error = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
+        try { this.authState.setUser(null); } catch (_) {}
+      } else if (statusCode === 400) {
+        // 400 is validation error - don't logout, just show error
+        this.error = 'Không thể tải danh sách. Vui lòng thử lại sau.';
+        console.warn('[MyBookings] 400 error - possible backend validation issue');
+      } else {
+        this.error = errMsg || 'Không thể tải danh sách đặt sân';
+      }
     } finally {
       this.loading = false;
     }
