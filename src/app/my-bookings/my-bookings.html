@@ -163,6 +163,12 @@
                           title="Hủy đơn">
                     ❌ Hủy
                   </button>
+                  <button *ngIf="canReview(booking)" 
+                          (click)="goToReview(booking.id)"
+                          class="px-4 py-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-white text-sm font-semibold rounded-lg shadow-sm hover:shadow-md transition-all"
+                          title="Đánh giá sân">
+                    ⭐ Đánh giá
+                  </button>
                 </div>
               </td>
             </tr>

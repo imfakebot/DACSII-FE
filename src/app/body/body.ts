@@ -2,6 +2,7 @@ import { Component, OnInit } from "@angular/core";
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FieldsService, Field } from '../services/fields.service';
+import { IdEncoderService } from '../services/id-encoder.service';
  
 @Component({
   selector: "app-body",
@@ -17,11 +18,21 @@ export class BodyComponent implements OnInit {
   selectedRecommend: 'football' | 'tennis' | 'badminton' | 'tabletennis' | 'all' = 'football';
   selectedTop: 'football' | 'tennis' | 'badminton' | 'tabletennis' | 'all' = 'football';
 
-  constructor(private fieldsService: FieldsService, private router: Router) {}
+  constructor(
+    private fieldsService: FieldsService, 
+    private router: Router,
+    private idEncoder: IdEncoderService  // Service mã hóa ID
+  ) {}
 
   async ngOnInit() {
     // Lấy dữ liệu sân từ service (gọi backend /api/fields qua proxy)
     this.fields = await this.fieldsService.getFields();
+  }
+  
+  // Tạo link chi tiết với ID đã mã hóa
+  getDetailLink(id: string): string[] {
+    const encodedId = this.idEncoder.encode(id);
+    return ['/detail', encodedId];
   }
   
   // 4 sân đầu làm 'Sân tập gần bạn'

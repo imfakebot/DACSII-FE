@@ -40,10 +40,11 @@ export interface ReviewDto {
 }
 
 export interface PaginatedReviewResponse { 
-  data: ReviewDto[]; 
+  data: ReviewDto[];
   total: number;
   page: number;
   limit: number;
+  averageRating?: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -61,7 +62,17 @@ export class ReviewService {
 
   async getReviewsByField(fieldId: string, page = 1, limit = 10): Promise<PaginatedReviewResponse> {
     const params = new HttpParams().set('page', String(page)).set('limit', String(limit));
-    return firstValueFrom(this.http.get<PaginatedReviewResponse>(`/review/field/${fieldId}`, { params }));
+    const raw: any = await firstValueFrom(this.http.get(`/review/field/${fieldId}`, { params }));
+    // Backend returns { data: [...], meta: { total, page, limit, averageRating } }
+    const meta = raw?.meta || {};
+    const mapped: PaginatedReviewResponse = {
+      data: raw?.data || [],
+      total: meta?.total ?? raw?.total ?? 0,
+      page: meta?.page ?? raw?.page ?? page,
+      limit: meta?.limit ?? raw?.limit ?? limit,
+      averageRating: meta?.averageRating ?? undefined,
+    };
+    return mapped;
   }
 
   async deleteReview(id: string): Promise<{ message: string }> {

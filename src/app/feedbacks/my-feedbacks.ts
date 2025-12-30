@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { FeedbacksService, CreateFeedbackDto, FeedbackDto } from '../services/feedbacks.service';
+import { IdEncoderService } from '../services/id-encoder.service';
 
 @Component({
   selector: 'app-my-feedbacks',
@@ -36,7 +37,8 @@ export class MyFeedbacksComponent implements OnInit {
 
   constructor(
     private feedbacksService: FeedbacksService,
-    private router: Router
+    private router: Router,
+    private idEncoder: IdEncoderService  // Service mã hóa ID để ẩn UUID trong URL
   ) {}
 
   async ngOnInit() {
@@ -110,8 +112,13 @@ export class MyFeedbacksComponent implements OnInit {
     }
   }
 
+  /**
+   * Xem chi tiết feedback - mã hóa ID trước khi navigate
+   */
   viewDetail(feedbackId: string) {
-    this.router.navigate(['/feedbacks', feedbackId]);
+    // Mã hóa ID thành chuỗi ngắn để ẩn UUID
+    const encodedId = this.idEncoder.encode(feedbackId);
+    this.router.navigate(['/feedbacks', encodedId]);
   }
 
   getStatusLabel(status: string): string {

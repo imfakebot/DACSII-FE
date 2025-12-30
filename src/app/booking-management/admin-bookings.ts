@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { BookingManagementService } from '../services/booking-management.service';
 import { BookingsService } from '../services/bookings.service';
 import { AuthStateService } from '../services/auth-state.service';
+import { IdEncoderService } from '../services/id-encoder.service';
 
 @Component({
   selector: 'app-admin-bookings',
@@ -37,7 +38,18 @@ export class AdminBookingsComponent implements OnInit {
   };
   creatingBooking = false;
 
-  constructor(private mgmt: BookingManagementService, private bookingsSrv: BookingsService, private router: Router, private authState: AuthStateService) {}
+  // Check-in modal
+  showCheckInModal = false;
+  checkInBooking: any = null;
+  checkingIn = false;
+
+  constructor(
+    private mgmt: BookingManagementService, 
+    private bookingsSrv: BookingsService, 
+    private router: Router, 
+    private authState: AuthStateService,
+    private idEncoder: IdEncoderService  // Service mã hóa ID
+  ) {}
 
   get isAdmin() { return this.authState.isAdmin(); }
 
@@ -68,13 +80,45 @@ export class AdminBookingsComponent implements OnInit {
         const fieldName = b?.field?.name || b?.fieldName || b?.field?.title || null;
         const startTime = b?.start_time || b?.startTime || b?.createdAt || null;
 
-        const rawStatus = this.resolveStatus(b);
+        let rawStatus = this.resolveStatus(b);
+        
+        // Fallback: If status is empty but we have timestamp fields, infer status
+        if (!rawStatus || rawStatus.trim() === '') {
+          if (b.check_in_at || b.checkInAt || b.checkedInAt) {
+            rawStatus = 'CHECKED_IN';
+          } else if (b.completed_at || b.completedAt) {
+            rawStatus = 'COMPLETED';
+          } else if (b.cancelled_at || b.cancelledAt || b.canceled_at) {
+            rawStatus = 'CANCELLED';
+          } else if (b.confirmed_at || b.confirmedAt) {
+            rawStatus = 'CONFIRMED';
+          }
+        }
+        
         const statusNormalized = this.normalizeStatus(rawStatus);
         const statusLabel = this.getStatusLabel(rawStatus || statusNormalized || '');
 
+        // Log status resolution for debugging
+        console.log('[AdminBookings] Status mapping for booking', b.id?.substring(0, 8), ':', {
+          rawStatus,
+          statusNormalized,
+          statusLabel,
+          timestamps: {
+            check_in_at: b.check_in_at,
+            completed_at: b.completed_at,
+            cancelled_at: b.cancelled_at
+          },
+          originalBookingData: {
+            status: b?.status,
+            bookingStatus: b?.bookingStatus,
+            booking_status: b?.booking_status,
+            state: b?.state
+          }
+        });
+
         // If we still couldn't determine a label, log the booking for debugging
         if (!statusLabel || statusLabel === '-') {
-          console.debug('[AdminBookings] unknown status for booking', { id: b?.id, rawStatus, statusNormalized, booking: b });
+          console.warn('[AdminBookings] Unknown status for booking', { id: b?.id, rawStatus, statusNormalized, booking: b });
         }
 
         return {
@@ -89,19 +133,30 @@ export class AdminBookingsComponent implements OnInit {
           statusLabel,
           // ensure `status` property exists for other logic
           status: b?.status ?? b?.bookingStatus ?? b?.booking_status ?? rawStatus,
+          // Extract payment info if available
+          payment: b?.payment || null,
+          paymentStatus: b?.payment?.status || this.inferPaymentStatusFromBooking(statusNormalized),
         };
       });
       this.total = res.meta?.totalItems || 0;
       this.totalPages = res.meta?.totalPages || 1;
     } catch (e: any) {
       console.warn('load bookings failed', e);
-      // Map HTTP 401 / Unauthorized to friendly Vietnamese message and clear client auth state
+      // Map HTTP 401/403 / Unauthorized to friendly Vietnamese message and clear client auth state
       const statusCode = e?.status || e?.error?.status || null;
       const errMsg = e?.error?.message || e?.message || '';
-      if (statusCode === 401 || /unauthor/i.test(String(errMsg))) {
-        this.error = 'Bạn chưa đăng nhập.';
+      if (statusCode === 401 || statusCode === 403 || /unauthor|forbidden/i.test(String(errMsg))) {
+        this.error = 'Phiên đăng nhập đã hết hạn hoặc bạn không có quyền truy cập. Vui lòng đăng nhập lại.';
         // Clear client auth state so header updates (hides Đăng xuất)
-        try { this.authState.setUser(null); } catch (_) {}
+        try { 
+          this.authState.setUser(null);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+        } catch (_) {}
+        // Redirect to login after 2 seconds
+        setTimeout(() => {
+          this.router.navigate(['/Login/login']);
+        }, 2000);
       } else {
         this.error = errMsg || 'Không tải được danh sách đặt sân.';
       }
@@ -116,26 +171,54 @@ export class AdminBookingsComponent implements OnInit {
   prev() { if (this.canPrev()) { this.page--; this.load(); } }
   next() { if (this.canNext()) { this.page++; this.load(); } }
 
-  viewBooking(id: string) { this.router.navigate([`/admin/bookings/${id}`]); }
+  viewBooking(id: string) { 
+    const encodedId = this.idEncoder.encode(id);  // Mã hóa ID trước khi hiển thị URL
+    this.router.navigate([`/admin/bookings/${encodedId}`]); 
+  }
 
   async doCheckIn(b: any) {
-    if (!confirm('Xác nhận check-in booking này?')) return;
-    this.pendingAction = `checkin:${b.id}`;
+    // Hiển thị modal xác nhận với thông tin chi tiết
+    this.checkInBooking = b;
+    this.showCheckInModal = true;
+  }
+
+  async confirmCheckIn() {
+    if (!this.checkInBooking) return;
+    
+    this.checkingIn = true;
+    this.pendingAction = `checkin:${this.checkInBooking.id}`;
+    
     try {
-      await this.bookingsSrv.checkIn(b.id);
-      alert('Check-in thành công!');
+      const result = await this.bookingsSrv.checkIn(this.checkInBooking.id);
+      console.log('[AdminBookings] checkIn response:', result);
+      
+      this.successMessage = `Check-in thành công cho đơn ${this.checkInBooking.code || this.checkInBooking.id.substring(0, 8)}!`;
+      this.showCheckInModal = false;
+      this.checkInBooking = null;
+      
       await this.load();
+      
+      setTimeout(() => {
+        this.successMessage = null;
+      }, 5000);
     } catch (e: any) {
       const statusCode = e?.status || e?.error?.status || null;
       const errMsg = e?.error?.message || e?.message || '';
       if (statusCode === 401 || /unauthor/i.test(String(errMsg))) {
-        alert('Bạn chưa đăng nhập. Vui lòng đăng nhập lại.');
+        this.error = 'Bạn chưa đăng nhập. Vui lòng đăng nhập lại.';
         try { this.authState.setUser(null); } catch (_) {}
       } else {
-        alert(errMsg || 'Check-in thất bại');
+        this.error = errMsg || 'Check-in thất bại';
       }
+    } finally { 
+      this.checkingIn = false;
+      this.pendingAction = null; 
     }
-    finally { this.pendingAction = null; }
+  }
+
+  closeCheckInModal() {
+    this.showCheckInModal = false;
+    this.checkInBooking = null;
   }
 
   async doCancel(b: any) {
@@ -333,11 +416,31 @@ export class AdminBookingsComponent implements OnInit {
   canCheckIn(booking: any): boolean {
     // Use normalized status to decide
     const normalized = this.normalizeStatus(booking.status || booking.statusNormalized || booking.bookingStatus || '');
-    // Allow check-in only for bookings that are confirmed or pending (not already completed)
-    const allowed = ['CONFIRMED', 'PENDING_PAYMENT', 'PENDING'];
-    const can = allowed.includes(normalized);
-    console.log('🔍 canCheckIn debug:', { bookingId: booking.id, normalized, can });
-    return can && normalized !== 'CHECKED_IN';
+    
+    // Không cho check-in nếu đã check-in rồi
+    if (normalized === 'CHECKED_IN') {
+      return false;
+    }
+    
+    // Không cho check-in nếu đã hủy
+    if (normalized === 'CANCELLED' || normalized === 'EXPIRED') {
+      return false;
+    }
+    
+    // Cho phép check-in nếu đã thanh toán (COMPLETED) hoặc đã xác nhận (CONFIRMED)
+    // Cũng cho phép nếu PENDING nhưng có thể thanh toán tiền mặt
+    const allowedStatuses = ['COMPLETED', 'CONFIRMED'];
+    const canCheckInByStatus = allowedStatuses.includes(normalized);
+    
+    // Log để debug
+    console.log('🔍 canCheckIn debug:', { 
+      bookingId: booking.id?.substring(0, 8), 
+      normalized, 
+      canCheckInByStatus,
+      paymentStatus: this.getPaymentStatus(booking)
+    });
+    
+    return canCheckInByStatus;
   }
 
   canCancel(booking: any): boolean {
@@ -389,6 +492,56 @@ export class AdminBookingsComponent implements OnInit {
   goToPage(page: number) {
     this.page = page;
     this.load();
+  }
+
+  /**
+   * Lấy trạng thái thanh toán từ booking object
+   */
+  getPaymentStatus(booking: any): string {
+    // Ưu tiên lấy từ payment object nếu có
+    if (booking.payment?.status) {
+      return booking.payment.status.toUpperCase();
+    }
+    
+    // Fallback: suy luận từ trạng thái booking
+    const bookingStatus = this.normalizeStatus(booking.status || booking.statusNormalized || '');
+    
+    if (bookingStatus === 'COMPLETED' || bookingStatus === 'CHECKED_IN') {
+      return 'COMPLETED';
+    } else if (bookingStatus === 'PENDING' || bookingStatus === 'PENDING_PAYMENT' || bookingStatus === 'CONFIRMED') {
+      return 'PENDING';
+    } else if (bookingStatus === 'CANCELLED') {
+      return 'FAILED';
+    }
+    
+    return '';
+  }
+
+  /**
+   * Lấy nhãn hiển thị cho trạng thái thanh toán
+   */
+  getPaymentStatusLabel(booking: any): string {
+    const status = this.getPaymentStatus(booking);
+    const labelMap: Record<string, string> = {
+      'COMPLETED': '✓ Đã thanh toán',
+      'PENDING': '⏳ Chờ thanh toán',
+      'FAILED': '✗ Thất bại',
+    };
+    return labelMap[status] || 'Chưa rõ';
+  }
+
+  /**
+   * Suy luận trạng thái thanh toán từ trạng thái booking
+   */
+  private inferPaymentStatusFromBooking(bookingStatus: string): string {
+    if (bookingStatus === 'COMPLETED' || bookingStatus === 'CHECKED_IN') {
+      return 'completed';
+    } else if (bookingStatus === 'PENDING' || bookingStatus === 'PENDING_PAYMENT' || bookingStatus === 'CONFIRMED') {
+      return 'pending';
+    } else if (bookingStatus === 'CANCELLED') {
+      return 'failed';
+    }
+    return 'pending';
   }
 }
 

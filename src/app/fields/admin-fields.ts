@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { FieldsService, Field } from '../services/fields.service';
 import { AuthStateService } from '../services/auth-state.service';
+import { IdEncoderService } from '../services/id-encoder.service';
 
 @Component({
   selector: 'app-admin-fields',
@@ -16,7 +17,12 @@ export class AdminFieldsComponent implements OnInit {
   loading = false;
   error: string | null = null;
 
-  constructor(private fieldsService: FieldsService, private router: Router, private authState: AuthStateService) {}
+  constructor(
+    private fieldsService: FieldsService, 
+    private router: Router, 
+    private authState: AuthStateService,
+    private idEncoder: IdEncoderService  // Service mã hóa ID
+  ) {}
 
   get isAdmin() { return this.authState.isAdmin(); }
 
@@ -46,7 +52,8 @@ export class AdminFieldsComponent implements OnInit {
   }
 
   onEdit(id: string) {
-    this.router.navigate([`/admin/fields/${id}/edit`]);
+    const encodedId = this.idEncoder.encode(id);  // Mã hóa ID trước khi hiển thị URL
+    this.router.navigate([`/admin/fields/${encodedId}/edit`]);
   }
 
   async onDelete(id: string) {

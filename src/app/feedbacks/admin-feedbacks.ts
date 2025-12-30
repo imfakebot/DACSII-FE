@@ -3,6 +3,7 @@ import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { FeedbacksService, FeedbackDto } from '../services/feedbacks.service';
+import { IdEncoderService } from '../services/id-encoder.service';
 
 @Component({
   selector: 'app-admin-feedbacks',
@@ -30,7 +31,8 @@ export class AdminFeedbacksComponent implements OnInit {
 
   constructor(
     private svc: FeedbacksService,
-    private router: Router
+    private router: Router,
+    private idEncoder: IdEncoderService  // Service mã hóa ID
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -82,7 +84,8 @@ export class AdminFeedbacksComponent implements OnInit {
   }
 
   viewDetail(id: string): void {
-    this.router.navigate(['/admin/feedback', id]);
+    const encodedId = this.idEncoder.encode(id);  // Mã hóa ID trước khi hiển thị URL
+    this.router.navigate(['/admin/feedback', encodedId]);
   }
 
   toggleQuickReply(id: string): void {

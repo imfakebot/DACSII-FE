@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterModule, Router } from '@angular/router';
 import { FieldsService } from '../services/fields.service';
 import { BranchesService, Branch } from '../services/branches.service';
 import { AuthStateService } from '../services/auth-state.service';
+import { IdEncoderService } from '../services/id-encoder.service';
 
 @Component({
   selector: 'app-admin-field-form',
@@ -17,8 +18,7 @@ export class AdminFieldFormComponent implements OnInit {
   id: string | null = null;
   model: any = { 
     name: '', 
-    description: '', 
-    fieldTypeId: '', 
+    description: '',     fieldTypeId: '', 
     branchId: '',
     utilityIds: [] 
   };
@@ -33,7 +33,14 @@ export class AdminFieldFormComponent implements OnInit {
   utilities: { id: number; name: string; price?: number }[] = [];
   utilitiesLoading = false;
 
-  constructor(private route: ActivatedRoute, private fieldsService: FieldsService, public router: Router, private authState: AuthStateService, private branchesSrv: BranchesService) {}
+  constructor(
+    private route: ActivatedRoute, 
+    private fieldsService: FieldsService, 
+    public router: Router, 
+    private authState: AuthStateService, 
+    private branchesSrv: BranchesService,
+    private idEncoder: IdEncoderService  // Service giải mã ID
+  ) {}
 
   get isAdmin() { return this.authState.isAdmin(); }
 
@@ -42,7 +49,10 @@ export class AdminFieldFormComponent implements OnInit {
       this.error = 'Bạn không có quyền.';
       return;
     }
-    this.id = this.route.snapshot.paramMap.get('id');
+    // Lấy ID đã mã hóa từ URL và giải mã
+    const encodedId = this.route.snapshot.paramMap.get('id');
+    this.id = encodedId ? this.idEncoder.decode(encodedId) : null;
+    
     this.loadFieldTypes();
     this.loadBranches();
     this.loadUtilities();

@@ -8,6 +8,7 @@ import { BookingsService, BookingResponse, CreateBookingDto } from '../services/
 import { AuthStateService } from '../services/auth-state.service';
 import { FieldReviewsComponent } from '../review/field-reviews';
 import { VoucherService, Voucher } from '../services/voucher.service';
+import { IdEncoderService } from '../services/id-encoder.service';
 
 /*
   DetailComponent (Tiếng Việt):
@@ -64,15 +65,36 @@ export class DetailComponent implements OnInit, OnDestroy {
     private bookingsService: BookingsService,
     public authState: AuthStateService,
     private voucherService: VoucherService,
+    private idEncoder: IdEncoderService,  // Service mã hóa/giải mã ID
     @Inject(PLATFORM_ID) private platformId: Object,
   ) {}
 
+  // Receive stats updates from `FieldReviewsComponent` and update header display
+  onReviewsStats(event: { averageRating: number | null; totalReviews: number }) {
+    if (!this.field) return;
+    // If child provides a concrete average, use it. If average is null it means the
+    // reviews page was empty (but backend may still report total) so we should not
+    // overwrite an existing `field.avgRating` with 0.
+    if (event.averageRating !== null && event.totalReviews > 0) {
+      this.field.avgRating = event.averageRating;
+    }
+  }
+
   async ngOnInit(){
-    const id = this.route.snapshot.paramMap.get('id');
-    if(!id){
+    // Lấy ID đã mã hóa từ URL
+    const encodedId = this.route.snapshot.paramMap.get('id');
+    if(!encodedId){
       this.pricingError = 'Không tìm thấy mã sân được yêu cầu.';
       return;
     }
+    
+    // Giải mã để có ID thật
+    const id = this.idEncoder.decode(encodedId);
+    if(!id){
+      this.pricingError = 'ID sân không hợp lệ.';
+      return;
+    }
+    
     try{
       this.field = await this.fieldsService.getFieldById(id);
       // Set duration mặc định ngay khi load để pricing có thể hoạt động

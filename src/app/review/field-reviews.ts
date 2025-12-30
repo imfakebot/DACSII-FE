@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { ReviewService, ReviewDto, PaginatedReviewResponse } from '../services/review.service';
@@ -13,6 +13,7 @@ import { ReviewService, ReviewDto, PaginatedReviewResponse } from '../services/r
 })
 export class FieldReviewsComponent implements OnInit {
   @Input() fieldId!: string;
+  @Output() statsChange = new EventEmitter<{ averageRating: number | null; totalReviews: number }>();
   
   reviews: ReviewDto[] = [];
   loading = false;
@@ -60,7 +61,12 @@ export class FieldReviewsComponent implements OnInit {
       this.reviews = response.data || [];
       this.total = response.total || 0;
       this.totalPages = Math.ceil(this.total / this.limit);
-      
+
+      // If backend provided an overall averageRating, prefer it for header display.
+      if (typeof response.averageRating === 'number' && response.averageRating > 0) {
+        this.averageRating = response.averageRating;
+      }
+
       this.calculateStats();
     } catch (err: any) {
       this.error = err?.error?.message || err?.message || 'Không thể tải đánh giá';
@@ -70,24 +76,42 @@ export class FieldReviewsComponent implements OnInit {
   }
 
   calculateStats(): void {
+    // Use backend total if available (supports pagination), otherwise fallback to current page length
+    this.totalReviews = this.total && this.total > 0 ? this.total : this.reviews.length;
+
+    // Reset distribution
+    this.ratingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+
     if (this.reviews.length === 0) {
-      this.averageRating = 0;
-      this.totalReviews = 0;
+      // No items on this page. If backend provided an overall average (set earlier in loadReviews),
+      // preserve it and synthesize a simple distribution so the bars can render in the UI.
+      if (this.averageRating && this.averageRating > 0 && this.totalReviews > 0) {
+        const rounded = Math.min(5, Math.max(1, Math.round(this.averageRating)));
+        this.ratingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+        this.ratingDistribution[rounded] = this.totalReviews;
+        try { this.statsChange.emit({ averageRating: this.averageRating, totalReviews: this.totalReviews }); } catch (e) {}
+      } else {
+        // No backend average either — keep average at 0 and emit null so parent does not overwrite
+        this.averageRating = 0;
+        try { this.statsChange.emit({ averageRating: null, totalReviews: this.totalReviews }); } catch (e) {}
+      }
       return;
     }
 
-    // Calculate average
+    // Calculate average from available page items
     const sum = this.reviews.reduce((acc, review) => acc + review.rating, 0);
     this.averageRating = sum / this.reviews.length;
-    this.totalReviews = this.total;
 
-    // Calculate distribution
-    this.ratingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    // Calculate distribution from page items
     this.reviews.forEach(review => {
-      if (review.rating >= 1 && review.rating <= 5) {
-        this.ratingDistribution[review.rating]++;
+      const r = Number(review.rating) || 0;
+      if (r >= 1 && r <= 5) {
+        this.ratingDistribution[r] = (this.ratingDistribution[r] || 0) + 1;
       }
     });
+
+    // Notify parent (detail page) about updated stats so header can reflect current values
+    try { this.statsChange.emit({ averageRating: this.averageRating, totalReviews: this.totalReviews }); } catch (e) {}
   }
 
   async nextPage(): Promise<void> {
@@ -117,7 +141,8 @@ export class FieldReviewsComponent implements OnInit {
 
   getRatingPercentage(rating: number): number {
     if (this.totalReviews === 0) return 0;
-    return (this.ratingDistribution[rating] / this.reviews.length) * 100;
+    // Use totalReviews as denominator so bar reflects overall distribution (when backend supplies total)
+    return (this.ratingDistribution[rating] / this.totalReviews) * 100;
   }
 
   formatDate(date: any): string {

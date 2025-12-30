@@ -4,6 +4,7 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FieldsService, Field } from '../services/fields.service';
 import { LocationsService, City } from '../services/locations.service';
+import { IdEncoderService } from '../services/id-encoder.service';
 
 /*
   FieldsListComponent (Tiếng Việt):
@@ -55,6 +56,7 @@ export class FieldsListComponent implements OnInit {
     private route: ActivatedRoute,
     private fieldsService: FieldsService,
     private locationsService: LocationsService,
+    private idEncoder: IdEncoderService,  // Service mã hóa ID
   ) {}
 
   async ngOnInit(){
@@ -94,8 +96,14 @@ export class FieldsListComponent implements OnInit {
     return this.fields.filter(f => this.isFootballField(f));
   }
 
-  viewDetail(id: any){ this.router.navigate(['/detail', id]); }
-  bookNow(id: any){ this.router.navigate(['/booking'], { queryParams: { fieldId: id } }); }
+  viewDetail(id: any){ 
+    const encodedId = this.idEncoder.encode(id);  // Mã hóa ID trước khi hiển thị URL
+    this.router.navigate(['/detail', encodedId]); 
+  }
+  bookNow(id: any){ 
+    const encodedId = this.idEncoder.encode(id);
+    this.router.navigate(['/booking'], { queryParams: { fieldId: encodedId } }); 
+  }
 
   // Xử lý nút tìm ở hero (hiện chỉ focus vào search)
   onHeroSearch(){

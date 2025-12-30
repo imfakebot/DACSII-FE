@@ -182,4 +182,18 @@ export class BookingsService {
   async createBookingByAdmin(payload: any): Promise<any> {
     return firstValueFrom(this.http.post<any>(`${this.baseUrl.getApiBaseUrl()}/bookings/management/create`, payload, this.authHeaders()));
   }
+
+  /**
+   * Lấy thông tin payment của một booking
+   * @param bookingId ID của booking
+   */
+  async getBookingPaymentInfo(bookingId: string): Promise<any> {
+    if (!this.isBrowser) {
+      console.warn('[BookingsService] SSR detected - skipping getBookingPaymentInfo network call');
+      return Promise.resolve(null);
+    }
+    // Backend có thể expose endpoint này hoặc include payment trong booking detail
+    // Tạm thời sẽ lấy từ booking detail
+    return firstValueFrom(this.http.get<any>(`${this.baseUrl.getApiBaseUrl()}/bookings/${bookingId}`, this.authHeaders()));
+  }
 }

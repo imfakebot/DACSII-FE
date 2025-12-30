@@ -4,6 +4,7 @@ import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FieldsService, Field } from '../services/fields.service';
 import { LocationsService, City } from '../services/locations.service';
+import { IdEncoderService } from '../services/id-encoder.service';
 
 type HallCategory = 'club' | 'training' | 'pro';
 type HallFilter = HallCategory | 'all';
@@ -47,6 +48,7 @@ export class TableTennisListComponent implements OnInit {
     private router: Router,
     private fieldsService: FieldsService,
     private locationsService: LocationsService,
+    private idEncoder: IdEncoderService,  // Service mã hóa ID
   ) {}
 
   async ngOnInit(){
@@ -88,7 +90,10 @@ export class TableTennisListComponent implements OnInit {
     return this.fields.filter(f => this.isTableTennisField(f));
   }
 
-  viewDetail(id: any){ this.router.navigate(['/detail', id]); }
+  viewDetail(id: any){ 
+    const encodedId = this.idEncoder.encode(id);  // Mã hóa ID trước khi hiển thị URL
+    this.router.navigate(['/detail', encodedId]); 
+  }
 
   onHeroSearch(){ return; }
 

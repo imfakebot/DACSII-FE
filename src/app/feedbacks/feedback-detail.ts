@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { FeedbacksService, FeedbackDto } from '../services/feedbacks.service';
 import { AuthStateService } from '../services/auth-state.service';
+import { IdEncoderService } from '../services/id-encoder.service';
 
 @Component({
   selector: 'app-feedback-detail',
@@ -13,7 +14,7 @@ import { AuthStateService } from '../services/auth-state.service';
   styleUrl: './feedback-detail.scss',
 })
 export class FeedbackDetailComponent implements OnInit {
-  feedbackId!: string;
+  feedbackId!: string;  // ID thật (đã giải mã) để gọi API
   feedback: FeedbackDto | null = null;
   loading = false;
   error: string | null = null;
@@ -30,16 +31,24 @@ export class FeedbackDetailComponent implements OnInit {
     private router: Router,
     private svc: FeedbacksService,
     private authState: AuthStateService,
+    private idEncoder: IdEncoderService  // Service mã hóa/giải mã ID
   ) {}
 
   async ngOnInit(): Promise<void> {
-    const idParam = this.route.snapshot.paramMap.get('id');
-    if (!idParam) {
+    // Lấy ID đã mã hóa từ URL
+    const encodedId = this.route.snapshot.paramMap.get('id');
+    if (!encodedId) {
       this.error = 'ID không hợp lệ';
       return;
     }
     
-    this.feedbackId = idParam;
+    // Giải mã để có ID thật dùng gọi API
+    this.feedbackId = this.idEncoder.decode(encodedId);
+    
+    if (!this.feedbackId) {
+      this.error = 'ID không hợp lệ';
+      return;
+    }
 
     // Determine whether current user is admin to toggle admin-only UI
     try {

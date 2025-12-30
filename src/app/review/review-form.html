@@ -1,12 +1,153 @@
-<div class="review-form">
-  <h3>Viết đánh giá</h3>
-  <div *ngIf="success" class="success">{{ success }}</div>
-  <div *ngIf="error" class="error">{{ error }}</div>
-  <label>Đánh giá (1-5)</label>
-  <input type="number" [(ngModel)]="rating" min="1" max="5" />
-  <label>Nhận xét</label>
-  <textarea [(ngModel)]="comment"></textarea>
-  <div>
-    <button (click)="submit()" [disabled]="loading">Gửi</button>
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 py-8 px-4">
+  <div class="max-w-3xl mx-auto">
+    
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <div class="inline-block p-4 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full mb-4 shadow-lg">
+        <svg class="w-12 h-12 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+        </svg>
+      </div>
+      <h1 class="text-4xl font-bold text-gray-900 mb-2">Đánh giá của bạn</h1>
+      <p class="text-gray-600">Chia sẻ trải nghiệm để giúp chúng tôi phục vụ tốt hơn</p>
+    </div>
+
+    <!-- Success Message -->
+    <div *ngIf="success" class="mb-6 bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 rounded-lg p-5 shadow-md animate-fadeIn">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-green-800 font-semibold">{{ success }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="mb-6 bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500 rounded-lg p-5 shadow-md animate-fadeIn">
+      <div class="flex items-center">
+        <div class="flex-shrink-0">
+          <svg class="h-6 w-6 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-red-800 font-semibold">{{ error }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Review Form Card -->
+    <div class="bg-white rounded-2xl shadow-xl p-8 space-y-8">
+      
+      <!-- Star Rating Section -->
+      <div class="text-center">
+        <label class="block text-lg font-semibold text-gray-900 mb-4">Đánh giá của bạn</label>
+        <div class="flex justify-center items-center gap-3 mb-3">
+          <button
+            *ngFor="let star of [1, 2, 3, 4, 5]"
+            type="button"
+            (click)="setRating(star)"
+            (mouseenter)="setHoveredStar(star)"
+            (mouseleave)="clearHover()"
+            class="transform transition-all duration-200 hover:scale-125 focus:outline-none">
+            <svg class="w-14 h-14 transition-colors duration-200" [ngClass]="getStarClass(star)" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+            </svg>
+          </button>
+        </div>
+        <p class="text-sm font-medium" [ngClass]="{
+          'text-red-600': rating <= 2,
+          'text-orange-600': rating === 3,
+          'text-yellow-600': rating === 4,
+          'text-green-600': rating === 5
+        }">
+          {{ rating === 1 ? 'Rất tệ' : rating === 2 ? 'Tệ' : rating === 3 ? 'Trung bình' : rating === 4 ? 'Tốt' : 'Xuất sắc' }}
+        </p>
+      </div>
+
+      <!-- Suggestion Tags Section -->
+      <div>
+        <label class="block text-lg font-semibold text-gray-900 mb-4">
+          <span class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+            </svg>
+            Chọn nhanh (tuỳ chọn)
+          </span>
+        </label>
+        <div class="flex flex-wrap gap-2">
+          <button
+            *ngFor="let tag of suggestionTags"
+            type="button"
+            (click)="toggleTag(tag.id)"
+            [ngClass]="{
+              'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg scale-105': tag.positive && isTagSelected(tag.id),
+              'bg-gradient-to-r from-red-500 to-rose-500 text-white shadow-lg scale-105': !tag.positive && isTagSelected(tag.id),
+              'bg-gray-100 text-gray-700 hover:bg-gray-200': !isTagSelected(tag.id)
+            }"
+            class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <span class="text-lg">{{ tag.icon }}</span>
+            <span>{{ tag.text }}</span>
+          </button>
+        </div>
+        <p class="mt-2 text-xs text-gray-500 italic">💡 Click để chọn/bỏ chọn các tiêu chí đánh giá</p>
+      </div>
+
+      <!-- Comment Section -->
+      <div>
+        <label for="comment" class="block text-lg font-semibold text-gray-900 mb-3">
+          <span class="flex items-center gap-2">
+            <svg class="w-5 h-5 text-purple-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M18 13V5a2 2 0 00-2-2H4a2 2 0 00-2 2v8a2 2 0 002 2h3l3 3 3-3h3a2 2 0 002-2zM5 7a1 1 0 011-1h8a1 1 0 110 2H6a1 1 0 01-1-1zm1 3a1 1 0 100 2h3a1 1 0 100-2H6z" clip-rule="evenodd"/>
+            </svg>
+            Nhận xét chi tiết
+          </span>
+        </label>
+        <textarea
+          id="comment"
+          [(ngModel)]="comment"
+          rows="6"
+          placeholder="Chia sẻ trải nghiệm của bạn về chất lượng sân, dịch vụ, nhân viên..."
+          class="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all resize-none text-gray-700 placeholder-gray-400"></textarea>
+        <p class="mt-2 text-xs text-gray-500">{{ comment.length }} ký tự</p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex gap-4">
+        <button
+          type="button"
+          (click)="submit()"
+          [disabled]="loading"
+          class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 disabled:from-gray-400 disabled:to-gray-500 text-white font-bold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 disabled:scale-100 transition-all duration-200 focus:outline-none focus:ring-4 focus:ring-blue-300 flex items-center justify-center gap-2">
+          <svg *ngIf="!loading" class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"/>
+          </svg>
+          <svg *ngIf="loading" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>{{ loading ? 'Đang gửi...' : 'Gửi đánh giá' }}</span>
+        </button>
+        <a
+          routerLink="/bookings"
+          class="px-6 py-4 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 flex items-center justify-center gap-2">
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+          </svg>
+          Quay lại
+        </a>
+      </div>
+
+    </div>
+
+    <!-- Footer Note -->
+    <div class="mt-6 text-center text-sm text-gray-500">
+      <p>🙏 Cảm ơn bạn đã dành thời gian đánh giá. Ý kiến của bạn rất quan trọng với chúng tôi!</p>
+    </div>
+
   </div>
 </div>

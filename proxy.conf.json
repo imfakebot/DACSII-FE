@@ -66,12 +66,6 @@
     "changeOrigin": true,
     "logLevel": "debug"
   },
-  "/feedbacks": {
-    "target": "http://localhost:3000",
-    "secure": false,
-    "changeOrigin": true,
-    "logLevel": "debug"
-  },
   "/branches": {
     "target": "http://localhost:3000",
     "secure": false,

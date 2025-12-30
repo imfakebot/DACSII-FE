@@ -1,10 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule } from '@angular/router';
+import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BookingsService } from '../services/bookings.service';
 import { PaymentService } from '../services/payment.service';
 import { AuthStateService } from '../services/auth-state.service';
+import { IdEncoderService } from '../services/id-encoder.service';
 
 @Component({
   selector: 'app-my-bookings',
@@ -35,7 +36,9 @@ export class MyBookingsComponent implements OnInit {
   constructor(
     private bookingsService: BookingsService,
     private payment: PaymentService,
-    private authState: AuthStateService
+    private authState: AuthStateService,
+    private router: Router,
+    private idEncoder: IdEncoderService
   ) {}
 
   ngOnInit() {
@@ -91,7 +94,60 @@ export class MyBookingsComponent implements OnInit {
         this.limit, 
         hasFilters ? filters : undefined
       );
-      this.bookings = response.data || [];
+      
+      // Map bookings with status normalization and enhanced data
+      this.bookings = (response.data || []).map((b: any) => {
+        let rawStatus = this.resolveStatus(b);
+        
+        console.log('[MyBookings] Booking raw data:', {
+          id: b.id?.substring(0, 8),
+          status_from_api: b.status,
+          check_in_at: b.check_in_at,
+          rawStatus: rawStatus,
+          entire_booking: b
+        });
+        
+        // Fallback: infer status from timestamps if status is empty
+        if (!rawStatus || rawStatus.trim() === '') {
+          if (b.check_in_at || b.checkInAt || b.checkedInAt) {
+            rawStatus = 'checked_in';
+            console.log('[MyBookings] ⚠️ STATUS RỖNG! Suy luận từ check_in_at → checked_in');
+          } else if (b.completed_at || b.completedAt) {
+            rawStatus = 'completed';
+          } else if (b.cancelled_at || b.cancelledAt || b.canceled_at) {
+            rawStatus = 'cancelled';
+          } else if (b.confirmed_at || b.confirmedAt) {
+            rawStatus = 'confirmed';
+          } else if (b.total_price && parseFloat(b.total_price) > 0) {
+            rawStatus = 'pending';
+          }
+        }
+        
+        const normalizedStatus = this.normalizeStatus(rawStatus);
+        
+        console.log('[MyBookings] ✅ Final:', `ID: ${b.id?.substring(0, 8)}, rawStatus: "${rawStatus}", normalized: "${normalizedStatus}", canReview: ${normalizedStatus === 'checked_in' || normalizedStatus === 'completed'}`);
+        
+        // Calculate duration if not provided
+        let duration = b.duration_minutes || b.duration || 0;
+        if (!duration && b.start_time && b.end_time) {
+          const start = new Date(b.start_time);
+          const end = new Date(b.end_time);
+          duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+        }
+        
+        return {
+          ...b,
+          status: normalizedStatus,
+          duration_minutes: duration,
+          field: {
+            name: b.field?.name || b.fieldName || '-',
+            branch: {
+              name: b.field?.branch?.name || b.branchName || '-'
+            }
+          }
+        };
+      });
+      
       this.totalPages = response.meta?.totalPages || 1;
       this.totalItems = response.meta?.totalItems || 0;
     } catch (e: any) {
@@ -262,5 +318,64 @@ export class MyBookingsComponent implements OnInit {
       style: 'currency',
       currency: 'VND'
     }).format(amount);
+  }
+
+  normalizeStatus(status: string): string {
+    if (!status) return 'pending';
+    const s = status.toString().trim().toLowerCase();
+    
+    // Map various status formats to normalized values
+    const statusMap: Record<string, string> = {
+      'pending_payment': 'pending',
+      'pending': 'pending',
+      'confirmed': 'confirmed',
+      'checked_in': 'checked_in',
+      'checkedin': 'checked_in',
+      'check_in': 'checked_in',
+      'completed': 'completed',
+      'cancelled': 'cancelled',
+      'canceled': 'cancelled',
+      'finished': 'finished',
+      'expired': 'expired'
+    };
+    
+    return statusMap[s] || s;
+  }
+
+  resolveStatus(booking: any): string {
+    if (!booking) return '';
+    
+    const candidates = [
+      booking.status,
+      booking.bookingStatus,
+      booking.booking_status,
+      booking.statusCode,
+      booking.status_code,
+      booking.state
+    ];
+    
+    for (const candidate of candidates) {
+      if (candidate && typeof candidate === 'string' && candidate.trim()) {
+        return candidate.trim();
+      }
+      if (candidate && typeof candidate === 'object') {
+        if (candidate.name) return String(candidate.name);
+        if (candidate.value) return String(candidate.value);
+        if (candidate.code) return String(candidate.code);
+      }
+    }
+    
+    return '';
+  }
+
+  canReview(booking: any): boolean {
+    // Can review if checked-in or completed (customer has used the field)
+    return booking.status === 'checked_in' || booking.status === 'completed';
+  }
+
+  goToReview(bookingId: string) {
+    // Encode booking ID and navigate to review page using Angular router
+    const encodedId = this.idEncoder.encode(bookingId);
+    this.router.navigate(['/review'], { queryParams: { bookingId: encodedId } });
   }
 }

@@ -344,7 +344,7 @@
 
   <!-- Reviews Section -->
   <section class="reviews-section" *ngIf="field">
-    <app-field-reviews [fieldId]="field.id"></app-field-reviews>
+    <app-field-reviews [fieldId]="field.id" (statsChange)="onReviewsStats($event)"></app-field-reviews>
   </section>
 </div>
 

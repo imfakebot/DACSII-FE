@@ -38,6 +38,8 @@ export const routes: Routes = [
 	{ path: 'admin/reviews', loadComponent: () => import('./review/admin-review').then(m => m.AdminReviewComponent) },
 	{ path: 'admin/utilities', loadComponent: () => import('./utility/admin-utilities').then(m => m.AdminUtilitiesComponent) },
 	{ path: 'admin/branches', loadComponent: () => import('./admin/admin-branches').then(m => m.AdminBranchesComponent) },
-	// fallback
-	{ path: '**', redirectTo: '' }
+	// 404 page
+	{ path: '404', loadComponent: () => import('./404/404').then(m => m.NotFoundComponent) },
+	// Wildcard route phải đặt cuối cùng
+	{ path: '**', redirectTo: '/404' }
 ];
