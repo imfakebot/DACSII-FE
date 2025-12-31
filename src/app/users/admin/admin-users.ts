@@ -33,6 +33,7 @@ export class AdminUsersComponent implements OnInit {
     gender: '',
     bio: '',
     branchId: '',
+    role: 'branch_manager', // default kept for backward compatibility
   };
   creating = false;
   // branches
@@ -148,11 +149,12 @@ export class AdminUsersComponent implements OnInit {
         gender: this.newEmployee.gender || undefined,
         bio: this.newEmployee.bio || undefined,
         branchId: this.newEmployee.branchId || undefined,
+          role: this.newEmployee.role || 'branch_manager',
       };
       const res = await this.adminUsersService.createEmployee(payload);
       this.success = res?.message || 'Tạo nhân viên thành công.';
       // reset form
-      this.newEmployee = { email: '', password: '', fullName: '', phoneNumber: '', gender: '', bio: '', branchId: '' };
+        this.newEmployee = { email: '', password: '', fullName: '', phoneNumber: '', gender: '', bio: '', branchId: '', role: 'branch_manager' };
       // reload list
       await this.loadUsers(this.page);
     } catch (err: any) {

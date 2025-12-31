@@ -25,6 +25,7 @@
         <i class="fa-solid fa-table-tennis-paddle-ball"></i> Bóng bàn
       </a>
 
+
       <!-- User dropdown -->
       <div *ngIf="authReady && userName && !isAdmin" class="relative group">
         <button class="flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 font-medium transition-all duration-300 focus:outline-none">
@@ -113,6 +114,17 @@
         </div>
       </div>
     </nav>
+
+    
+
+    
+      <!-- Notifications Bell (for logged-in users) -->
+      <a *ngIf="authReady && userName" [routerLink]="['/notifications']" routerLinkActive="text-brand font-bold bg-brand/5" class="relative flex items-center gap-2 px-3 py-2 rounded-lg text-gray-600 hover:text-brand hover:bg-brand/5 font-medium transition-all duration-300">
+        <i class="fa-solid fa-bell"></i> Thông báo
+        <span *ngIf="unreadCount > 0" class="absolute -top-1 -right-1 min-w-[20px] h-5 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full px-1.5 animate-pulse">
+          {{ unreadCount > 99 ? '99+' : unreadCount }}
+        </span>
+      </a>
 
     <!-- Mobile Menu Button (visible on small screens) -->
     <button (click)="toggleMobileMenu()" class="lg:hidden p-2 text-gray-600 hover:text-brand hover:bg-brand/5 rounded-lg transition-all duration-300">

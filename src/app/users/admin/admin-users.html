@@ -57,6 +57,13 @@
               <div class="hint" style="font-size: 0.85rem; color: #666; margin-top: 4px;">Không lấy được danh sách chi nhánh tự động — bạn có thể nhập ID thủ công.</div>
             </ng-template>
           </label>
+          <label>
+            <span class="label">Vai trò</span>
+            <select name="role" [(ngModel)]="newEmployee.role" required>
+              <option value="branch_manager">Quản lý chi nhánh</option>
+              <option value="staff">Nhân viên</option>
+            </select>
+          </label>
           <label class="full-width">
             <span class="label">Tiểu sử</span>
             <input name="bio" [(ngModel)]="newEmployee.bio" placeholder="Tiểu sử ngắn (tùy chọn)" />

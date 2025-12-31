@@ -450,21 +450,45 @@
 
 // Print Styles
 @media print {
-  .payment-success-container {
-    background: white;
-    padding: 1rem;
+  body {
+    margin: 0;
+    padding: 0;
   }
 
+  .payment-success-container {
+    background: white;
+    padding: 0;
+    min-height: auto;
+  }
+
+  // Hide everything except booking card
   .success-icon-wrapper,
   .success-message,
-  .action-buttons,
-  .notes-section {
-    display: none;
+  .action-buttons {
+    display: none !important;
   }
 
   .booking-card {
     box-shadow: none;
     border: 1px solid #e2e8f0;
+    margin: 0;
+    page-break-inside: avoid;
+  }
+
+  // Keep notes section visible in print
+  .notes-section {
+    page-break-inside: avoid;
+  }
+
+  // Optimize for print
+  .card-header {
+    background: white !important;
+    color: #0f172a !important;
+    border-bottom: 2px solid #667eea;
+  }
+
+  .info-row {
+    page-break-inside: avoid;
   }
 }
 

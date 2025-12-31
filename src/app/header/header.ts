@@ -1,7 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { AuthStateService } from '../services/auth-state.service';
+import { NotificationService } from '../services/notification.service';
+import { WebSocketService } from '../services/websocket.service';
 import { Subscription } from 'rxjs';
 
 
@@ -17,7 +19,7 @@ import { Subscription } from 'rxjs';
   templateUrl: './header.html',
   styleUrls: ['./header.scss']
 })
-export class HeaderComponent implements OnDestroy {
+export class HeaderComponent implements OnInit, OnDestroy {
   authReady = false;
   isRegister = false;
   userName: string | null = null;
@@ -27,10 +29,17 @@ export class HeaderComponent implements OnDestroy {
   showUserDropdown = false;
   // mobile menu state
   showMobileMenu = false;
+  // notification badge
+  unreadCount = 0;
   
   private subs: Subscription[] = [];
 
-  constructor(private router: Router, private authState: AuthStateService) {
+  constructor(
+    private router: Router,
+    private authState: AuthStateService,
+    private notificationService: NotificationService,
+    private wsService: WebSocketService
+  ) {
     // wait for auth initialization to avoid flicker of guest UI during SSR/client bootstrap
     this.subs.push(this.authState.ready$.subscribe(r => {
       this.authReady = !!r;
@@ -43,7 +52,38 @@ export class HeaderComponent implements OnDestroy {
       } catch {
         this.isAdmin = false;
       }
+
+      // Kết nối WebSocket khi user đăng nhập
+      if (this.userName) {
+        this.wsService.connect();
+        this.loadUnreadCount();
+      } else {
+        this.wsService.disconnect();
+        this.unreadCount = 0;
+      }
     }));
+
+    // Lắng nghe thông báo real-time để cập nhật badge
+    this.subs.push(
+      this.notificationService.getUnreadCount$().subscribe(count => {
+        this.unreadCount = count;
+      })
+    );
+  }
+
+  ngOnInit(): void {
+    // Load initial unread count if user is logged in
+    if (this.userName) {
+      this.loadUnreadCount();
+    }
+  }
+
+  async loadUnreadCount(): Promise<void> {
+    try {
+      this.unreadCount = await this.notificationService.getUnreadCount();
+    } catch (error) {
+      console.error('Failed to load unread count:', error);
+    }
   }
 
   onLogin(e?: Event){

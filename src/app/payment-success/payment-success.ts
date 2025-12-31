@@ -274,32 +274,46 @@ export class PaymentSuccessComponent implements OnInit {
   }
 
   /**
-   * Download ticket as PDF (mock implementation)
+   * Download ticket as PDF from backend
    */
   async downloadTicket() {
-    if (!this.bookingDetails) return;
+    if (!this.bookingDetails) {
+      alert('Không tìm thấy thông tin đặt sân');
+      return;
+    }
     
     this.downloadingTicket = true;
 
     try {
-      // Mock download delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Get booking ID
+      const bookingId = this.bookingDetails.id || this.bookingId;
+      if (!bookingId) {
+        throw new Error('Không tìm thấy mã đặt sân');
+      }
+
+      console.log('[PaymentSuccess] Downloading ticket for booking:', bookingId);
       
-      // In production, this would call backend API to generate PDF
-      // For now, we'll create a simple text receipt
-      const ticketContent = this.generateTicketText();
-      const blob = new Blob([ticketContent], { type: 'text/plain' });
-      const url = window.URL.createObjectURL(blob);
+      // Call backend to get PDF
+      const pdfBlob = await this.bookingsService.downloadTicket(bookingId);
+      
+      console.log('[PaymentSuccess] PDF blob received, size:', pdfBlob.size);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Ticket_${this.bookingId}.txt`;
+      link.download = `Ve-Dat-San-${bookingId.substring(0, 8)}.pdf`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
       
+      console.log('[PaymentSuccess] PDF downloaded successfully');
       alert('Vé đã được tải xuống!');
-    } catch (err) {
+    } catch (err: any) {
       console.error('[PaymentSuccess] Failed to download ticket:', err);
-      alert('Không thể tải vé. Vui lòng thử lại.');
+      const errorMsg = err?.message || 'Không thể tải vé';
+      alert(`Lỗi: ${errorMsg}. Vui lòng thử lại hoặc liên hệ hỗ trợ.`);
     } finally {
       this.downloadingTicket = false;
     }

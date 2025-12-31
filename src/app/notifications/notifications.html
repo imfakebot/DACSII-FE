@@ -69,10 +69,12 @@
       </div>
       <div class="notification-content">
         <h3 class="notification-title">{{ notification.title }}</h3>
-        <p class="notification-body" *ngIf="notification.body">{{ notification.body }}</p>
+        <p class="notification-body" *ngIf="notification.content || notification.body">
+          {{ notification.content || notification.body }}
+        </p>
         <span class="notification-time">
           <i class="far fa-clock"></i>
-          {{ formatDateTime(notification.created_at) }}
+          {{ formatDateTime(notification.created_at || notification.createdAt) }}
         </span>
       </div>
       <div class="notification-status" *ngIf="!notification.is_read">
@@ -87,7 +89,7 @@
       class="pagination-btn"
       (click)="prevPage()" 
       [disabled]="currentPage === 1">
-      <i class="fas fa-chevron-left"></i>
+      <i class="fas fa-chevron-left"><</i>
     </button>
     
     <button 
@@ -102,7 +104,7 @@
       class="pagination-btn"
       (click)="nextPage()" 
       [disabled]="currentPage === totalPages">
-      <i class="fas fa-chevron-right"></i>
+      <i class="fas fa-chevron-right">></i>
     </button>
     
     <span class="pagination-info">

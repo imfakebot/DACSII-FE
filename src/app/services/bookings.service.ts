@@ -196,4 +196,29 @@ export class BookingsService {
     // Tạm thời sẽ lấy từ booking detail
     return firstValueFrom(this.http.get<any>(`${this.baseUrl.getApiBaseUrl()}/bookings/${bookingId}`, this.authHeaders()));
   }
+
+  /**
+   * Download ticket PDF for a booking (requires auth)
+   */
+  async downloadTicket(bookingId: string): Promise<Blob> {
+    if (!this.isBrowser) {
+      throw new Error('SSR context - cannot download');
+    }
+    const url = `${this.baseUrl.getApiBaseUrl()}/bookings/${bookingId}/download`;
+    const token = localStorage.getItem('accessToken') || '';
+    
+    // Use fetch API to get blob response (simpler than HttpClient for binary data)
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': token ? `Bearer ${token}` : ''
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to download ticket: ${response.statusText}`);
+    }
+    
+    return await response.blob();
+  }
 }

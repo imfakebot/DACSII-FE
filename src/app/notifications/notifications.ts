@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { NotificationService, NotificationDto } from '../services/notification.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-notifications',
@@ -28,16 +29,54 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   
   // Auto refresh
   private refreshInterval: any = null;
+  private subscriptions: Subscription[] = [];
 
   constructor(private notificationService: NotificationService) {}
 
   async ngOnInit() {
     await this.loadNotifications();
     this.startAutoRefresh();
+    this.listenForNewNotifications();
   }
 
   ngOnDestroy() {
     this.stopAutoRefresh();
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  /**
+   * Lắng nghe thông báo mới real-time
+   */
+  private listenForNewNotifications(): void {
+    const sub = this.notificationService.getNewNotification$().subscribe(notification => {
+      if (notification) {
+        // Thêm thông báo mới vào đầu danh sách
+        this.notifications.unshift(notification);
+        
+        // Cập nhật unread count
+        this.unreadCount++;
+        
+        // Hiển thị toast hoặc notification
+        this.showNotificationToast(notification);
+      }
+    });
+    this.subscriptions.push(sub);
+  }
+
+  /**
+   * Hiển thị toast khi có thông báo mới
+   */
+  private showNotificationToast(notification: NotificationDto): void {
+    // Có thể dùng library như ngx-toastr hoặc tự làm
+    console.log('New notification:', notification);
+    
+    // Tạm thời dùng browser notification (cần permission)
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(notification.title, {
+        body: notification.content || notification.body || '',
+        icon: '/assets/logoHaiAnhEm.png'
+      });
+    }
   }
 
   async loadNotifications() {
@@ -48,14 +87,17 @@ export class NotificationsComponent implements OnInit, OnDestroy {
       const response = await this.notificationService.getNotifications(this.currentPage, this.limit);
       
       if (this.showUnreadOnly) {
-        this.notifications = response.data.filter(n => !n.is_read);
+        this.notifications = response.data.filter(n => !n.is_read && !n.isRead);
       } else {
         this.notifications = response.data;
       }
       
       this.totalItems = response.meta?.total || 0;
-      this.totalPages = response.meta?.totalPages || 1;
+      this.totalPages = response.meta?.lastPage || response.meta?.totalPages || 1;
       this.unreadCount = response.meta?.unreadCount || 0;
+      
+      // Cập nhật unread count trong service để header cũng cập nhật
+      this.notificationService.updateUnreadCount(this.unreadCount);
     } catch (e: any) {
       console.error('Error loading notifications:', e);
       this.error = e?.error?.message || e?.message || 'Không thể tải thông báo';
@@ -68,7 +110,14 @@ export class NotificationsComponent implements OnInit, OnDestroy {
     try {
       const response = await this.notificationService.markAllAsRead();
       this.successMessage = response.message || 'Đã đánh dấu tất cả là đã đọc';
-      await this.loadNotifications();
+      
+      // Cập nhật UI ngay lập tức
+      this.notifications.forEach(n => {
+        n.is_read = true;
+        n.isRead = true;
+      });
+      this.unreadCount = 0;
+      this.notificationService.updateUnreadCount(0);
       
       setTimeout(() => {
         this.successMessage = null;
@@ -123,40 +172,54 @@ export class NotificationsComponent implements OnInit, OnDestroy {
   }
 
   getNotificationIcon(notification: NotificationDto): string {
-    if (notification.title.includes('Đặt sân')) return 'fa-calendar-check';
-    if (notification.title.includes('Thanh toán')) return 'fa-credit-card';
-    if (notification.title.includes('Hủy')) return 'fa-times-circle';
-    if (notification.title.includes('Hoàn tiền')) return 'fa-money-bill-wave';
+    const title = notification.title.toLowerCase();
+    if (title.includes('đặt sân') || title.includes('booking')) return 'fa-calendar-check';
+    if (title.includes('thanh toán') || title.includes('payment')) return 'fa-credit-card';
+    if (title.includes('hủy') || title.includes('cancel')) return 'fa-times-circle';
+    if (title.includes('hoàn tiền') || title.includes('refund')) return 'fa-money-bill-wave';
+    if (title.includes('nhắc nhở') || title.includes('reminder')) return 'fa-clock';
     return 'fa-bell';
   }
 
   getNotificationClass(notification: NotificationDto): string {
-    if (notification.title.includes('thành công')) return 'success';
-    if (notification.title.includes('Hủy') || notification.title.includes('thất bại')) return 'error';
-    if (notification.title.includes('Nhắc nhở')) return 'warning';
+    const title = notification.title.toLowerCase();
+    if (title.includes('thành công') || title.includes('success')) return 'success';
+    if (title.includes('hủy') || title.includes('thất bại') || title.includes('failed')) return 'error';
+    if (title.includes('nhắc nhở') || title.includes('reminder')) return 'warning';
     return 'info';
   }
 
-  formatDateTime(isoString: string): string {
-    const date = new Date(isoString);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-
-    if (diffMins < 1) return 'Vừa xong';
-    if (diffMins < 60) return `${diffMins} phút trước`;
-    if (diffHours < 24) return `${diffHours} giờ trước`;
-    if (diffDays < 7) return `${diffDays} ngày trước`;
+  formatDateTime(isoString?: string): string {
+    if (!isoString) return 'N/A';
     
-    return date.toLocaleString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    try {
+      const date = new Date(isoString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) return 'N/A';
+      
+      const now = new Date();
+      const diffMs = now.getTime() - date.getTime();
+      const diffMins = Math.floor(diffMs / 60000);
+      const diffHours = Math.floor(diffMs / 3600000);
+      const diffDays = Math.floor(diffMs / 86400000);
+
+      if (diffMins < 1) return 'Vừa xong';
+      if (diffMins < 60) return `${diffMins} phút trước`;
+      if (diffHours < 24) return `${diffHours} giờ trước`;
+      if (diffDays < 7) return `${diffDays} ngày trước`;
+      
+      return date.toLocaleString('vi-VN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'N/A';
+    }
   }
 
   private startAutoRefresh() {
