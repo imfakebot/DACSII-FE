@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { BaseUrlService } from '../base_url';
 
 export interface CreateUtilityDto {
   name: string;
@@ -20,7 +21,7 @@ export interface UtilityDto {
 
 @Injectable({ providedIn: 'root' })
 export class UtilityService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
 
   private authHeaders(): { headers: HttpHeaders } {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -28,22 +29,22 @@ export class UtilityService {
   }
 
   async getAll(): Promise<UtilityDto[]> {
-    return firstValueFrom(this.http.get<UtilityDto[]>(`/utilities`));
+    return firstValueFrom(this.http.get<UtilityDto[]>(`${this.baseUrl.getApiBaseUrl()}/utilities`));
   }
 
   async getById(id: number): Promise<UtilityDto> {
-    return firstValueFrom(this.http.get<UtilityDto>(`/utilities/${id}`));
+    return firstValueFrom(this.http.get<UtilityDto>(`${this.baseUrl.getApiBaseUrl()}/utilities/${id}`));
   }
 
   async create(payload: CreateUtilityDto): Promise<UtilityDto> {
-    return firstValueFrom(this.http.post<UtilityDto>(`/utilities`, payload, this.authHeaders()));
+    return firstValueFrom(this.http.post<UtilityDto>(`${this.baseUrl.getApiBaseUrl()}/utilities`, payload, this.authHeaders()));
   }
 
   async update(id: number, payload: UpdateUtilityDto): Promise<UtilityDto> {
-    return firstValueFrom(this.http.put<UtilityDto>(`/utilities/${id}`, payload, this.authHeaders()));
+    return firstValueFrom(this.http.put<UtilityDto>(`${this.baseUrl.getApiBaseUrl()}/utilities/${id}`, payload, this.authHeaders()));
   }
 
   async delete(id: number): Promise<{ message: string }> {
-    return firstValueFrom(this.http.delete<{ message: string }>(`/utilities/${id}`, this.authHeaders()));
+    return firstValueFrom(this.http.delete<{ message: string }>(`${this.baseUrl.getApiBaseUrl()}/utilities/${id}`, this.authHeaders()));
   }
 }

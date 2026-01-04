@@ -1,22 +1,26 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { BaseUrlService } from '../base_url';
 
 export interface Branch { id: string; name: string }
 
 @Injectable({ providedIn: 'root' })
 export class BranchesService {
-  // A small helper that attempts a list of possible endpoints and returns the first successful array
-  private probes = [
-    '/branches',
-    '/branches/all',
-    '/branch',
-    '/branch/list',
-    '/branches/list',
-    '/locations/branches'
-  ];
+  constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
 
-  constructor(private http: HttpClient) {}
+  // A small helper that attempts a list of possible endpoints and returns the first successful array
+  private get probes() {
+    const base = this.baseUrl.getApiBaseUrl();
+    return [
+      `${base}/branches`,
+      `${base}/branches/all`,
+      `${base}/branch`,
+      `${base}/branch/list`,
+      `${base}/branches/list`,
+      `${base}/locations/branches`
+    ];
+  }
 
   async listBranches(): Promise<Branch[]> {
     for (const p of this.probes) {

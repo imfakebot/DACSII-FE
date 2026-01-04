@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { BaseUrlService } from '../base_url';
 
 export interface CreateReviewDto {
   bookingId: string;
@@ -49,7 +50,7 @@ export interface PaginatedReviewResponse {
 
 @Injectable({ providedIn: 'root' })
 export class ReviewService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
 
   private authHeaders(): { headers: HttpHeaders } {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -57,12 +58,12 @@ export class ReviewService {
   }
 
   async createReview(payload: CreateReviewDto): Promise<ReviewDto> {
-    return firstValueFrom(this.http.post<ReviewDto>(`/review`, payload, this.authHeaders()));
+    return firstValueFrom(this.http.post<ReviewDto>(`${this.baseUrl.getApiBaseUrl()}/review`, payload, this.authHeaders()));
   }
 
   async getReviewsByField(fieldId: string, page = 1, limit = 10): Promise<PaginatedReviewResponse> {
     const params = new HttpParams().set('page', String(page)).set('limit', String(limit));
-    const raw: any = await firstValueFrom(this.http.get(`/review/field/${fieldId}`, { params }));
+    const raw: any = await firstValueFrom(this.http.get(`${this.baseUrl.getApiBaseUrl()}/review/field/${fieldId}`, { params }));
     // Backend returns { data: [...], meta: { total, page, limit, averageRating } }
     const meta = raw?.meta || {};
     const mapped: PaginatedReviewResponse = {
@@ -76,6 +77,6 @@ export class ReviewService {
   }
 
   async deleteReview(id: string): Promise<{ message: string }> {
-    return firstValueFrom(this.http.delete<{ message: string }>(`/review/${id}`, this.authHeaders()));
+    return firstValueFrom(this.http.delete<{ message: string }>(`${this.baseUrl.getApiBaseUrl()}/review/${id}`, this.authHeaders()));
   }
 }

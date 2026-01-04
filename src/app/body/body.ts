@@ -1,13 +1,14 @@
 import { Component, OnInit } from "@angular/core";
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { FieldsService, Field } from '../services/fields.service';
 import { IdEncoderService } from '../services/id-encoder.service';
  
 @Component({
   selector: "app-body",
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, FormsModule],
   templateUrl: "./body.html",
   styleUrls: ["./body.scss"]
 })
@@ -17,6 +18,11 @@ export class BodyComponent implements OnInit {
   selectedNear: 'football' | 'tennis' | 'badminton' | 'tabletennis' | 'all' = 'football';
   selectedRecommend: 'football' | 'tennis' | 'badminton' | 'tabletennis' | 'all' = 'football';
   selectedTop: 'football' | 'tennis' | 'badminton' | 'tabletennis' | 'all' = 'football';
+  
+  // Tìm kiếm
+  searchQuery: string = '';
+  searchSport: string = '';
+  searchLocation: string = '';
 
   constructor(
     private fieldsService: FieldsService, 
@@ -137,7 +143,16 @@ export class BodyComponent implements OnInit {
     this.selectedTop = s;
   }
 
-  // Xử lý nút "Đặt ngay" trong khuyến mãi
-  
-  
+  // Xử lý tìm kiếm
+  onSearch() {
+    // Tạo params cho URL
+    const params: any = {};
+    if (this.searchQuery) params.q = this.searchQuery;
+    if (this.searchSport) params.sport = this.searchSport;
+    if (this.searchLocation) params.location = this.searchLocation;
+
+    // Chuyển đến trang list với query params
+    const sportRoute = this.searchSport || 'football';
+    this.router.navigate([`/${sportRoute}`], { queryParams: params });
+  }
 }

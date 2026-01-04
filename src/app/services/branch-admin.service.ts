@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { BaseUrlService } from '../base_url';
 
 export interface BranchDto {
   id: string;
@@ -64,7 +65,7 @@ export interface UpdateBranchDto {
 
 @Injectable({ providedIn: 'root' })
 export class BranchAdminService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
 
   private authHeaders(): { headers: HttpHeaders } {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -72,26 +73,26 @@ export class BranchAdminService {
   }
 
   async getAll(): Promise<BranchDto[]> {
-    return firstValueFrom(this.http.get<BranchDto[]>(`/branches`, this.authHeaders()));
+    return firstValueFrom(this.http.get<BranchDto[]>(`${this.baseUrl.getApiBaseUrl()}/branches`, this.authHeaders()));
   }
 
   async getById(id: string): Promise<BranchDto> {
-    return firstValueFrom(this.http.get<BranchDto>(`/branches/${id}`, this.authHeaders()));
+    return firstValueFrom(this.http.get<BranchDto>(`${this.baseUrl.getApiBaseUrl()}/branches/${id}`, this.authHeaders()));
   }
 
   async create(dto: CreateBranchDto): Promise<BranchDto> {
-    return firstValueFrom(this.http.post<BranchDto>(`/branches`, dto, this.authHeaders()));
+    return firstValueFrom(this.http.post<BranchDto>(`${this.baseUrl.getApiBaseUrl()}/branches`, dto, this.authHeaders()));
   }
 
   async update(id: string, dto: UpdateBranchDto): Promise<BranchDto> {
-    return firstValueFrom(this.http.put<BranchDto>(`/branches/${id}`, dto, this.authHeaders()));
+    return firstValueFrom(this.http.put<BranchDto>(`${this.baseUrl.getApiBaseUrl()}/branches/${id}`, dto, this.authHeaders()));
   }
 
   async remove(id: string): Promise<{message: string}> {
-    return firstValueFrom(this.http.delete<{message: string}>(`/branches/${id}`, this.authHeaders()));
+    return firstValueFrom(this.http.delete<{message: string}>(`${this.baseUrl.getApiBaseUrl()}/branches/${id}`, this.authHeaders()));
   }
 
   async getAvailableManagers(): Promise<AvailableManager[]> {
-    return firstValueFrom(this.http.get<AvailableManager[]>(`/branches/available-managers`, this.authHeaders()));
+    return firstValueFrom(this.http.get<AvailableManager[]>(`${this.baseUrl.getApiBaseUrl()}/branches/available-managers`, this.authHeaders()));
   }
 }

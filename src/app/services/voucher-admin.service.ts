@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { BaseUrlService } from '../base_url';
 
 @Injectable({ providedIn: 'root' })
 export class VoucherAdminService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
 
   private authHeaders() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -12,18 +13,18 @@ export class VoucherAdminService {
   }
 
   async getAll(): Promise<any[]> {
-    return firstValueFrom(this.http.get<any[]>(`/voucher`, this.authHeaders()));
+    return firstValueFrom(this.http.get<any[]>(`${this.baseUrl.getApiBaseUrl()}/voucher`, this.authHeaders()));
   }
 
   async getById(id: string): Promise<any> {
-    return firstValueFrom(this.http.get<any>(`/voucher/${id}`, this.authHeaders()));
+    return firstValueFrom(this.http.get<any>(`${this.baseUrl.getApiBaseUrl()}/voucher/${id}`, this.authHeaders()));
   }
 
   async create(payload: any): Promise<any> {
-    return firstValueFrom(this.http.post(`/voucher`, payload, this.authHeaders()));
+    return firstValueFrom(this.http.post(`${this.baseUrl.getApiBaseUrl()}/voucher`, payload, this.authHeaders()));
   }
 
   async remove(id: string): Promise<{ message: string }> {
-    return firstValueFrom(this.http.delete<{ message: string }>(`/voucher/${id}`, this.authHeaders()));
+    return firstValueFrom(this.http.delete<{ message: string }>(`${this.baseUrl.getApiBaseUrl()}/voucher/${id}`, this.authHeaders()));
   }
 }

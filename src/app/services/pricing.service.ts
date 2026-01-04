@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { BaseUrlService } from '../base_url';
 
 export interface CheckPriceDto {
   fieldId: string;
@@ -39,9 +40,9 @@ export interface CheckPriceResponseDto {
 
 @Injectable({ providedIn: 'root' })
 export class PricingService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
 
   async checkAvailability(payload: CheckPriceDto): Promise<CheckPriceResponseDto> {
-    return firstValueFrom(this.http.post<CheckPriceResponseDto>(`/pricing/check-availability`, payload));
+    return firstValueFrom(this.http.post<CheckPriceResponseDto>(`${this.baseUrl.getApiBaseUrl()}/pricing/check-availability`, payload));
   }
 }

@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { AuthStateService } from '../services/auth-state.service';
+import { AuthService } from '../services/auth.service';
 import { NotificationService } from '../services/notification.service';
 import { WebSocketService } from '../services/websocket.service';
 import { Subscription } from 'rxjs';
@@ -37,6 +38,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   constructor(
     private router: Router,
     private authState: AuthStateService,
+    private authService: AuthService,
     private notificationService: NotificationService,
     private wsService: WebSocketService
   ) {
@@ -100,9 +102,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
     this.router.navigate(['/Register/register']);
   }
 
-  onLogout(e?: Event){
+  async onLogout(e?: Event){
     if(e) e.preventDefault();
-    this.authState.setUser(null);
+    try {
+      await this.authService.logout();
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     this.router.navigate(['/Login/login']);
   }
 

@@ -1,0 +1,87 @@
+<div class="min-h-screen bg-gray-50">
+  <!-- Hero Section -->
+  <section class="bg-gradient-to-r from-brand to-brand-dark text-white py-20">
+    <div class="container mx-auto px-4">
+      <div class="max-w-3xl mx-auto text-center">
+        <h1 class="text-4xl md:text-5xl font-bold mb-6">Về chúng tôi</h1>
+        <p class="text-xl text-blue-100">
+          Nền tảng đặt sân thể thao hàng đầu Việt Nam, mang đến trải nghiệm tiện lợi và nhanh chóng
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Story Section -->
+  <section class="py-16">
+    <div class="container mx-auto px-4">
+      <div class="max-w-4xl mx-auto">
+        <div class="bg-white rounded-2xl shadow-lg p-8 md:p-12">
+          <h2 class="text-3xl font-bold text-gray-800 mb-6">Câu chuyện của chúng tôi</h2>
+          <div class="prose prose-lg max-w-none text-gray-600 space-y-4">
+            <p>
+              Sport Booking ra đời từ mong muốn giải quyết bài toán đặt sân thể thao phức tạp và mất thời gian. 
+              Chúng tôi hiểu rằng việc tìm kiếm và đặt sân phù hợp đôi khi trở thành rào cản với đam mê thể thao của nhiều người.
+            </p>
+            <p>
+              Với đội ngũ đam mê công nghệ và thể thao, chúng tôi đã xây dựng một nền tảng giúp kết nối người chơi 
+              với hàng trăm sân thể thao chất lượng trên toàn quốc. Từ bóng đá, tennis, cầu lông đến bóng bàn - 
+              tất cả chỉ trong vài cú chạm.
+            </p>
+            <p>
+              Sứ mệnh của chúng tôi là làm cho việc chơi thể thao trở nên dễ dàng hơn bao giờ hết, 
+              để mọi người có thể tập trung vào niềm vui và sức khỏe của mình.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="py-16 bg-white">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl font-bold text-center text-gray-800 mb-12">Tại sao chọn chúng tôi?</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
+        <div *ngFor="let feature of features" class="text-center p-6 rounded-xl hover:shadow-lg transition-shadow bg-gray-50">
+          <div class="w-16 h-16 bg-brand/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fa-solid {{feature.icon}} text-3xl text-brand"></i>
+          </div>
+          <h3 class="text-xl font-bold text-gray-800 mb-3">{{feature.title}}</h3>
+          <p class="text-gray-600">{{feature.description}}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="py-16 bg-gradient-to-r from-brand to-brand-dark text-white">
+    <div class="container mx-auto px-4">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-5xl mx-auto">
+        <div *ngFor="let stat of stats" class="text-center">
+          <div class="text-4xl md:text-5xl font-bold mb-2">{{stat.number}}</div>
+          <div class="text-blue-100 text-lg">{{stat.label}}</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact CTA -->
+  <section class="py-16">
+    <div class="container mx-auto px-4">
+      <div class="max-w-3xl mx-auto text-center bg-white rounded-2xl shadow-lg p-12">
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">Sẵn sàng bắt đầu?</h2>
+        <p class="text-gray-600 mb-8 text-lg">
+          Tham gia cùng hàng nghìn người dùng đang tận hưởng trải nghiệm đặt sân tiện lợi
+        </p>
+        <div class="flex gap-4 justify-center flex-wrap">
+          <a [routerLink]="['/']" class="px-8 py-3 bg-brand hover:bg-brand-dark text-white font-bold rounded-xl shadow-lg transition-all">
+            Đặt sân ngay
+          </a>
+          <a [routerLink]="['/contact']" class="px-8 py-3 bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold rounded-xl transition-all">
+            Liên hệ chúng tôi
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

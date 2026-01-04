@@ -26,6 +26,7 @@ export const routes: Routes = [
 	{ path: 'voucher', loadComponent: () => import('./voucher/voucher-check').then(m => m.VoucherCheckComponent) },
 	{ path: 'payment-success', loadComponent: () => import('./payment-success/payment-success').then(m => m.PaymentSuccessComponent) },
 	{ path: 'booking-success', loadComponent: () => import('./payment-success/payment-success').then(m => m.PaymentSuccessComponent) },
+	{ path: 'vnpay-return', loadComponent: () => import('./vnpay-return/vnpay-return').then(m => m.VnpayReturnComponent) },
 	{ path: 'admin/dashboard', loadComponent: () => import('./dashboard/dashboard').then(m => m.DashboardComponent) },
 	{ path: 'admin/users', loadComponent: () => import('./users/admin/admin-users').then(m => m.AdminUsersComponent) },
 	{ path: 'admin/fields', loadComponent: () => import('./fields/admin-fields').then(m => m.AdminFieldsComponent) },
@@ -38,6 +39,9 @@ export const routes: Routes = [
 	{ path: 'admin/reviews', loadComponent: () => import('./review/admin-review').then(m => m.AdminReviewComponent) },
 	{ path: 'admin/utilities', loadComponent: () => import('./utility/admin-utilities').then(m => m.AdminUtilitiesComponent) },
 	{ path: 'admin/branches', loadComponent: () => import('./admin/admin-branches').then(m => m.AdminBranchesComponent) },
+	// Static pages
+	{ path: 'about', loadComponent: () => import('./pages/about/about').then(m => m.AboutComponent) },
+	{ path: 'contact', loadComponent: () => import('./pages/contact/contact').then(m => m.ContactComponent) },
 	// 404 page
 	{ path: '404', loadComponent: () => import('./404/404').then(m => m.NotFoundComponent) },
 	// Wildcard route phải đặt cuối cùng

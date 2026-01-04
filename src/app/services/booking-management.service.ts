@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { BaseUrlService } from '../base_url';
 
 @Injectable({ providedIn: 'root' })
 export class BookingManagementService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
 
   private authHeaders() {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -12,16 +13,16 @@ export class BookingManagementService {
   }
 
   async createByAdmin(payload: any): Promise<any> {
-    return firstValueFrom(this.http.post(`/bookings/management/create`, payload, this.authHeaders()));
+    return firstValueFrom(this.http.post(`${this.baseUrl.getApiBaseUrl()}/bookings/management/create`, payload, this.authHeaders()));
   }
 
   async checkIn(bookingId: string): Promise<any> {
     // Backend expects { identifier: string }
-    return firstValueFrom(this.http.post(`/bookings/check-in`, { identifier: bookingId }, this.authHeaders()));
+    return firstValueFrom(this.http.post(`${this.baseUrl.getApiBaseUrl()}/bookings/check-in`, { identifier: bookingId }, this.authHeaders()));
   }
 
   async getAll(page = 1, limit = 10, status?: string): Promise<any> {
-    let q = `/bookings/management/all?page=${page}&limit=${limit}`;
+    let q = `${this.baseUrl.getApiBaseUrl()}/bookings/management/all?page=${page}&limit=${limit}`;
     if (status) q += `&status=${encodeURIComponent(status)}`;
     return firstValueFrom(this.http.get<any>(q, this.authHeaders()));
   }

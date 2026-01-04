@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { BaseUrlService } from '../base_url';
 
 export interface CreateFeedbackDto { 
   title: string; 
@@ -66,9 +67,7 @@ export interface FeedbackDto {
 
 @Injectable({ providedIn: 'root' })
 export class FeedbacksService {
-  private readonly baseUrl = 'http://localhost:3000';
-
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
 
   private authHeaders(): { headers: HttpHeaders } {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -76,20 +75,20 @@ export class FeedbacksService {
   }
 
   async create(payload: CreateFeedbackDto): Promise<FeedbackDto> {
-    return firstValueFrom(this.http.post<FeedbackDto>(`${this.baseUrl}/feedbacks`, payload, this.authHeaders()));
+    return firstValueFrom(this.http.post<FeedbackDto>(`${this.baseUrl.getApiBaseUrl()}/feedbacks`, payload, this.authHeaders()));
   }
 
   async getMyFeedbacks(): Promise<FeedbackDto[]> {
-    return firstValueFrom(this.http.get<FeedbackDto[]>(`${this.baseUrl}/feedbacks/me`, this.authHeaders()));
+    return firstValueFrom(this.http.get<FeedbackDto[]>(`${this.baseUrl.getApiBaseUrl()}/feedbacks/me`, this.authHeaders()));
   }
 
   // Admin
   async getAllAdmin(): Promise<FeedbackDto[]> {
-    return firstValueFrom(this.http.get<FeedbackDto[]>(`${this.baseUrl}/feedbacks/admin/all`, this.authHeaders()));
+    return firstValueFrom(this.http.get<FeedbackDto[]>(`${this.baseUrl.getApiBaseUrl()}/feedbacks/admin/all`, this.authHeaders()));
   }
 
   async getDetail(id: string): Promise<FeedbackDto> {
-    const raw = await firstValueFrom(this.http.get<FeedbackDto>(`${this.baseUrl}/feedbacks/${id}`, this.authHeaders()));
+    const raw = await firstValueFrom(this.http.get<FeedbackDto>(`${this.baseUrl.getApiBaseUrl()}/feedbacks/${id}`, this.authHeaders()));
 
     console.log('[FeedbacksService] Raw response from backend:', JSON.stringify(raw, null, 2));
 
@@ -124,6 +123,6 @@ export class FeedbacksService {
   }
 
   async reply(id: string, dto: ReplyFeedbackDto): Promise<FeedbackResponseDto> {
-    return firstValueFrom(this.http.post<FeedbackResponseDto>(`${this.baseUrl}/feedbacks/${id}/reply`, dto, this.authHeaders()));
+    return firstValueFrom(this.http.post<FeedbackResponseDto>(`${this.baseUrl.getApiBaseUrl()}/feedbacks/${id}/reply`, dto, this.authHeaders()));
   }
 }

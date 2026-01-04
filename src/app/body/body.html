@@ -22,24 +22,35 @@
     <div class="container mx-auto max-w-5xl bg-white rounded-2xl shadow-2xl p-4 lg:p-6 flex flex-col lg:flex-row gap-4 items-center border border-gray-100">
       <div class="flex-1 w-full relative">
         <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
-        <input type="text" placeholder="Tìm kiếm sân thể thao, tên địa điểm, khu vực..." class="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand/50 outline-none transition-all">
+        <input 
+          type="text" 
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="onSearch()"
+          placeholder="Tìm kiếm sân thể thao, tên địa điểm, khu vực..." 
+          class="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand/50 outline-none transition-all">
       </div>
       <div class="w-full lg:w-auto flex gap-4">
-        <select class="flex-1 lg:w-48 py-3 px-4 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand/50 outline-none cursor-pointer">
-          <option>Môn thể thao</option>
-          <option>Bóng đá</option>
-          <option>Tennis</option>
-          <option>Cầu lông</option>
-          <option>Bóng bàn</option>
+        <select 
+          [(ngModel)]="searchSport"
+          class="flex-1 lg:w-48 py-3 px-4 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand/50 outline-none cursor-pointer">
+          <option value="">Môn thể thao</option>
+          <option value="football">Bóng đá</option>
+          <option value="tennis">Tennis</option>
+          <option value="badminton">Cầu lông</option>
+          <option value="table-tennis">Bóng bàn</option>
         </select>
-        <select class="flex-1 lg:w-48 py-3 px-4 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand/50 outline-none cursor-pointer">
-          <option>Khu vực</option>
-          <option>Hà Nội</option>
-          <option>Đà Nẵng</option>
-          <option>TP. Hồ Chí Minh</option>
+        <select 
+          [(ngModel)]="searchLocation"
+          class="flex-1 lg:w-48 py-3 px-4 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand/50 outline-none cursor-pointer">
+          <option value="">Khu vực</option>
+          <option value="hanoi">Hà Nội</option>
+          <option value="danang">Đà Nẵng</option>
+          <option value="hcm">TP. Hồ Chí Minh</option>
         </select>
       </div>
-      <button class="w-full lg:w-auto px-8 py-3 bg-brand hover:bg-brand-dark text-white font-bold rounded-xl shadow-lg shadow-brand/30 transition-all duration-300 transform hover:-translate-y-1">
+      <button 
+        (click)="onSearch()"
+        class="w-full lg:w-auto px-8 py-3 bg-brand hover:bg-brand-dark text-white font-bold rounded-xl shadow-lg shadow-brand/30 transition-all duration-300 transform hover:-translate-y-1">
         Tìm kiếm
       </button>
     </div>

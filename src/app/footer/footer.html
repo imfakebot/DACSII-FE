@@ -1,74 +1,60 @@
 ﻿<footer class="bg-slate-900 text-white pt-16 pb-8">
   <div class="container mx-auto px-4">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
-      <!-- Cột 1: Logo + thông tin liên hệ -->
-      <div class="space-y-4">
-        <div class="flex items-center gap-2 mb-4">
+    <!-- Switch to 3 equal columns on large screens to avoid empty right space -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12 mb-12 items-start">
+      <!-- Column 1: Logo + info -->
+      <div class="space-y-4 max-w-md">
+        <div class="flex items-center gap-3 mb-2">
           <img src="/assets/logoHaiAnhEm.png" alt="Logo" class="w-12 h-12 rounded-full border-2 border-white/20" />
           <span class="text-xl font-bold text-white">Sport Booking</span>
         </div>
         <p class="text-gray-400 text-sm leading-relaxed">
           Nền tảng đặt sân thể thao hàng đầu, mang đến trải nghiệm tiện lợi và nhanh chóng cho cộng đồng yêu thể thao.
         </p>
-        <div class="space-y-2 text-gray-300 text-sm">
+        <div class="space-y-3 text-gray-300 text-sm pt-2">
           <p class="flex items-start gap-3">
-            <i class="fa-solid fa-location-dot mt-1 text-brand"></i>
-            <span>{{ dress || 'Số 1, Đại Cồ Việt, Hai Bà Trưng, Hà Nội' }}</span>
+            <i class="fa-solid fa-location-dot mt-1 text-brand flex-shrink-0"></i>
+            <span>Thành phố Đà Nẵng 🏛️</span>
           </p>
           <p class="flex items-center gap-3">
-            <i class="fa-solid fa-phone text-brand"></i>
-            <span>{{ hotline || '1900 123 456' }}</span>
+            <i class="fa-solid fa-phone text-brand flex-shrink-0"></i>
+            <a href="tel:0765539316" class="hover:text-brand transition-colors">0765539316</a>
           </p>
           <p class="flex items-center gap-3">
-            <i class="fa-solid fa-envelope text-brand"></i>
-            <span>{{ email || 'contact@haianhem.com' }}</span>
+            <i class="fa-solid fa-envelope text-brand flex-shrink-0"></i>
+            <a href="mailto:linhtvt24it@vku.udn.vn" class="hover:text-brand transition-colors break-all">linhtvt24it@vku.udn.vn</a>
           </p>
         </div>
       </div>
 
-      <!-- Cột 2: Quy định & chính sách -->
+      <!-- Column 2: Liên kết nhanh (restored to original simple list) -->
       <div>
-        <h3 class="text-lg font-bold mb-6 border-b border-gray-700 pb-2 inline-block">Quy định & Chính sách</h3>
+        <h3 class="text-lg font-semibold mb-4 text-white">Liên kết nhanh</h3>
         <ul class="space-y-3 text-gray-400 text-sm">
-          <li><a href="#" class="hover:text-brand hover:pl-1 transition-all duration-300">Hướng dẫn sử dụng</a></li>
-          <li><a href="#" class="hover:text-brand hover:pl-1 transition-all duration-300">Quy chế hoạt động</a></li>
-          <li><a href="#" class="hover:text-brand hover:pl-1 transition-all duration-300">Chính sách thanh toán</a></li>
-          <li><a href="#" class="hover:text-brand hover:pl-1 transition-all duration-300">Bảo mật thông tin</a></li>
-          <li><a href="#" class="hover:text-brand hover:pl-1 transition-all duration-300">Giải quyết khiếu nại</a></li>
+          <li><a [routerLink]="['/']" class="hover:text-brand">Trang chủ</a></li>
+          <li><a [routerLink]="['/about']" class="hover:text-brand">Giới thiệu</a></li>
+          <li><a [routerLink]="['/contact']" class="hover:text-brand">Liên hệ</a></li>
         </ul>
       </div>
 
-      <!-- Cột 3: Liên kết nhanh -->
-      <div>
-        <h3 class="text-lg font-bold mb-6 border-b border-gray-700 pb-2 inline-block">Liên kết nhanh</h3>
-        <ul class="space-y-3 text-gray-400 text-sm">
-          <li><a [routerLink]="['/']" class="hover:text-brand hover:pl-1 transition-all duration-300">Trang chủ</a></li>
-          <li><a href="#" class="hover:text-brand hover:pl-1 transition-all duration-300">Giới thiệu</a></li>
-          <li><a href="#" class="hover:text-brand hover:pl-1 transition-all duration-300">Dành cho đối tác</a></li>
-          <li><a href="#" class="hover:text-brand hover:pl-1 transition-all duration-300">Tin tức & Sự kiện</a></li>
-          <li><a href="#" class="hover:text-brand hover:pl-1 transition-all duration-300">Tuyển dụng</a></li>
-        </ul>
-      </div>
-
-      <!-- Cột 4: Mạng xã hội & Tải ứng dụng -->
-      <div>
-        <h3 class="text-lg font-bold mb-6 border-b border-gray-700 pb-2 inline-block">Kết nối với chúng tôi</h3>
-        <div class="flex gap-4 mb-6">
-          <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all duration-300">
+      <!-- Column 3: Social + App badges + newsletter -->
+      <div class="">
+        <h3 class="text-lg font-semibold mb-4 text-white">Kết nối với chúng tôi</h3>
+        <div class="flex items-center gap-3 mb-6">
+          <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-blue-600 hover:text-white transition-all">
             <i class="fa-brands fa-facebook-f"></i>
           </a>
-          <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-pink-600 hover:text-white transition-all duration-300">
+          <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-pink-600 hover:text-white transition-all">
             <i class="fa-brands fa-instagram"></i>
           </a>
-          <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all duration-300">
+          <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-red-600 hover:text-white transition-all">
             <i class="fa-brands fa-youtube"></i>
           </a>
         </div>
-        <h4 class="text-sm font-bold mb-3 text-gray-300">Tải ứng dụng ngay</h4>
-        <div class="flex gap-2">
-           <div class="h-10 w-32 bg-gray-800 rounded border border-gray-700 flex items-center justify-center text-xs text-gray-400 cursor-pointer hover:border-gray-500">App Store</div>
-           <div class="h-10 w-32 bg-gray-800 rounded border border-gray-700 flex items-center justify-center text-xs text-gray-400 cursor-pointer hover:border-gray-500">Google Play</div>
-        </div>
+
+        
+
+      
       </div>
     </div>
 

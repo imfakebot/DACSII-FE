@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { BaseUrlService } from '../base_url';
 
 export interface VoucherCheckResponse {
   isValid: boolean;
@@ -27,14 +28,14 @@ export interface Voucher {
 
 @Injectable({ providedIn: 'root' })
 export class VoucherService {
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
 
   async checkVoucher(code: string, orderValue: number): Promise<VoucherCheckResponse> {
     const params = new HttpParams()
       .set('code', code)
       .set('orderValue', String(orderValue));
     return firstValueFrom(
-      this.http.get<VoucherCheckResponse>(`/voucher/check`, { params })
+      this.http.get<VoucherCheckResponse>(`${this.baseUrl.getApiBaseUrl()}/voucher/check`, { params })
     );
   }
 
@@ -42,7 +43,7 @@ export class VoucherService {
     const params = new HttpParams()
       .set('orderValue', String(orderValue));
     return firstValueFrom(
-      this.http.get<Voucher[]>(`/voucher/available`, { params })
+      this.http.get<Voucher[]>(`${this.baseUrl.getApiBaseUrl()}/voucher/available`, { params })
     );
   }
 }

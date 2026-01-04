@@ -1,4 +1,15 @@
-/* Styles are now handled by Tailwind CSS in the HTML */
+/* Minor overrides to ensure footer spacing and responsive behavior */
 :host {
   display: block;
+}
+
+.footer-links a {
+  transition: transform .15s ease, color .15s ease;
+}
+
+/* Make sure social icons don't push layout on small screens */
+@media (max-width: 768px) {
+  :host {
+    padding-bottom: 2rem;
+  }
 }

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, firstValueFrom } from 'rxjs';
 import { WebSocketService } from './websocket.service';
+import { BaseUrlService } from '../base_url';
 
 export interface NotificationDto {
   id: string;
@@ -35,7 +36,8 @@ export class NotificationService {
 
   constructor(
     private http: HttpClient,
-    private wsService: WebSocketService
+    private wsService: WebSocketService,
+    private baseUrl: BaseUrlService
   ) {
     // Lắng nghe thông báo real-time từ WebSocket
     this.wsService.onNotification().subscribe(notification => {
@@ -68,11 +70,11 @@ export class NotificationService {
 
   async getNotifications(page = 1, limit = 10): Promise<PaginatedNotificationResponse> {
     const params = new HttpParams().set('page', String(page)).set('limit', String(limit));
-    return firstValueFrom(this.http.get<PaginatedNotificationResponse>(`/notification`, { params, ...this.authHeaders() }));
+    return firstValueFrom(this.http.get<PaginatedNotificationResponse>(`${this.baseUrl.getApiBaseUrl()}/notification`, { params, ...this.authHeaders() }));
   }
 
   async markAllAsRead(): Promise<{ message: string }> {
-    return firstValueFrom(this.http.patch<{ message: string }>(`/notification/read-all`, {}, this.authHeaders()));
+    return firstValueFrom(this.http.patch<{ message: string }>(`${this.baseUrl.getApiBaseUrl()}/notification/read-all`, {}, this.authHeaders()));
   }
 
   async getUnreadCount(): Promise<number> {
