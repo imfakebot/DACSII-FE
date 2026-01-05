@@ -62,11 +62,25 @@ export interface Field {
 function mapField(raw: FieldBackend): Field {
   const normalizeImageUrl = (u?: string) => {
     if (!u) return '';
+    
+    // Skip invalid URLs containing 'undefined'
+    if (u.includes('undefined')) {
+      console.warn('[FieldsService] Skipping invalid image URL:', u);
+      return '';
+    }
+    
+    // Convert full backend URL to relative path for proxy
+    // e.g., "http://localhost:3000/uploads/abc.jpg" -> "/uploads/abc.jpg"
+    if (u.includes('/uploads/')) {
+      const uploadsIndex = u.indexOf('/uploads/');
+      return u.substring(uploadsIndex); // returns '/uploads/xxx'
+    }
+    
     // Convert backslashes to forward slashes
     let s = u.replace(/\\/g, '/');
     // If path contains 'src/assets', collapse everything before to '/assets/'
     s = s.replace(/.*src\/assets\//i, '/assets/');
-    // If it's a Windows absolute path like C:/.../assets/..., ensure leading '/'
+    // If it's a relative path, ensure leading '/'
     if (!s.startsWith('http') && !s.startsWith('/')) s = '/' + s;
     return s;
   };
@@ -87,7 +101,9 @@ function mapField(raw: FieldBackend): Field {
     ward: address?.ward?.name as any,
     city: address?.city?.name,
     ownerName: raw.owner?.full_name,
-    images: (raw.images || []).map(i => normalizeImageUrl(i.image_url)),
+    images: (raw.images || [])
+      .map(i => normalizeImageUrl(i.image_url))
+      .filter(url => url !== ''), // Filter out empty/invalid URLs
     status: raw.status,
     createdAt: raw.createdAt,
     avgRating: raw.avgRating ?? raw.avg_rating ?? undefined,
