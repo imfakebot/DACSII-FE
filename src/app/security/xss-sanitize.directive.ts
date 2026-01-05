@@ -32,9 +32,10 @@ export class XssSanitizeDirective implements ControlValueAccessor {
     private xss: XssSanitizerService
   ) {}
 
-  @HostListener('input', ['$event.target.value'])
-  onInput(value: string): void {
-    const sanitized = this.sanitize(value);
+  @HostListener('input', ['$event'])
+  onInput(event: Event): void {
+    const target = event.target as HTMLInputElement | HTMLTextAreaElement;
+    const sanitized = this.sanitize(target.value);
     this.onChange(sanitized);
   }
 
