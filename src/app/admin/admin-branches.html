@@ -92,7 +92,7 @@
             <div class="info-icon">👤</div>
             <div class="info-content">
               <div class="info-label">Quản lý</div>
-              <div class="info-value">{{ branch.manager?.fullName || 'Chưa gán' }}</div>
+              <div class="info-value">{{ branch.manager?.fullName || branch.manager?.full_name || 'Chưa gán' }}</div>
             </div>
           </div>
           
@@ -153,8 +153,16 @@
           <span>Quản lý</span>
           <select name="managerId" [(ngModel)]="form.managerId">
             <option [ngValue]="undefined">-- Chưa gán quản lý --</option>
-            <option *ngFor="let mgr of availableManagers" [ngValue]="mgr.id">{{ mgr.fullName }} ({{ mgr.phoneNumber }})</option>
-            <option *ngIf="currentBranch?.manager" [ngValue]="currentBranch?.managerId">{{ currentBranch?.manager?.fullName }} ({{ currentBranch?.manager?.phoneNumber }}) - Hiện tại</option>
+            <!-- Hiển thị manager hiện tại của branch đang edit -->
+            <ng-container *ngIf="editMode && currentBranch?.manager">
+              <option [ngValue]="currentBranch?.manager?.id || currentBranch?.managerId">
+                ({{ currentBranch?.manager?.fullName || currentBranch?.manager?.full_name }}) - Hiện tại
+              </option>
+            </ng-container>
+            <!-- Danh sách tất cả managers khác -->
+            <option *ngFor="let mgr of getAllManagersForSelection()" [ngValue]="mgr.id">
+              {{ mgr.fullName }}{{ mgr.phoneNumber ? ' (' + mgr.phoneNumber + ')' : '' }}
+            </option>
           </select>
         </label>
 

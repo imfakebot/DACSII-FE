@@ -1,10 +1,10 @@
 <div class="dashboard-container">
   <header class="dashboard-header">
     <h1>Dashboard Quản Trị</h1>
-    <p class="subtitle">Tổng quan hoạt động và doanh thu</p>
+    <p class="subtitle">Tổng quan hoạt động và doanh thu năm {{ revenueYear }}</p>
   </header>
 
-  <!-- Filters Section -->
+  <!-- Branch Filter -->
   <section class="filters-section">
     <div class="filters-group">
       <div class="filter-item">
@@ -15,33 +15,11 @@
         </select>
       </div>
 
-      <div class="filter-item">
-        <label for="startDate">Từ ngày</label>
-        <input
-          id="startDate"
-          type="date"
-          [(ngModel)]="startDate"
-          class="form-input"
-          placeholder="Chọn ngày bắt đầu"
-        />
-      </div>
-
-      <div class="filter-item">
-        <label for="endDate">Đến ngày</label>
-        <input
-          id="endDate"
-          type="date"
-          [(ngModel)]="endDate"
-          class="form-input"
-          placeholder="Chọn ngày kết thúc"
-        />
-      </div>
-
       <div class="filter-actions">
-        <button class="btn btn-primary" (click)="applyFilters()">
+        <button class="btn btn-primary" (click)="applyBranchFilter()">
           <i class="fa-solid fa-filter"></i> Lọc
         </button>
-        <button class="btn btn-secondary" (click)="clearFilters()">
+        <button class="btn btn-secondary" (click)="clearBranchFilter()">
           <i class="fa-solid fa-rotate-left"></i> Xóa bộ lọc
         </button>
       </div>
@@ -56,12 +34,12 @@
         <i class="fa-solid fa-sack-dollar"></i>
       </div>
       <div class="stat-content">
-        <p class="stat-label">Tổng Doanh Thu</p>
-        <h2 class="stat-value" *ngIf="!statsLoading">{{ formatCurrency(stats?.revenue || 0) }}</h2>
-        <div class="stat-loading" *ngIf="statsLoading">
+        <p class="stat-label">Tổng Doanh Thu Năm {{ revenueYear }}</p>
+        <h2 class="stat-value" *ngIf="!statsLoading && !revenueLoading">{{ formatCurrency(totalRevenue) }}</h2>
+        <div class="stat-loading" *ngIf="statsLoading || revenueLoading">
           <i class="fa-solid fa-spinner fa-spin"></i>
         </div>
-        <p class="stat-note">Đơn hàng đã hoàn thành</p>
+        <p class="stat-note">Tổng các tháng trong biểu đồ</p>
       </div>
     </div>
 
@@ -71,40 +49,28 @@
         <i class="fa-solid fa-receipt"></i>
       </div>
       <div class="stat-content">
-        <p class="stat-label">Tổng Giao Dịch</p>
-        <h2 class="stat-value" *ngIf="!statsLoading">{{ getTotalTransactions() }}</h2>
+        <p class="stat-label">Tổng Giao Dịch Năm {{ revenueYear }}</p>
+        <h2 class="stat-value" *ngIf="!statsLoading">{{ totalTransactions }}</h2>
         <div class="stat-loading" *ngIf="statsLoading">
           <i class="fa-solid fa-spinner fa-spin"></i>
         </div>
-        <div class="stat-breakdown" *ngIf="stats?.transactions">
-          <span class="breakdown-item success">
-            <i class="fa-solid fa-check-circle"></i> {{ stats?.transactions?.['COMPLETED'] || 0 }}
+        <div class="stat-breakdown">
+          <span class="breakdown-item success" title="Hoàn thành">
+            <i class="fa-solid fa-check-circle"></i> 
+            <span class="breakdown-label">Hoàn thành:</span>
+            {{ getTransactionCount('completed') }}
           </span>
-          <span class="breakdown-item pending">
-            <i class="fa-solid fa-clock"></i> {{ stats?.transactions?.['PENDING'] || 0 }}
+          <span class="breakdown-item pending" title="Chờ xử lý">
+            <i class="fa-solid fa-clock"></i> 
+            <span class="breakdown-label">Chờ xử lý:</span>
+            {{ getTransactionCount('pending') }}
           </span>
-          <span class="breakdown-item failed">
-            <i class="fa-solid fa-xmark-circle"></i> {{ stats?.transactions?.['FAILED'] || 0 }}
+          <span class="breakdown-item failed" title="Thất bại">
+            <i class="fa-solid fa-xmark-circle"></i> 
+            <span class="breakdown-label">Thất bại:</span>
+            {{ getTransactionCount('failed') }}
           </span>
         </div>
-      </div>
-    </div>
-
-    <!-- Occupancy Rate Card -->
-    <div class="stat-card occupancy-card">
-      <div class="stat-icon">
-        <i class="fa-solid fa-chart-pie"></i>
-      </div>
-      <div class="stat-content">
-        <p class="stat-label">Tỷ Lệ Lấp Đầy Sân</p>
-        <h2 class="stat-value" *ngIf="!occupancyLoading">{{ occupancyRate }}%</h2>
-        <div class="stat-loading" *ngIf="occupancyLoading">
-          <i class="fa-solid fa-spinner fa-spin"></i>
-        </div>
-        <div class="occupancy-bar">
-          <div class="occupancy-fill" [style.width.%]="occupancyRate"></div>
-        </div>
-        <p class="stat-note">Trung bình tháng này</p>
       </div>
     </div>
   </section>
@@ -211,25 +177,37 @@
       <div class="bookings-list" *ngIf="!bookingsLoading">
         <div class="booking-item" *ngFor="let booking of recentBookings">
           <div class="booking-info">
+            <div class="booking-header-row">
+              <div class="booking-code">
+                <i class="fa-solid fa-hashtag"></i>
+                <span class="code-text">{{ booking.code }}</span>
+              </div>
+              <span class="booking-status" [ngClass]="getStatusClass(booking.status)">
+                {{ getStatusLabel(booking.status) }}
+              </span>
+            </div>
             <div class="booking-customer">
               <i class="fa-solid fa-user"></i>
-              <span class="customer-name">{{ booking.customerName }}</span>
+              <div class="customer-details">
+                <span class="customer-name">{{ booking.customerName }}</span>
+                <span class="customer-email" *ngIf="booking.customerEmail">{{ booking.customerEmail }}</span>
+              </div>
             </div>
             <div class="booking-field">
               <i class="fa-solid fa-futbol"></i>
-              <span>{{ booking.fieldName }}</span>
+              <div class="field-details">
+                <span class="field-name">{{ booking.fieldName }}</span>
+                <span class="branch-name" *ngIf="booking.branchName">{{ booking.branchName }}</span>
+              </div>
             </div>
             <div class="booking-time">
               <i class="fa-solid fa-clock"></i>
               <span>{{ formatDateTime(booking.startTime) }}</span>
-              <span class="duration">({{ booking.duration }} phút)</span>
+              <span class="duration" *ngIf="booking.duration > 0">{{ booking.duration }} phút</span>
             </div>
           </div>
           <div class="booking-meta">
             <div class="booking-amount">{{ formatCurrency(booking.totalAmount) }}</div>
-            <span class="booking-status" [ngClass]="getStatusClass(booking.status)">
-              {{ getStatusLabel(booking.status) }}
-            </span>
           </div>
         </div>
 

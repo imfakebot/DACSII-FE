@@ -60,8 +60,14 @@ export class ContactComponent {
     {
       icon: 'fa-envelope',
       title: 'Email',
-      content: 'linhtvt24it@vku.udn.vn',
-      link: 'mailto:linhtvt24it@vku.udn.vn'
+      content: 'linhtvt.24it@vku.udn.vn',
+      link: 'mailto:linhtvt.24it@vku.udn.vn'
+    },
+    {
+      icon: 'fa-envelope',
+      title: 'Email',
+      content: 'anhtt.24it@vku.udn.vn',
+      link: 'mailto:anhtt.24it@vku.udn.vn'
     },
     {
       icon: 'fa-clock',

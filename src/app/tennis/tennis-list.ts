@@ -1,5 +1,5 @@
 import { Component, OnInit, Input } from '@angular/core';
-import { Router, RouterModule } from '@angular/router';
+import { Router, RouterModule, ActivatedRoute } from '@angular/router';
 import { CommonModule, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FieldsService, Field } from '../services/fields.service';
@@ -45,6 +45,7 @@ export class TennisListComponent implements OnInit {
 
   constructor(
     private router: Router,
+    private route: ActivatedRoute,
     private fieldsService: FieldsService,
     private locationsService: LocationsService,
     private idEncoder: IdEncoderService,  // Service mã hóa ID
@@ -59,6 +60,32 @@ export class TennisListComponent implements OnInit {
       this.tennisKeywords.unshift(this.presetType.toLowerCase());
     }
     this.computeTypeMetadata();
+    
+    // Đọc query params từ URL
+    this.route.queryParams.subscribe(params => {
+      if (params['q']) {
+        this.query = params['q'];
+      }
+      if (params['location']) {
+        const locationMap: Record<string, string> = {
+          'hanoi': 'Hà Nội', 'hcm': 'TP. Hồ Chí Minh', 'danang': 'Đà Nẵng',
+          'hochiminh': 'TP. Hồ Chí Minh', 'tphcm': 'TP. Hồ Chí Minh'
+        };
+        const locationKey = params['location'].toLowerCase();
+        const mappedCity = locationMap[locationKey];
+        if (mappedCity) {
+          const matchedCity = this.cities.find(c => this.normalizeVietnamese(c).includes(this.normalizeVietnamese(mappedCity)));
+          this.selectedCity = matchedCity || null;
+        } else {
+          const matchedCity = this.cities.find(c => this.normalizeVietnamese(c).includes(this.normalizeVietnamese(params['location'])));
+          this.selectedCity = matchedCity || null;
+        }
+      }
+    });
+  }
+  
+  private normalizeVietnamese(text: string): string {
+    return text.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').trim();
   }
 
   get cities(){
@@ -70,7 +97,9 @@ export class TennisListComponent implements OnInit {
 
   get displayedFields(){
     return this.tennisFields.filter(f => {
-      const matchesQuery = !this.query || (f.name + ' ' + (f.description||'')).toLowerCase().includes(this.query.toLowerCase());
+      const searchText = this.normalizeVietnamese(`${f.name || ''} ${f.description || ''} ${f.street || ''} ${f.ward || ''} ${f.city || ''}`);
+      const queryNormalized = this.normalizeVietnamese(this.query);
+      const matchesQuery = !this.query || searchText.includes(queryNormalized);
       const matchesCity = !this.selectedCity || f.city === this.selectedCity;
       const surface = this.getSurfaceBadge(f);
       const matchesSurface = this.surfaceFilter === 'all' || surface === this.surfaceFilter;

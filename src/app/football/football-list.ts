@@ -70,6 +70,52 @@ export class FieldsListComponent implements OnInit {
       this.footballKeywords.unshift(this.presetType.toLowerCase());
     }
     this.computeTypeMetadata();
+    
+    // Đọc query params từ URL (từ trang chủ tìm kiếm)
+    this.route.queryParams.subscribe(params => {
+      // Đọc search query
+      if (params['q']) {
+        this.query = params['q'];
+      }
+      // Đọc location filter
+      if (params['location']) {
+        // Map location code sang tên thành phố thực
+        const locationMap: Record<string, string> = {
+          'hanoi': 'Hà Nội',
+          'hcm': 'TP. Hồ Chí Minh',
+          'danang': 'Đà Nẵng',
+          'hochiminh': 'TP. Hồ Chí Minh',
+          'tphcm': 'TP. Hồ Chí Minh'
+        };
+        const locationKey = params['location'].toLowerCase();
+        // Tìm city match với location param
+        const mappedCity = locationMap[locationKey];
+        if (mappedCity) {
+          // Tìm trong danh sách cities hiện có
+          const matchedCity = this.cities.find(c => 
+            this.normalizeVietnamese(c).includes(this.normalizeVietnamese(mappedCity))
+          );
+          this.selectedCity = matchedCity || null;
+        } else {
+          // Thử match trực tiếp với tên thành phố
+          const matchedCity = this.cities.find(c => 
+            this.normalizeVietnamese(c).includes(this.normalizeVietnamese(params['location']))
+          );
+          this.selectedCity = matchedCity || null;
+        }
+      }
+    });
+  }
+  
+  // Helper: chuẩn hóa tiếng Việt để so sánh
+  private normalizeVietnamese(text: string): string {
+    return text
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/Đ/g, 'D')
+      .trim();
   }
 
   // Lấy danh sách thành phố hiện có
@@ -84,10 +130,20 @@ export class FieldsListComponent implements OnInit {
   // Danh sách sân sau khi áp filter/search
   get displayedFields(){
     return this.footballFields.filter(f => {
-      const matchesQuery = !this.query || (f.name + ' ' + (f.description||'')).toLowerCase().includes(this.query.toLowerCase());
+      // Tìm kiếm theo tên, mô tả, địa chỉ, quận/huyện
+      const searchText = this.normalizeVietnamese(
+        `${f.name || ''} ${f.description || ''} ${f.street || ''} ${f.ward || ''} ${f.city || ''}`
+      );
+      const queryNormalized = this.normalizeVietnamese(this.query);
+      const matchesQuery = !this.query || searchText.includes(queryNormalized);
+      
+      // Lọc theo thành phố
       const matchesCity = !this.selectedCity || f.city === this.selectedCity;
+      
+      // Lọc theo loại sân (5/7/11 người)
       const pitch = this.getPitchBadge(f);
       const matchesPitch = this.pitchFilter === 'all' || pitch === this.pitchFilter;
+      
       return matchesQuery && matchesCity && matchesPitch;
     });
   }

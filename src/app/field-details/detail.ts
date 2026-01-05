@@ -274,21 +274,16 @@ export class DetailComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Get total price - prefer pricing object (with voucher applied) over calculated price
+   * Get total price - use pricing object from BE API
    */
   get estimatedTotal(): number | null {
-    // If pricing object exists (with or without voucher), use its total_price
+    // If pricing object exists (from BE API), use its total_price
     if (this.pricing && this.pricing.pricing && typeof this.pricing.pricing.total_price === 'number') {
       return this.pricing.pricing.total_price;
     }
     
-    // Fallback: calculate from time slots if no pricing object yet
-    if (!this.time || !this.duration) return null;
-    
-    const pricePerHour = this.calculatePricePerHour(this.time);
-    const hours = this.duration / 60;
-    const total = pricePerHour * hours;
-    return Math.ceil(total / 1000) * 1000; // Round to nearest 1000
+    // No pricing yet - user needs to select time slot first
+    return null;
   }
 
   private buildIsoStart(): string | null {
@@ -320,69 +315,35 @@ export class DetailComponent implements OnInit, OnDestroy {
     this.checkingAvailability = true;
     this.pricingPending = true;
     try{
-      // Tính giá client-side dựa trên time_slots
-      const pricePerHour = this.calculatePricePerHour(this.time);
-      const hours = this.duration / 60;
-      const totalPrice = Math.ceil((pricePerHour * hours) / 1000) * 1000;
-      
-      // Tính end time
-      const startDate = new Date(`${this.date}T${this.time}:00`);
-      const endDate = new Date(startDate.getTime() + this.duration * 60000);
-      const endTime = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
-      
-      console.log('=== CLIENT-SIDE PRICING ===');
-      console.log('[Time]:', this.time);
-      console.log('[Price/hour]:', pricePerHour, 'VND');
-      console.log('[Duration]:', this.duration, 'minutes');
-      console.log('[Total]:', totalPrice, 'VND');
-      
-      // Build pricing object client-side
-      this.pricing = {
-        available: true,
-        field_name: this.field?.name || '',
-        booking_details: {
-          date: this.date,
-          start_time: this.time + ':00',
-          end_time: endTime + ':00',
-          duration: `${this.duration} phút`
-        },
-        pricing: {
-          price_per_hour: pricePerHour,
-          total_price: totalPrice,
-          currency: 'VND'
-        },
-        message: 'Giá đã được tính theo khung giờ'
-      } as any;
-      
-      // Gọi API chỉ để check availability (không dùng giá từ BE nữa)
+      // Gọi API để lấy giá THỰC TẾ từ BE (theo time_slots table)
       const payload: any = {
         fieldId: this.field.id,
         startTime: startIso,
         durationMinutes: this.duration,
       };
       
-      try {
-        await this.pricingService.checkAvailability(payload);
-        // Nếu API success thì giữ nguyên pricing đã tính
-      } catch (apiError: any) {
-        // Nếu API trả conflict/error thì throw để hiển thị lỗi
-        if (apiError.status === 409) {
-          throw apiError;
-        }
-        // Các lỗi khác thì vẫn giữ pricing client-side
-        console.warn('[API Check] Failed but keeping client-side pricing:', apiError);
-      }
+      console.log('=== CALLING BE PRICING API ===');
+      console.log('[Payload]:', payload);
       
-      console.log('[Response] pricing:', this.pricing?.pricing);
+      // Lấy giá từ BE - đây là giá chính xác theo cấu hình time_slots
+      const beResponse = await this.pricingService.checkAvailability(payload);
+      
+      console.log('[BE Response]:', beResponse);
+      console.log('[BE Price per hour]:', beResponse.pricing?.price_per_hour);
+      console.log('[BE Total price]:', beResponse.pricing?.total_price);
+      
+      // Dùng giá từ BE thay vì tính client-side
+      this.pricing = beResponse;
+      
       console.log('=== PRICING CHECK END ===');
 
-      // Nếu user đã chọn voucher hoặc có mã, kiểm tra voucher riêng và áp lên client-side
+      // Nếu user đã chọn voucher hoặc có mã, kiểm tra voucher riêng và áp lên giá từ BE
       const voucherCodeToCheck = this.selectedVoucher?.code || this.voucherCode;
       if (voucherCodeToCheck) {
         try {
           const orderValue = this.pricing?.pricing?.total_price ?? 0;
           const voucherRes = await this.voucherService.checkVoucher(voucherCodeToCheck, orderValue);
-          // Cập nhật UI với giá đã giảm (tính trên client)
+          // Cập nhật UI với giá đã giảm (dựa trên giá gốc từ BE)
           if (this.pricing && this.pricing.pricing) {
             this.pricing.pricing.original_price = this.pricing.pricing.total_price;
             this.pricing.pricing.discount = voucherRes.discountAmount;

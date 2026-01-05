@@ -56,7 +56,23 @@ export class AdminBranchesComponent implements OnInit {
     this.loading = true;
     this.error = null;
     try {
-      this.branches = await this.branchService.getAll();
+      // Lấy danh sách branches cơ bản
+      const basicBranches = await this.branchService.getAll();
+      
+      // Lấy chi tiết từng branch để có thông tin fields
+      this.branches = await Promise.all(
+        basicBranches.map(async (branch) => {
+          try {
+            const fullBranch = await this.branchService.getById(branch.id);
+            return fullBranch;
+          } catch {
+            // Nếu không lấy được chi tiết, dùng dữ liệu cơ bản
+            return branch;
+          }
+        })
+      );
+      
+      console.log('[AdminBranches] Loaded branches with fields:', this.branches);
     } catch (err: any) {
       console.error('[AdminBranches] loadBranches failed', err);
       this.error = err?.error?.message || err?.message || 'Không tải được danh sách chi nhánh.';
@@ -76,9 +92,42 @@ export class AdminBranchesComponent implements OnInit {
   async loadAvailableManagers(): Promise<void> {
     try {
       this.availableManagers = await this.branchService.getAvailableManagers();
+      console.log('[AdminBranches] Available managers:', this.availableManagers);
     } catch (err) {
       console.warn('[AdminBranches] loadAvailableManagers failed', err);
+      this.availableManagers = [];
     }
+  }
+
+  /**
+   * Lấy danh sách tất cả manager (có sẵn + đang gán cho các branch khác)
+   * để hiển thị trong dropdown khi edit
+   */
+  getAllManagersForSelection(): AvailableManager[] {
+    const managers: AvailableManager[] = [...this.availableManagers];
+    
+    // Thêm manager đang được gán cho các branch (trừ branch hiện tại nếu đang edit)
+    for (const branch of this.branches) {
+      if (branch.manager && branch.manager.id) {
+        // Nếu đang edit và manager này thuộc branch đang edit -> bỏ qua (sẽ hiển thị riêng)
+        if (this.editMode && this.currentBranch?.id === branch.id) {
+          continue;
+        }
+        
+        // Kiểm tra chưa có trong danh sách
+        const exists = managers.some(m => m.id === branch.manager!.id);
+        if (!exists) {
+          managers.push({
+            id: branch.manager.id,
+            fullName: branch.manager.fullName || branch.manager.full_name || 'N/A',
+            phoneNumber: branch.manager.phoneNumber || branch.manager.phone_number || '',
+            email: ''
+          });
+        }
+      }
+    }
+    
+    return managers;
   }
 
   async onCityChange(): Promise<void> {

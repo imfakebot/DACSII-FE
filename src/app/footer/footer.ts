@@ -16,6 +16,7 @@ import { RouterModule } from '@angular/router';
 })
 export class FooterComponent {
   hotline: string = '📞 0765539316';
-  email: string = '✉ linhtvt24it@vku.udn.vn';
+  email: string = '✉ linhtvt.24it@vku.udn.vn';  
+  email1: string = '✉ anhtt.24it@vku.udn.vn';  
   dress: string = 'Thành phố Đà Nẵng 🏠';
 }

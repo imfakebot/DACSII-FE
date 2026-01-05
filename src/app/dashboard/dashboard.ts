@@ -11,15 +11,13 @@ interface RevenueData {
   revenue: number;
 }
 
-interface StatsOverview {
-  revenue: number;
-  transactions: Record<string, number>;
-}
-
 interface RecentBooking {
   id: string;
-  customerName?: string;
+  code: string;
+  customerName: string;
+  customerEmail?: string;
   fieldName: string;
+  branchName?: string;
   startTime: string;
   duration: number;
   totalAmount: number;
@@ -34,10 +32,11 @@ interface RecentBooking {
   styleUrls: ['./dashboard.scss']
 })
 export class DashboardComponent implements OnInit {
-  // Stats
-  stats: StatsOverview | null = null;
+  // Stats - tính từ biểu đồ để đảm bảo khớp
+  totalRevenue = 0;
+  totalTransactions = 0;
+  transactionsByStatus: Record<string, number> = {};
   statsLoading = false;
-  statsError: string | null = null;
 
   // Revenue chart
   revenueData: RevenueData[] = [];
@@ -51,15 +50,9 @@ export class DashboardComponent implements OnInit {
   bookingsLoading = false;
   bookingsError: string | null = null;
 
-  // Occupancy rate (mock data for now)
-  occupancyRate = 0;
-  occupancyLoading = false;
-
-  // Filters
+  // Branch filter
   branches: Branch[] = [];
   selectedBranchId = '';
-  startDate = '';
-  endDate = '';
 
   // Chart dimensions
   chartWidth = 800;
@@ -74,11 +67,11 @@ export class DashboardComponent implements OnInit {
 
   async ngOnInit() {
     await this.loadBranches();
+    // Load chart TRƯỚC, rồi tính stats từ chart
+    await this.loadRevenueChart();
     await Promise.all([
-      this.loadStats(),
-      this.loadRevenueChart(),
-      this.loadRecentBookings(),
-      this.loadOccupancyRate()
+      this.loadStatsFromAPI(),
+      this.loadRecentBookings()
     ]);
   }
 
@@ -94,36 +87,8 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
-   * Load overview statistics (revenue + transactions)
-   */
-  async loadStats() {
-    this.statsLoading = true;
-    this.statsError = null;
-    try {
-      this.stats = await this.paymentService.getAdminStats(
-        this.startDate || undefined,
-        this.endDate || undefined,
-        this.selectedBranchId || undefined
-      );
-    } catch (error: any) {
-      console.error('[Dashboard] Failed to load stats:', error);
-      this.statsError = error?.error?.message || 'Không tải được thống kê';
-      // Fallback to mock data
-      this.stats = {
-        revenue: 15750000,
-        transactions: {
-          COMPLETED: 45,
-          PENDING: 12,
-          FAILED: 3
-        }
-      };
-    } finally {
-      this.statsLoading = false;
-    }
-  }
-
-  /**
-   * Load revenue chart data for current year
+   * Load revenue chart data
+   * Biểu đồ hiển thị doanh thu theo tháng của năm được chọn
    */
   async loadRevenueChart() {
     this.revenueLoading = true;
@@ -134,35 +99,64 @@ export class DashboardComponent implements OnInit {
         this.selectedBranchId || undefined
       );
       
+      console.log('[Dashboard] Revenue chart API response:', data);
+      
       // Fill missing months with 0
       this.revenueData = [];
       for (let i = 1; i <= 12; i++) {
         const monthData = data.find((d: any) => d.month === i);
         this.revenueData.push({
           month: i,
-          revenue: monthData ? monthData.revenue : 0
+          revenue: monthData ? Number(monthData.revenue) : 0
         });
       }
+      
+      // Tính tổng doanh thu từ biểu đồ
+      this.totalRevenue = this.revenueData.reduce((sum, item) => sum + item.revenue, 0);
+      
+      console.log('[Dashboard] Revenue data:', this.revenueData);
+      console.log('[Dashboard] Total revenue from chart:', this.totalRevenue);
     } catch (error: any) {
       console.error('[Dashboard] Failed to load revenue chart:', error);
       this.revenueError = error?.error?.message || 'Không tải được biểu đồ doanh thu';
-      // Fallback to mock data
-      this.revenueData = [
-        { month: 1, revenue: 1200000 },
-        { month: 2, revenue: 1500000 },
-        { month: 3, revenue: 1800000 },
-        { month: 4, revenue: 1600000 },
-        { month: 5, revenue: 2100000 },
-        { month: 6, revenue: 2400000 },
-        { month: 7, revenue: 2200000 },
-        { month: 8, revenue: 2600000 },
-        { month: 9, revenue: 2300000 },
-        { month: 10, revenue: 2700000 },
-        { month: 11, revenue: 2500000 },
-        { month: 12, revenue: 2900000 }
-      ];
+      this.revenueData = Array.from({ length: 12 }, (_, i) => ({ month: i + 1, revenue: 0 }));
+      this.totalRevenue = 0;
     } finally {
       this.revenueLoading = false;
+    }
+  }
+
+  /**
+   * Load transaction stats từ API
+   * Lấy số lượng giao dịch theo trạng thái của năm hiện tại
+   */
+  async loadStatsFromAPI() {
+    this.statsLoading = true;
+    try {
+      // Lấy stats cho cả năm hiện tại
+      const startOfYear = `${this.revenueYear}-01-01`;
+      const endOfYear = `${this.revenueYear}-12-31`;
+      
+      const stats = await this.paymentService.getAdminStats(
+        startOfYear,
+        endOfYear,
+        this.selectedBranchId || undefined
+      );
+      
+      console.log('[Dashboard] Stats API response:', stats);
+      
+      // Lấy transactions breakdown (lowercase từ BE)
+      this.transactionsByStatus = stats?.transactions || {};
+      this.totalTransactions = Object.values(this.transactionsByStatus).reduce((sum, count) => sum + count, 0);
+      
+      console.log('[Dashboard] Transactions by status:', this.transactionsByStatus);
+      console.log('[Dashboard] Total transactions:', this.totalTransactions);
+    } catch (error) {
+      console.error('[Dashboard] Failed to load stats:', error);
+      this.transactionsByStatus = {};
+      this.totalTransactions = 0;
+    } finally {
+      this.statsLoading = false;
     }
   }
 
@@ -173,65 +167,43 @@ export class DashboardComponent implements OnInit {
     this.bookingsLoading = true;
     this.bookingsError = null;
     try {
-      const response = await this.bookingsService.getAdminBookings(1, 10); // First page, 10 items
-      this.recentBookings = response.data.map((booking: any) => ({
-        id: booking.id,
-        customerName: booking.userProfile?.fullName || booking.userProfile?.email || 'Khách hàng',
-        fieldName: booking.field?.name || 'Sân chưa rõ',
-        startTime: booking.startTime,
-        duration: booking.durationMinutes,
-        totalAmount: booking.payment?.finalAmount || 0,
-        status: booking.status
-      }));
-    } catch (error: any) {
-      console.error('[Dashboard] Failed to load recent bookings:', error);
-      this.bookingsError = error?.error?.message || 'Không tải được danh sách booking';
-      // Fallback to mock data
-      this.recentBookings = [
-        {
-          id: '1',
-          customerName: 'Nguyễn Văn A',
-          fieldName: 'Sân A1',
-          startTime: new Date().toISOString(),
-          duration: 90,
-          totalAmount: 300000,
-          status: 'CONFIRMED'
-        },
-        {
-          id: '2',
-          customerName: 'Trần Thị B',
-          fieldName: 'Sân B2',
-          startTime: new Date(Date.now() - 3600000).toISOString(),
-          duration: 60,
-          totalAmount: 200000,
-          status: 'COMPLETED'
-        },
-        {
-          id: '3',
-          customerName: 'Lê Văn C',
-          fieldName: 'Sân C3',
-          startTime: new Date(Date.now() - 7200000).toISOString(),
-          duration: 120,
-          totalAmount: 400000,
-          status: 'PENDING'
+      const response = await this.bookingsService.getAdminBookings(1, 10);
+      console.log('[Dashboard] Bookings API response:', response);
+      
+      this.recentBookings = (response.data || []).map((booking: any) => {
+        // Tính duration từ start_time và end_time
+        let duration = 0;
+        const startTime = booking.start_time || booking.startTime;
+        const endTime = booking.end_time || booking.endTime;
+        
+        if (startTime && endTime) {
+          const start = new Date(startTime);
+          const end = new Date(endTime);
+          duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
         }
-      ];
+        
+        return {
+          id: booking.id,
+          code: booking.code || `BK-${(booking.id || '').substring(0, 8).toUpperCase()}`,
+          customerName: booking.userProfile?.fullName || booking.userProfile?.full_name || booking.customerName || 'Khách hàng',
+          customerEmail: booking.userProfile?.email || '',
+          fieldName: booking.field?.name || 'Sân chưa rõ',
+          branchName: booking.field?.branch?.name || '',
+          startTime: startTime,
+          duration: duration,
+          totalAmount: booking.payment?.finalAmount || booking.payment?.final_amount || booking.total_price || 0,
+          status: booking.status
+        };
+      });
+      
+      console.log('[Dashboard] Mapped bookings:', this.recentBookings);
+    } catch (error: any) {
+      console.error('[Dashboard] Failed to load bookings:', error);
+      this.bookingsError = error?.error?.message || 'Không tải được danh sách booking';
+      this.recentBookings = [];
     } finally {
       this.bookingsLoading = false;
     }
-  }
-
-  /**
-   * Load occupancy rate (mock data - backend doesn't have this API yet)
-   */
-  async loadOccupancyRate() {
-    this.occupancyLoading = true;
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Mock calculation: random between 60-85%
-    this.occupancyRate = Math.floor(Math.random() * 25) + 60;
-    this.occupancyLoading = false;
   }
 
   /**
@@ -299,6 +271,7 @@ export class DashboardComponent implements OnInit {
    * Format datetime
    */
   formatDateTime(isoString: string): string {
+    if (!isoString) return 'N/A';
     const date = new Date(isoString);
     return date.toLocaleString('vi-VN', {
       day: '2-digit',
@@ -340,39 +313,38 @@ export class DashboardComponent implements OnInit {
   }
 
   /**
-   * Get total transactions count
+   * Get transaction count by status (lowercase key from BE)
    */
-  getTotalTransactions(): number {
-    if (!this.stats?.transactions) return 0;
-    return Object.values(this.stats.transactions).reduce((sum, count) => sum + count, 0);
+  getTransactionCount(status: string): number {
+    return this.transactionsByStatus[status] || 0;
   }
 
   /**
-   * Change revenue chart year
+   * Change revenue chart year và reload tất cả
    */
   async changeYear(delta: number) {
     this.revenueYear += delta;
     await this.loadRevenueChart();
+    await this.loadStatsFromAPI();
   }
 
   /**
-   * Apply filters and reload all data
+   * Apply branch filter
    */
-  async applyFilters() {
+  async applyBranchFilter() {
+    console.log('[Dashboard] Applying branch filter:', this.selectedBranchId);
+    await this.loadRevenueChart();
     await Promise.all([
-      this.loadStats(),
-      this.loadRevenueChart(),
+      this.loadStatsFromAPI(),
       this.loadRecentBookings()
     ]);
   }
 
   /**
-   * Clear all filters
+   * Clear branch filter
    */
-  clearFilters() {
+  async clearBranchFilter() {
     this.selectedBranchId = '';
-    this.startDate = '';
-    this.endDate = '';
-    this.applyFilters();
+    await this.applyBranchFilter();
   }
 }
