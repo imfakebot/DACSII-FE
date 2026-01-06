@@ -189,8 +189,8 @@ export class AdminFieldFormComponent implements OnInit {
       if (this.model.utilityIds && this.model.utilityIds.length > 0) {
         payload.utilityIds = this.model.utilityIds;
       }
-      // Send status - convert enum to boolean if needed
-      if (this.model.status !== undefined) {
+      // Send status ONLY when UPDATING (UpdateFieldDto has status, CreateFieldDto doesn't)
+      if (this.id && this.model.status !== undefined) {
         payload.status = this.model.status === FieldStatus.ACTIVE || this.model.status === true;
       }
 
