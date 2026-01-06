@@ -34,6 +34,42 @@ interface FieldBackend {
   price_per_hour?: number;
 }
 
+// Enum trạng thái sân
+export enum FieldStatus {
+  ACTIVE = 'active',           // Hoạt động
+  INACTIVE = 'inactive',       // Tạm ngưng
+  MAINTENANCE = 'maintenance', // Bảo trì
+  CLOSED = 'closed'           // Tạm đóng
+}
+
+// Helper để lấy label tiếng Việt
+export function getFieldStatusLabel(status: FieldStatus | boolean): string {
+  if (typeof status === 'boolean') {
+    return status ? 'Hoạt động' : 'Tạm ngưng';
+  }
+  switch (status) {
+    case FieldStatus.ACTIVE: return 'Hoạt động';
+    case FieldStatus.INACTIVE: return 'Tạm ngưng';
+    case FieldStatus.MAINTENANCE: return 'Bảo trì';
+    case FieldStatus.CLOSED: return 'Tạm đóng';
+    default: return 'Không xác định';
+  }
+}
+
+// Helper để lấy CSS class
+export function getFieldStatusClass(status: FieldStatus | boolean): string {
+  if (typeof status === 'boolean') {
+    return status ? 'status-active' : 'status-inactive';
+  }
+  switch (status) {
+    case FieldStatus.ACTIVE: return 'status-active';
+    case FieldStatus.INACTIVE: return 'status-inactive';
+    case FieldStatus.MAINTENANCE: return 'status-maintenance';
+    case FieldStatus.CLOSED: return 'status-closed';
+    default: return 'status-unknown';
+  }
+}
+
 // Front-end mapped type
 export interface Field {
   id: string;
@@ -48,13 +84,15 @@ export interface Field {
   city?: string; // address.city.name
   ownerName?: string; // owner.full_name
   images: string[]; // array of image URLs
-  status: boolean;
+  status: boolean | FieldStatus; // Hỗ trợ cả boolean (legacy) và enum mới
   createdAt: string;
   avgRating?: number;
   pricePerHour?: number;
   utilities?: Array<{id: number; name: string; price?: number; description?: string}>;
   branchPhone?: string;
   managerName?: string;
+  branchId?: string; // ID chi nhánh
+  branch?: { id: string; name?: string }; // Branch info
   latitude?: number;
   longitude?: number;
 }
@@ -116,6 +154,8 @@ function mapField(raw: FieldBackend): Field {
     })) || [],
     branchPhone: branchPhone,
     managerName: manager?.fullName || manager?.full_name,
+    branchId: raw.branch?.id,
+    branch: raw.branch ? { id: raw.branch.id, name: raw.branch.name } : undefined,
     latitude: address?.latitude,
     longitude: address?.longitude,
   };

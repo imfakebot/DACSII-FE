@@ -1,33 +1,42 @@
 <div class="dashboard-container">
   <header class="dashboard-header">
     <h1>Dashboard Quản Trị</h1>
-    <p class="subtitle">Tổng quan hoạt động và doanh thu năm {{ revenueYear }}</p>
+    <p class="subtitle" *ngIf="canViewRevenue">Tổng quan hoạt động và doanh thu năm {{ revenueYear }}</p>
+    <p class="subtitle" *ngIf="!canViewRevenue">Tổng quan hoạt động đặt sân</p>
   </header>
 
-  <!-- Branch Filter -->
-  <section class="filters-section">
+  <!-- Branch Filter (chỉ hiện cho admin/manager) -->
+  <section class="filters-section" *ngIf="canViewRevenue">
     <div class="filters-group">
       <div class="filter-item">
         <label for="branchFilter">Chi nhánh</label>
-        <select id="branchFilter" [(ngModel)]="selectedBranchId" class="form-select">
+        <select 
+          id="branchFilter" 
+          [(ngModel)]="selectedBranchId" 
+          [disabled]="!canSelectBranch"
+          class="form-select"
+          [class.disabled]="!canSelectBranch">
           <option value="">-- Tất cả chi nhánh --</option>
           <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
         </select>
+        <p *ngIf="!canSelectBranch && userBranchId" class="filter-note">
+          <i class="fa-solid fa-info-circle"></i> Bạn chỉ xem được dữ liệu chi nhánh của mình
+        </p>
       </div>
 
       <div class="filter-actions">
         <button class="btn btn-primary" (click)="applyBranchFilter()">
           <i class="fa-solid fa-filter"></i> Lọc
         </button>
-        <button class="btn btn-secondary" (click)="clearBranchFilter()">
+        <button class="btn btn-secondary" (click)="clearBranchFilter()" *ngIf="canSelectBranch">
           <i class="fa-solid fa-rotate-left"></i> Xóa bộ lọc
         </button>
       </div>
     </div>
   </section>
 
-  <!-- Stats Overview Cards -->
-  <section class="stats-grid">
+  <!-- Stats Overview Cards (chỉ hiện cho admin/manager) -->
+  <section class="stats-grid" *ngIf="canViewRevenue">
     <!-- Revenue Card -->
     <div class="stat-card revenue-card">
       <div class="stat-icon">
@@ -75,8 +84,8 @@
     </div>
   </section>
 
-  <!-- Revenue Chart -->
-  <section class="chart-section">
+  <!-- Revenue Chart (chỉ hiện cho admin/manager) -->
+  <section class="chart-section" *ngIf="canViewRevenue">
     <div class="chart-card">
       <div class="chart-header">
         <div>

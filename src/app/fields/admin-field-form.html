@@ -23,6 +23,13 @@
             </select>
           </label>
 
+          <label>
+            <span class="label">Trạng thái *</span>
+            <select name="status" [(ngModel)]="model.status" required>
+              <option *ngFor="let opt of statusOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+          </label>
+
           <label class="full-width">
             <span class="label">Mô tả</span>
             <textarea name="description" [(ngModel)]="model.description"></textarea>

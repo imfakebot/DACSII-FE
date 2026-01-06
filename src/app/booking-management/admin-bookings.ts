@@ -1,16 +1,18 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BookingManagementService } from '../services/booking-management.service';
 import { BookingsService } from '../services/bookings.service';
 import { AuthStateService } from '../services/auth-state.service';
 import { IdEncoderService } from '../services/id-encoder.service';
+import { ZXingScannerModule } from '@zxing/ngx-scanner';
+import { BarcodeFormat } from '@zxing/library';
 
 @Component({
   selector: 'app-admin-bookings',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule],
+  imports: [CommonModule, RouterModule, FormsModule, ZXingScannerModule],
   templateUrl: './admin-bookings.html'
 })
 export class AdminBookingsComponent implements OnInit {
@@ -43,6 +45,15 @@ export class AdminBookingsComponent implements OnInit {
   checkInBooking: any = null;
   checkingIn = false;
 
+  // QR Scanner
+  showQrScanner = false;
+  qrScannerEnabled = false;
+  qrScanError: string | null = null;
+  qrScanSuccess: string | null = null;
+  allowedFormats = [BarcodeFormat.QR_CODE];
+  availableCameras: MediaDeviceInfo[] = [];
+  selectedCamera: MediaDeviceInfo | undefined = undefined;
+
   constructor(
     private mgmt: BookingManagementService, 
     private bookingsSrv: BookingsService, 
@@ -52,9 +63,11 @@ export class AdminBookingsComponent implements OnInit {
   ) {}
 
   get isAdmin() { return this.authState.isAdmin(); }
+  get canManage() { return this.authState.canManage(); }
+  get canAccessBookings() { return this.authState.canAccessBookings(); }
 
   ngOnInit(): void {
-    if (!this.isAdmin) {
+    if (!this.canAccessBookings) {
       this.error = 'Bạn không có quyền truy cập.';
       return;
     }
@@ -192,7 +205,7 @@ export class AdminBookingsComponent implements OnInit {
       const result = await this.bookingsSrv.checkIn(this.checkInBooking.id);
       console.log('[AdminBookings] checkIn response:', result);
       
-      this.successMessage = `Check-in thành công cho đơn ${this.checkInBooking.code || this.checkInBooking.id.substring(0, 8)}!`;
+      this.successMessage = 'Check-in thành công!';
       this.showCheckInModal = false;
       this.checkInBooking = null;
       
@@ -202,11 +215,14 @@ export class AdminBookingsComponent implements OnInit {
         this.successMessage = null;
       }, 5000);
     } catch (e: any) {
-      const statusCode = e?.status || e?.error?.status || null;
+      const statusCode = e?.status || e?.error?.status || e?.error?.statusCode || null;
       const errMsg = e?.error?.message || e?.message || '';
+      
       if (statusCode === 401 || /unauthor/i.test(String(errMsg))) {
         this.error = 'Bạn chưa đăng nhập. Vui lòng đăng nhập lại.';
         try { this.authState.setUser(null); } catch (_) {}
+      } else if (statusCode === 403 || /forbidden/i.test(String(errMsg))) {
+        this.error = 'Bạn không có quyền thực hiện check-in. Vui lòng liên hệ quản lý.';
       } else {
         this.error = errMsg || 'Check-in thất bại';
       }
@@ -219,6 +235,122 @@ export class AdminBookingsComponent implements OnInit {
   closeCheckInModal() {
     this.showCheckInModal = false;
     this.checkInBooking = null;
+  }
+
+  // ========== QR Scanner Methods ==========
+  
+  openQrScanner() {
+    this.showQrScanner = true;
+    this.qrScannerEnabled = true;
+    this.qrScanError = null;
+    this.qrScanSuccess = null;
+  }
+
+  closeQrScanner() {
+    this.showQrScanner = false;
+    this.qrScannerEnabled = false;
+    this.qrScanError = null;
+    this.qrScanSuccess = null;
+  }
+
+  onCamerasFound(cameras: MediaDeviceInfo[]) {
+    this.availableCameras = cameras;
+    if (cameras.length > 0) {
+      // Ưu tiên camera sau (back camera) cho mobile
+      const backCamera = cameras.find(c => c.label.toLowerCase().includes('back') || c.label.toLowerCase().includes('rear'));
+      this.selectedCamera = backCamera ?? cameras[0];
+    }
+  }
+
+  onScanSuccess(resultString: string) {
+    console.log('[QR Scanner] Scanned:', resultString);
+    this.qrScannerEnabled = false; // Tạm dừng scanner
+    
+    // Kiểm tra xem QR code có phải là mã đơn không
+    this.processQrCode(resultString);
+  }
+
+  onScanError(error: any) {
+    console.error('[QR Scanner] Error:', error);
+    // Không hiển thị lỗi liên tục, chỉ log
+  }
+
+  async processQrCode(scannedCode: string) {
+    this.qrScanError = null;
+    this.qrScanSuccess = null;
+    
+    // Tìm booking với mã đơn trùng khớp
+    const matchingBooking = this.bookings.find(b => {
+      const bookingCode = b.code || b.id;
+      // So sánh chính xác hoặc QR có chứa mã đơn
+      return bookingCode === scannedCode || 
+             scannedCode.includes(bookingCode) || 
+             bookingCode.includes(scannedCode) ||
+             b.id === scannedCode;
+    });
+
+    if (!matchingBooking) {
+      this.qrScanError = 'Không tìm thấy đơn hàng. Vui lòng kiểm tra lại mã QR.';
+      // Cho phép quét lại sau 2 giây
+      setTimeout(() => {
+        this.qrScannerEnabled = true;
+      }, 2000);
+      return;
+    }
+
+    // Kiểm tra xem đơn có thể check-in không
+    if (!this.canCheckIn(matchingBooking)) {
+      const statusLabel = this.getStatusLabel(matchingBooking.statusNormalized || matchingBooking.status);
+      this.qrScanError = `Đơn không thể check-in. Trạng thái hiện tại: ${statusLabel}`;
+      setTimeout(() => {
+        this.qrScannerEnabled = true;
+      }, 2000);
+      return;
+    }
+
+    // Tiến hành check-in
+    this.qrScanSuccess = 'Đang xử lý check-in...';
+    
+    try {
+      const result = await this.bookingsSrv.checkIn(matchingBooking.id);
+      console.log('[QR Check-in] Success:', result);
+      
+      this.qrScanSuccess = '✅ Check-in thành công!';
+      this.successMessage = 'Check-in thành công!';
+      
+      // Đóng scanner và reload sau 1.5 giây
+      setTimeout(() => {
+        this.closeQrScanner();
+        this.load();
+      }, 1500);
+      
+      setTimeout(() => {
+        this.successMessage = null;
+      }, 5000);
+    } catch (e: any) {
+      const statusCode = e?.status || e?.error?.statusCode || 0;
+      let errMsg = e?.error?.message || e?.message || 'Check-in thất bại';
+      
+      // Xử lý lỗi 403 - Forbidden
+      if (statusCode === 403 || errMsg.toLowerCase().includes('forbidden')) {
+        errMsg = 'Bạn không có quyền thực hiện check-in. Vui lòng liên hệ quản lý.';
+      }
+      
+      this.qrScanError = errMsg;
+      
+      // Cho phép quét lại
+      setTimeout(() => {
+        this.qrScannerEnabled = true;
+      }, 2000);
+    }
+  }
+
+  switchCamera() {
+    if (this.availableCameras.length <= 1) return;
+    
+    const currentIndex = this.availableCameras.findIndex(c => c.deviceId === this.selectedCamera?.deviceId);
+    const nextIndex = (currentIndex + 1) % this.availableCameras.length;
+    this.selectedCamera = this.availableCameras[nextIndex];
   }
 
   async doCancel(b: any) {

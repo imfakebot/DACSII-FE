@@ -5,7 +5,7 @@
         <h1>⚽ Quản lý Sân</h1>
         <p class="subtitle">Quản lý và theo dõi tất cả sân bóng trong hệ thống</p>
       </div>
-      <div class="header-actions" *ngIf="isAdmin">
+      <div class="header-actions" *ngIf="canManage">
         <button class="btn btn-refresh" (click)="load()" [disabled]="loading">
           <span class="icon">↻</span> Tải lại
         </button>
@@ -16,8 +16,36 @@
     </div>
   </header>
 
+  <!-- Branch Filter -->
+  <section class="filters-section" *ngIf="canManage">
+    <div class="filters-group">
+      <div class="filter-item">
+        <label for="branchFilter">Chi nhánh</label>
+        <select 
+          id="branchFilter" 
+          [(ngModel)]="selectedBranchId" 
+          (ngModelChange)="onBranchFilterChange()"
+          [disabled]="!canSelectBranch"
+          class="form-select"
+          [class.disabled]="!canSelectBranch">
+          <option value="">-- Tất cả chi nhánh --</option>
+          <option *ngFor="let branch of branches" [value]="branch.id">{{ branch.name }}</option>
+        </select>
+        <p *ngIf="!canSelectBranch && userBranchId" class="filter-note">
+          <i class="fa-solid fa-info-circle"></i> Bạn chỉ xem được sân thuộc chi nhánh của mình
+        </p>
+      </div>
+
+      <div class="filter-actions" *ngIf="canSelectBranch">
+        <button class="btn btn-secondary" (click)="clearBranchFilter()">
+          <i class="fa-solid fa-rotate-left"></i> Xóa bộ lọc
+        </button>
+      </div>
+    </div>
+  </section>
+
   <!-- Stats Cards -->
-  <div class="stats-grid" *ngIf="isAdmin">
+  <div class="stats-grid" *ngIf="canManage">
     <div class="stat-card stat-card--blue">
       <div class="stat-icon">⚽</div>
       <div class="stat-content">
@@ -39,6 +67,20 @@
         <div class="stat-label">Tạm ngưng</div>
       </div>
     </div>
+    <div class="stat-card stat-card--warning">
+      <div class="stat-icon">🔧</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getMaintenanceCount() }}</div>
+        <div class="stat-label">Bảo trì</div>
+      </div>
+    </div>
+    <div class="stat-card stat-card--red">
+      <div class="stat-icon">🚫</div>
+      <div class="stat-content">
+        <div class="stat-value">{{ getClosedCount() }}</div>
+        <div class="stat-label">Tạm đóng</div>
+      </div>
+    </div>
     <div class="stat-card stat-card--purple">
       <div class="stat-icon">🏗️</div>
       <div class="stat-content">
@@ -49,20 +91,20 @@
   </div>
 
   <div *ngIf="error" class="alert alert-error">⚠️ {{ error }}</div>
-  <div *ngIf="!error && fields?.length === 0 && !loading" class="alert alert-warning">🚧 Chưa có sân nào. Hãy tạo sân mới!</div>
+  <div *ngIf="!error && filteredFields?.length === 0 && !loading" class="alert alert-warning">🚧 Không có sân nào phù hợp với bộ lọc.</div>
 
-  <section class="card" *ngIf="isAdmin; else noPermission">
+  <section class="card" *ngIf="canManage; else noPermission">
     <div class="card-header">
-      <h2 class="card-title">Danh sách sân ({{ fields.length }})</h2>
+      <h2 class="card-title">Danh sách sân ({{ filteredFields.length }})</h2>
     </div>
 
     <div class="fields-grid" *ngIf="!loading; else loadingTpl">
-      <div *ngFor="let f of fields" class="field-card">
+      <div *ngFor="let f of filteredFields" class="field-card">
         <div class="field-card-header">
           <div class="field-icon">⚽</div>
-          <span class="status-badge" [ngClass]="{ 'status-active': f.status, 'status-inactive': !f.status }">
+          <span class="status-badge" [ngClass]="getStatusClass(f.status)">
             <span class="status-dot"></span>
-            {{ f.status ? 'Hoạt động' : 'Tạm ngưng' }}
+            {{ getStatusLabel(f.status) }}
           </span>
         </div>
         

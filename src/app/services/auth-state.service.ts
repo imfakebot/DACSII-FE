@@ -8,6 +8,11 @@ export interface AuthUser {
   email: string;
   full_name?: string;
   role?: string;
+  branch_id?: string; // ID chi nhánh của branch_manager/staff
+  branch?: { // Optional branch info
+    id: string;
+    name?: string;
+  };
 }
 
 @Injectable({ providedIn: 'root' })
@@ -77,5 +82,75 @@ export class AuthStateService {
     }
     const roleStr = String(roleVal || '').toLowerCase();
     return roleStr === 'admin' || roleStr === 'super_admin' || roleStr.includes('admin');
+  }
+
+  /**
+   * Kiểm tra xem user có phải branch_manager không
+   */
+  isBranchManager(): boolean {
+    const user = this.getCurrentUser();
+    if (!user) return false;
+    let roleVal: any = user.role;
+    if (!roleVal) return false;
+    if (typeof roleVal === 'object') {
+      roleVal = (roleVal.name || roleVal.role || '').toString();
+    }
+    const roleStr = String(roleVal || '').toLowerCase();
+    return roleStr === 'branch_manager' || roleStr === 'manager';
+  }
+
+  /**
+   * Kiểm tra xem user có phải staff không
+   */
+  isStaff(): boolean {
+    const user = this.getCurrentUser();
+    if (!user) return false;
+    let roleVal: any = user.role;
+    if (!roleVal) return false;
+    if (typeof roleVal === 'object') {
+      roleVal = (roleVal.name || roleVal.role || '').toString();
+    }
+    const roleStr = String(roleVal || '').toLowerCase();
+    return roleStr === 'staff';
+  }
+
+  /**
+   * Kiểm tra xem user có quyền admin hoặc branch_manager
+   */
+  canManage(): boolean {
+    return this.isAdmin() || this.isBranchManager();
+  }
+
+  /**
+   * Kiểm tra xem user có quyền truy cập booking management (admin, branch_manager, staff)
+   */
+  canAccessBookings(): boolean {
+    return this.isAdmin() || this.isBranchManager() || this.isStaff();
+  }
+
+  /**
+   * Kiểm tra xem user có quyền xem thống kê doanh thu (chỉ admin và branch_manager)
+   */
+  canViewRevenue(): boolean {
+    return this.isAdmin() || this.isBranchManager();
+  }
+
+  /**
+   * Lấy branch ID của user (nếu là branch_manager hoặc staff)
+   */
+  getUserBranchId(): string | null {
+    const user = this.getCurrentUser();
+    if (!user) return null;
+    return user.branch_id || user.branch?.id || (user as any).branchId || null;
+  }
+
+  /**
+   * Lấy tên role hiển thị
+   */
+  getRoleLabel(): string {
+    if (this.isAdmin()) return 'Quản trị viên';
+    if (this.isBranchManager()) return 'Quản lý chi nhánh';
+    if (this.isStaff()) return 'Nhân viên';
+    return 'Người dùng';
   }
 }

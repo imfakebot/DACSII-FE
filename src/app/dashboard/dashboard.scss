@@ -65,6 +65,27 @@
         border-color: #3b82f6;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
       }
+      
+      &.disabled,
+      &:disabled {
+        background: #f1f5f9;
+        color: #94a3b8;
+        cursor: not-allowed;
+        opacity: 0.7;
+      }
+    }
+    
+    .filter-note {
+      margin: 0.5rem 0 0 0;
+      font-size: 0.8rem;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      
+      i {
+        color: #3b82f6;
+      }
     }
   }
 

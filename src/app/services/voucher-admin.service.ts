@@ -13,7 +13,9 @@ export class VoucherAdminService {
   }
 
   async getAll(): Promise<any[]> {
-    return firstValueFrom(this.http.get<any[]>(`${this.baseUrl.getApiBaseUrl()}/voucher`, this.authHeaders()));
+    // Backend không có GET /voucher endpoint cho admin
+    // Workaround: Dùng GET /voucher/available với orderValue rất lớn để lấy tất cả
+    return firstValueFrom(this.http.get<any[]>(`${this.baseUrl.getApiBaseUrl()}/voucher/available?orderValue=999999999`, this.authHeaders()));
   }
 
   async getById(id: string): Promise<any> {

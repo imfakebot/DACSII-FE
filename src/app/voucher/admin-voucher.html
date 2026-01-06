@@ -198,5 +198,104 @@
       </div>
     </form>
   </section>
-  <!-- Voucher list removed: GET /voucher endpoint is not available on backend. -->
+
+  <!-- Voucher List -->
+  <section class="card vouchers-list-card">
+    <div class="card-header">
+      <h2>Danh sách voucher</h2>
+      <button class="btn btn-secondary" (click)="loadVouchers()" [disabled]="loadingVouchers">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path fill-rule="evenodd" d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.417A6 6 0 1 1 8 2v1z"/>
+          <path d="M8 4.466V.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 0 1 8 4.466z"/>
+        </svg>
+        {{ loadingVouchers ? 'Đang tải...' : 'Làm mới' }}
+      </button>
+    </div>
+
+    <div *ngIf="vouchersError" class="alert alert-error">
+      {{ vouchersError }}
+    </div>
+
+    <div *ngIf="loadingVouchers" class="loading-state">
+      <div class="spinner"></div>
+      <p>Đang tải danh sách voucher...</p>
+    </div>
+
+    <div *ngIf="!loadingVouchers && vouchers.length === 0" class="empty-state">
+      <svg width="64" height="64" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M2.5 8a5.5 5.5 0 0 1 8.25-4.764.5.5 0 0 0 .5-.866A6.5 6.5 0 1 0 14.5 8a.5.5 0 0 0-1 0 5.5 5.5 0 1 1-11 0z"/>
+        <path d="M15.354 3.354a.5.5 0 0 0-.708-.708L8 9.293 5.354 6.646a.5.5 0 1 0-.708.708l3 3a.5.5 0 0 0 .708 0l7-7z"/>
+      </svg>
+      <p>Chưa có voucher nào</p>
+    </div>
+
+    <div class="voucher-grid" *ngIf="!loadingVouchers && vouchers.length > 0">
+      <div *ngFor="let v of vouchers" class="voucher-card">
+        <div class="voucher-code-section">
+          <div class="voucher-code">{{ v.code }}</div>
+          <div class="voucher-badge" [class.expired]="isExpired(v)" [class.active]="!isExpired(v)">
+            {{ isExpired(v) ? 'Hết hạn' : 'Còn hạn' }}
+          </div>
+        </div>
+
+        <div class="voucher-details">
+          <div class="detail-row">
+            <span class="label">Giảm giá:</span>
+            <span class="value highlight">
+              <span *ngIf="v.discountAmount">{{ formatCurrency(v.discountAmount) }}</span>
+              <span *ngIf="v.discountPercentage">{{ v.discountPercentage }}%</span>
+              <span *ngIf="v.discountPercentage && v.maxDiscountAmount" class="text-muted">
+                (tối đa {{ formatCurrency(v.maxDiscountAmount) }})
+              </span>
+            </span>
+          </div>
+
+          <div class="detail-row" *ngIf="v.minOrderValue">
+            <span class="label">Đơn tối thiểu:</span>
+            <span class="value">{{ formatCurrency(v.minOrderValue) }}</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Số lượng:</span>
+            <span class="value">{{ v.quantity }} lượt</span>
+          </div>
+
+          <div class="detail-row">
+            <span class="label">Thời gian:</span>
+            <span class="value">{{ formatDate(v.validFrom) }} - {{ formatDate(v.validTo) }}</span>
+          </div>
+        </div>
+
+        <div class="voucher-actions">
+          <button 
+            class="btn btn-danger btn-sm"
+            (click)="confirmDelete(v.id)"
+            [disabled]="deletingId !== null"
+            title="Xóa voucher">
+            <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+              <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+            </svg>
+            Xóa
+          </button>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div *ngIf="deletingId === v.id" class="modal-overlay" (click)="cancelDelete()">
+          <div class="modal-content" (click)="$event.stopPropagation()">
+            <h3>Xác nhận xóa</h3>
+            <p>Bạn có chắc muốn xóa voucher <strong>{{ v.code }}</strong>?</p>
+            <div class="modal-actions">
+              <button class="btn btn-danger" (click)="deleteVoucher(v.id)">
+                Xóa
+              </button>
+              <button class="btn btn-secondary" (click)="cancelDelete()">
+                Hủy
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>

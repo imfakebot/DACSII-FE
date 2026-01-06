@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { PaymentService } from '../services/payment.service';
 import { BookingsService } from '../services/bookings.service';
 import { BranchesService, Branch } from '../services/branches.service';
+import { AuthStateService } from '../services/auth-state.service';
 
 interface RevenueData {
   month: number;
@@ -53,6 +54,12 @@ export class DashboardComponent implements OnInit {
   // Branch filter
   branches: Branch[] = [];
   selectedBranchId = '';
+  canSelectBranch = false; // Chỉ admin mới được chọn branch khác
+  userBranchId: string | null = null; // Branch của user hiện tại
+  
+  // Permission flags
+  canViewRevenue = false; // Chỉ admin và manager mới xem được doanh thu
+  isStaff = false;
 
   // Chart dimensions
   chartWidth = 800;
@@ -62,17 +69,32 @@ export class DashboardComponent implements OnInit {
   constructor(
     private paymentService: PaymentService,
     private bookingsService: BookingsService,
-    private branchService: BranchesService
+    private branchService: BranchesService,
+    private authState: AuthStateService
   ) {}
 
   async ngOnInit() {
+    // Kiểm tra quyền và branch
+    this.canSelectBranch = this.authState.isAdmin();
+    this.canViewRevenue = this.authState.canViewRevenue(); // Chỉ admin và manager
+    this.isStaff = this.authState.isStaff();
+    this.userBranchId = this.authState.getUserBranchId();
+    
+    // Nếu là branch_manager hoặc staff, tự động filter theo branch của họ
+    if (this.userBranchId && !this.canSelectBranch) {
+      this.selectedBranchId = this.userBranchId;
+    }
+    
     await this.loadBranches();
-    // Load chart TRƯỚC, rồi tính stats từ chart
-    await this.loadRevenueChart();
-    await Promise.all([
-      this.loadStatsFromAPI(),
-      this.loadRecentBookings()
-    ]);
+    
+    // Chỉ load revenue chart và stats nếu có quyền (admin/manager)
+    if (this.canViewRevenue) {
+      await this.loadRevenueChart();
+      await this.loadStatsFromAPI();
+    }
+    
+    // Load recent bookings cho tất cả roles
+    await this.loadRecentBookings();
   }
 
   /**

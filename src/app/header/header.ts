@@ -25,6 +25,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
   isRegister = false;
   userName: string | null = null;
   isAdmin = false;
+  isBranchManager = false;
+  isStaff = false;
+  canManage = false; // admin hoặc branch_manager
+  roleLabel = '';
   showAdminDropdown = false;
   // state for user dropdown (used by template)
   showUserDropdown = false;
@@ -51,8 +55,16 @@ export class HeaderComponent implements OnInit, OnDestroy {
       this.userName = u?.full_name || null;
       try {
         this.isAdmin = this.authState.isAdmin();
+        this.isBranchManager = this.authState.isBranchManager();
+        this.isStaff = this.authState.isStaff();
+        this.canManage = this.authState.canManage();
+        this.roleLabel = this.authState.getRoleLabel();
       } catch {
         this.isAdmin = false;
+        this.isBranchManager = false;
+        this.isStaff = false;
+        this.canManage = false;
+        this.roleLabel = 'Người dùng';
       }
 
       // Kết nối WebSocket khi user đăng nhập

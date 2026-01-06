@@ -2,7 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterModule, Router } from '@angular/router';
-import { FieldsService } from '../services/fields.service';
+import { FieldsService, FieldStatus } from '../services/fields.service';
 import { BranchesService, Branch } from '../services/branches.service';
 import { AuthStateService } from '../services/auth-state.service';
 import { IdEncoderService } from '../services/id-encoder.service';
@@ -18,9 +18,11 @@ export class AdminFieldFormComponent implements OnInit {
   id: string | null = null;
   model: any = { 
     name: '', 
-    description: '',     fieldTypeId: '', 
+    description: '',
+    fieldTypeId: '', 
     branchId: '',
-    utilityIds: [] 
+    utilityIds: [],
+    status: FieldStatus.ACTIVE // Mặc định là hoạt động
   };
   loading = false;
   saving = false;
@@ -32,6 +34,14 @@ export class AdminFieldFormComponent implements OnInit {
   fieldTypesLoading = false;
   utilities: { id: number; name: string; price?: number }[] = [];
   utilitiesLoading = false;
+  
+  // Danh sách trạng thái sân
+  statusOptions = [
+    { value: FieldStatus.ACTIVE, label: 'Hoạt động' },
+    { value: FieldStatus.INACTIVE, label: 'Tạm ngưng' },
+    { value: FieldStatus.MAINTENANCE, label: 'Bảo trì' },
+    { value: FieldStatus.CLOSED, label: 'Tạm đóng' }
+  ];
 
   constructor(
     private route: ActivatedRoute, 
@@ -43,9 +53,10 @@ export class AdminFieldFormComponent implements OnInit {
   ) {}
 
   get isAdmin() { return this.authState.isAdmin(); }
+  get canManage() { return this.authState.canManage(); }
 
   ngOnInit(): void {
-    if (!this.isAdmin) {
+    if (!this.canManage) {
       this.error = 'Bạn không có quyền.';
       return;
     }

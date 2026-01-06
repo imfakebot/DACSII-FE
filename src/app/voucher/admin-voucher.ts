@@ -175,4 +175,10 @@ export class AdminVoucherComponent implements OnInit {
       minimumFractionDigits: 0
     }).format(amount);
   }
+
+  isExpired(voucher: any): boolean {
+    const now = new Date();
+    const validTo = new Date(voucher.validTo);
+    return now > validTo;
+  }
 }
