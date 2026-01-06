@@ -454,6 +454,11 @@
   padding: 1rem;
   overflow-y: auto;
   animation: fadeIn 0.2s ease;
+  
+  &.modal-behind {
+    z-index: 9998;
+    pointer-events: none;
+  }
 }
 
 @keyframes fadeIn {

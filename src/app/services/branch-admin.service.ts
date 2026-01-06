@@ -13,6 +13,8 @@ export interface BranchDto {
     street: string;
     wardId: string;
     cityId: string;
+    city?: { id: string | number; name: string }; // Backend có thể trả về city object
+    ward?: { id: string | number; name: string }; // Backend có thể trả về ward object
     latitude?: number;
     longitude?: number;
   };

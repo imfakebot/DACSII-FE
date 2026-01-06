@@ -296,10 +296,17 @@ export class AdminBranchesComponent implements OnInit {
   }
 
   onLocationSelected(location: { lat: number; lng: number; address?: string }): void {
+    // Cập nhật form trực tiếp
     this.form.latitude = location.lat;
     this.form.longitude = location.lng;
+    
+    // Tự động điền địa chỉ từ bản đồ vào trường "Địa chỉ (Số nhà, tên đường)"
+    if (location.address) {
+      this.form.street = location.address;
+    }
+    
     this.showMapPicker = false;
-    console.log('[AdminBranches] Location selected:', location);
+    console.log('[AdminBranches] Location selected:', location, 'Street updated to:', this.form.street);
   }
 
   onMapPickerCancelled(): void {

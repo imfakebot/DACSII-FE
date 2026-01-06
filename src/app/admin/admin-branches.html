@@ -84,7 +84,7 @@
             <div class="info-icon">📍</div>
             <div class="info-content">
               <div class="info-label">Địa chỉ</div>
-              <div class="info-value">{{ branch.address?.street || 'Chưa cập nhật' }}, {{ getCityName(branch.address?.cityId) }}</div>
+              <div class="info-value">{{ branch.address?.street || 'Chưa cập nhật' }}, {{ branch.address?.city?.name || getCityName(branch.address?.cityId) }}</div>
             </div>
           </div>
           
@@ -118,7 +118,7 @@
   </div>
 
   <!-- Form Modal -->
-  <div *ngIf="showForm" class="modal-overlay" (click)="closeForm()">
+  <div *ngIf="showForm" class="modal-overlay" [class.modal-behind]="showMapPicker" (click)="closeForm()">
     <div class="modal-content" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <h2>{{ editMode ? 'Chỉnh sửa chi nhánh' : 'Tạo chi nhánh mới' }}</h2>
