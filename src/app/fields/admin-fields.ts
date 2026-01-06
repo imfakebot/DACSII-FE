@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
-import { RouterModule, Router } from '@angular/router';
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FieldsService, Field, FieldStatus, getFieldStatusLabel, getFieldStatusClass } from '../services/fields.service';
 import { AuthStateService } from '../services/auth-state.service';
 import { IdEncoderService } from '../services/id-encoder.service';
 import { BranchesService, Branch } from '../services/branches.service';
+import { Subscription, filter } from 'rxjs';
 
 @Component({
   selector: 'app-admin-fields',
@@ -14,7 +15,7 @@ import { BranchesService, Branch } from '../services/branches.service';
   templateUrl: './admin-fields.html',
   styleUrls: ['./admin-fields.scss']
 })
-export class AdminFieldsComponent implements OnInit {
+export class AdminFieldsComponent implements OnInit, OnDestroy {
   fields: Field[] = []; // Tất cả sân từ API
   filteredFields: Field[] = []; // Sân sau khi filter
   loading = false;
@@ -25,6 +26,8 @@ export class AdminFieldsComponent implements OnInit {
   selectedBranchId = '';
   userBranchId: string | null = null;
   canSelectBranch = false;
+  
+  private routerSubscription?: Subscription;
 
   constructor(
     private fieldsService: FieldsService, 
@@ -61,6 +64,20 @@ export class AdminFieldsComponent implements OnInit {
     
     await this.loadBranches();
     await this.load();
+    
+    // Auto-reload khi quay lại trang này sau khi edit/create
+    this.routerSubscription = this.router.events
+      .pipe(filter(event => event instanceof NavigationEnd))
+      .subscribe(async (event: any) => {
+        if (event.url === '/admin/fields' || event.url.startsWith('/admin/fields?')) {
+          console.log('🔄 [AdminFields] Router navigated back, reloading...');
+          await this.load();
+        }
+      });
+  }
+  
+  ngOnDestroy() {
+    this.routerSubscription?.unsubscribe();
   }
   
   async loadBranches() {
@@ -142,8 +159,8 @@ export class AdminFieldsComponent implements OnInit {
     return this.filteredFields.filter(f => f.status === true || f.status === FieldStatus.ACTIVE).length;
   }
 
-  getInactiveCount(): number {
-    return this.filteredFields.filter(f => f.status === false || f.status === FieldStatus.INACTIVE).length;
+  getClosedCount(): number {
+    return this.filteredFields.filter(f => f.status === false || f.status === FieldStatus.CLOSED).length;
   }
 
   getTypeCount(): number {
@@ -158,14 +175,5 @@ export class AdminFieldsComponent implements OnInit {
 
   getStatusClass(status: boolean | FieldStatus): string {
     return getFieldStatusClass(status);
-  }
-
-  // Đếm theo từng trạng thái
-  getMaintenanceCount(): number {
-    return this.filteredFields.filter(f => f.status === FieldStatus.MAINTENANCE).length;
-  }
-
-  getClosedCount(): number {
-    return this.filteredFields.filter(f => f.status === FieldStatus.CLOSED).length;
   }
 }

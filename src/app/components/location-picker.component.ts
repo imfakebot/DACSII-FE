@@ -13,137 +13,257 @@ interface Location {
   standalone: true,
   imports: [CommonModule],
   template: `
-    <div class="location-picker">
-      <div class="picker-header">
-        <h4>📍 Chọn vị trí trên bản đồ</h4>
-        <p class="picker-hint">Click vào bản đồ để chọn vị trí, hoặc kéo marker đỏ</p>
-      </div>
-      
-      <div class="search-box" *ngIf="isBrowser">
-        <input 
-          type="text" 
-          #searchInput
-          placeholder="Tìm kiếm địa chỉ (VD: 123 Nguyễn Huệ, Quận 1, TP.HCM)"
-          class="search-input"
-          (keyup.enter)="searchAddress(searchInput.value)"
-        />
-        <button type="button" class="search-btn" (click)="searchAddress(searchInput.value)">
-          🔍 Tìm
-        </button>
-      </div>
+    <div class="location-picker-overlay">
+      <div class="location-picker">
+        <div class="picker-header">
+          <div class="header-content">
+            <div class="header-icon">📍</div>
+            <div>
+              <h4>Chọn vị trí trên bản đồ</h4>
+              <p class="picker-hint">Click vào bản đồ để chọn vị trí, hoặc kéo marker đỏ</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="search-box" *ngIf="isBrowser">
+          <div class="search-input-wrapper">
+            <span class="search-icon">🔍</span>
+            <input 
+              type="text" 
+              #searchInput
+              placeholder="Tìm kiếm địa chỉ (VD: 123 Nguyễn Huệ, Quận 1, TP.HCM)"
+              class="search-input"
+              (keyup.enter)="searchAddress(searchInput.value)"
+            />
+          </div>
+          <button type="button" class="search-btn" (click)="searchAddress(searchInput.value)">
+            Tìm
+          </button>
+        </div>
 
-      <div id="map" class="map-container"></div>
-      
-      <div class="coordinates-display" *ngIf="selectedLocation">
-        <div class="coord-item">
-          <strong>Vĩ độ:</strong> {{ getLatDisplay() }}
+        <div id="map" class="map-container"></div>
+        
+        <div class="coordinates-display" *ngIf="selectedLocation">
+          <div class="coord-card">
+            <div class="coord-icon">🌍</div>
+            <div class="coord-details">
+              <div class="coord-label">Vĩ độ</div>
+              <div class="coord-value">{{ getLatDisplay() }}</div>
+            </div>
+          </div>
+          <div class="coord-card">
+            <div class="coord-icon">🧭</div>
+            <div class="coord-details">
+              <div class="coord-label">Kinh độ</div>
+              <div class="coord-value">{{ getLngDisplay() }}</div>
+            </div>
+          </div>
+          <div class="coord-card full-width" *ngIf="selectedLocation.address">
+            <div class="coord-icon">📌</div>
+            <div class="coord-details">
+              <div class="coord-label">Địa chỉ</div>
+              <div class="coord-value">{{ selectedLocation.address }}</div>
+            </div>
+          </div>
         </div>
-        <div class="coord-item">
-          <strong>Kinh độ:</strong> {{ getLngDisplay() }}
-        </div>
-        <div class="coord-item full-width" *ngIf="selectedLocation.address">
-          <strong>Địa chỉ:</strong> {{ selectedLocation.address }}
-        </div>
-      </div>
 
-      <div class="picker-actions">
-        <button type="button" class="btn btn-secondary" (click)="onCancel()">Hủy</button>
-        <button 
-          type="button" 
-          class="btn btn-primary" 
-          [disabled]="!selectedLocation"
-          (click)="onConfirm()">
-          ✅ Xác nhận vị trí
-        </button>
+        <div class="picker-actions">
+          <button type="button" class="btn btn-secondary" (click)="onCancel()">
+            <span class="btn-icon">✕</span>
+            Hủy
+          </button>
+          <button 
+            type="button" 
+            class="btn btn-primary" 
+            [disabled]="!selectedLocation"
+            (click)="onConfirm()">
+            <span class="btn-icon">✓</span>
+            Xác nhận vị trí
+          </button>
+        </div>
       </div>
     </div>
   `,
   styles: [`
+    .location-picker-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 1rem;
+    }
+
     .location-picker {
       display: flex;
       flex-direction: column;
+      gap: 1.25rem;
+      max-width: 1000px;
+      width: 100%;
+      max-height: 90vh;
+      background: white;
+      border-radius: 1rem;
+      padding: 1.75rem;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      overflow-y: auto;
+    }
+
+    .picker-header {
+      border-bottom: 2px solid #f3f4f6;
+      padding-bottom: 1rem;
+    }
+
+    .header-content {
+      display: flex;
       gap: 1rem;
-      max-width: 900px;
-      margin: 0 auto;
+      align-items: flex-start;
+    }
+
+    .header-icon {
+      font-size: 2.5rem;
+      line-height: 1;
+      flex-shrink: 0;
     }
 
     .picker-header h4 {
       margin: 0 0 0.5rem 0;
-      color: #1f2937;
-      font-size: 1.25rem;
+      color: #111827;
+      font-size: 1.5rem;
+      font-weight: 700;
     }
 
     .picker-hint {
       margin: 0;
       color: #6b7280;
-      font-size: 0.875rem;
+      font-size: 0.9rem;
+      line-height: 1.5;
     }
 
     .search-box {
       display: flex;
-      gap: 0.5rem;
+      gap: 0.75rem;
+      align-items: stretch;
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      flex: 1;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.25rem;
+      pointer-events: none;
+      opacity: 0.5;
     }
 
     .search-input {
-      flex: 1;
-      padding: 0.75rem;
+      width: 100%;
+      padding: 0.875rem 1rem 0.875rem 3rem;
       border: 2px solid #e5e7eb;
-      border-radius: 0.5rem;
+      border-radius: 0.75rem;
       font-size: 0.95rem;
-      transition: border-color 0.2s;
+      transition: all 0.2s;
+      background: #f9fafb;
     }
 
     .search-input:focus {
       outline: none;
       border-color: #3b82f6;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
     .search-btn {
-      padding: 0.75rem 1.5rem;
+      padding: 0.875rem 2rem;
       background: linear-gradient(135deg, #3b82f6, #2563eb);
       color: white;
       border: none;
-      border-radius: 0.5rem;
-      font-weight: 500;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      font-size: 0.95rem;
       cursor: pointer;
-      transition: transform 0.2s;
+      transition: all 0.2s;
+      box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
     }
 
     .search-btn:hover {
       transform: translateY(-2px);
+      box-shadow: 0 6px 12px -1px rgba(59, 130, 246, 0.4);
+    }
+
+    .search-btn:active {
+      transform: translateY(0);
     }
 
     .map-container {
       width: 100%;
       height: 450px;
-      border-radius: 0.75rem;
-      border: 2px solid #e5e7eb;
+      border-radius: 1rem;
+      border: 3px solid #e5e7eb;
       overflow: hidden;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
     }
 
     .coordinates-display {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 1rem;
-      padding: 1rem;
-      background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-      border-radius: 0.5rem;
-      border: 1px solid #bae6fd;
     }
 
-    .coord-item {
-      font-size: 0.95rem;
-      color: #0c4a6e;
+    .coord-card {
+      display: flex;
+      gap: 1rem;
+      padding: 1.25rem;
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border-radius: 0.75rem;
+      border: 2px solid #bae6fd;
+      transition: all 0.2s;
     }
 
-    .coord-item.full-width {
+    .coord-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+    }
+
+    .coord-card.full-width {
       grid-column: 1 / -1;
     }
 
-    .coord-item strong {
-      color: #075985;
-      margin-right: 0.5rem;
+    .coord-icon {
+      font-size: 2rem;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+
+    .coord-details {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .coord-label {
+      font-size: 0.8rem;
+      color: #0369a1;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.25rem;
+    }
+
+    .coord-value {
+      font-size: 1rem;
+      color: #0c4a6e;
+      font-weight: 500;
+      word-break: break-word;
     }
 
     .picker-actions {
@@ -151,39 +271,100 @@ interface Location {
       gap: 1rem;
       justify-content: flex-end;
       padding-top: 0.5rem;
+      border-top: 2px solid #f3f4f6;
     }
 
     .btn {
-      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 1.75rem;
       border: none;
-      border-radius: 0.5rem;
-      font-weight: 500;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      font-size: 0.95rem;
       cursor: pointer;
       transition: all 0.2s;
+    }
+
+    .btn-icon {
+      font-size: 1.125rem;
+      font-weight: 700;
     }
 
     .btn-secondary {
       background: #f3f4f6;
       color: #374151;
+      border: 2px solid #e5e7eb;
     }
 
     .btn-secondary:hover {
       background: #e5e7eb;
+      border-color: #d1d5db;
     }
 
     .btn-primary {
       background: linear-gradient(135deg, #10b981, #059669);
       color: white;
+      box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.3);
     }
 
     .btn-primary:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+      box-shadow: 0 6px 12px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
     }
 
     .btn-primary:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+      background: linear-gradient(135deg, #9ca3af, #6b7280);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .location-picker-overlay {
+        padding: 0;
+      }
+
+      .location-picker {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+        padding: 1rem;
+      }
+
+      .picker-header h4 {
+        font-size: 1.25rem;
+      }
+
+      .header-icon {
+        font-size: 2rem;
+      }
+
+      .search-box {
+        flex-direction: column;
+      }
+
+      .map-container {
+        height: 350px;
+      }
+
+      .coordinates-display {
+        grid-template-columns: 1fr;
+      }
+
+      .picker-actions {
+        flex-direction: column-reverse;
+      }
+
+      .btn {
+        width: 100%;
+        justify-content: center;
+      }
     }
   `]
 })

@@ -35,11 +35,9 @@ export class AdminFieldFormComponent implements OnInit {
   utilities: { id: number; name: string; price?: number }[] = [];
   utilitiesLoading = false;
   
-  // Danh sách trạng thái sân
+  // Danh sách trạng thái sân (chỉ 2 trạng thái: active/closed)
   statusOptions = [
-    { value: FieldStatus.ACTIVE, label: 'Hoạt động' },
-    { value: FieldStatus.INACTIVE, label: 'Tạm ngưng' },
-    { value: FieldStatus.MAINTENANCE, label: 'Bảo trì' },
+    { value: FieldStatus.ACTIVE, label: 'Đang hoạt động' },
     { value: FieldStatus.CLOSED, label: 'Tạm đóng' }
   ];
 
@@ -79,7 +77,8 @@ export class AdminFieldFormComponent implements OnInit {
         description: f.description, 
         fieldTypeId: f.fieldTypeId || '', 
         branchId: (f as any).branchId || '',
-        utilityIds: (f as any).utilityIds || [] 
+        utilityIds: (f as any).utilityIds || [],
+        status: f.status // Load status từ backend (boolean hoặc FieldStatus enum)
       };
     } catch (e: any) {
       console.error('[AdminFieldFormComponent] Load failed:', e?.error?.message || e?.message, e);
@@ -189,6 +188,10 @@ export class AdminFieldFormComponent implements OnInit {
       // Send utilityIds if selected
       if (this.model.utilityIds && this.model.utilityIds.length > 0) {
         payload.utilityIds = this.model.utilityIds;
+      }
+      // Send status - convert enum to boolean if needed
+      if (this.model.status !== undefined) {
+        payload.status = this.model.status === FieldStatus.ACTIVE || this.model.status === true;
       }
 
       let res;

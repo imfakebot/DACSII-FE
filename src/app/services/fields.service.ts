@@ -34,40 +34,26 @@ interface FieldBackend {
   price_per_hour?: number;
 }
 
-// Enum trạng thái sân
+// Enum trạng thái sân (database chỉ lưu boolean: 1 = active, 0 = closed)
 export enum FieldStatus {
-  ACTIVE = 'active',           // Hoạt động
-  INACTIVE = 'inactive',       // Tạm ngưng
-  MAINTENANCE = 'maintenance', // Bảo trì
-  CLOSED = 'closed'           // Tạm đóng
+  ACTIVE = 'active',     // Đang hoạt động (true/1)
+  CLOSED = 'closed'      // Tạm đóng (false/0)
 }
 
 // Helper để lấy label tiếng Việt
 export function getFieldStatusLabel(status: FieldStatus | boolean): string {
   if (typeof status === 'boolean') {
-    return status ? 'Hoạt động' : 'Tạm ngưng';
+    return status ? 'Đang hoạt động' : 'Tạm đóng';
   }
-  switch (status) {
-    case FieldStatus.ACTIVE: return 'Hoạt động';
-    case FieldStatus.INACTIVE: return 'Tạm ngưng';
-    case FieldStatus.MAINTENANCE: return 'Bảo trì';
-    case FieldStatus.CLOSED: return 'Tạm đóng';
-    default: return 'Không xác định';
-  }
+  return status === FieldStatus.ACTIVE ? 'Đang hoạt động' : 'Tạm đóng';
 }
 
 // Helper để lấy CSS class
 export function getFieldStatusClass(status: FieldStatus | boolean): string {
   if (typeof status === 'boolean') {
-    return status ? 'status-active' : 'status-inactive';
+    return status ? 'status-active' : 'status-closed';
   }
-  switch (status) {
-    case FieldStatus.ACTIVE: return 'status-active';
-    case FieldStatus.INACTIVE: return 'status-inactive';
-    case FieldStatus.MAINTENANCE: return 'status-maintenance';
-    case FieldStatus.CLOSED: return 'status-closed';
-    default: return 'status-unknown';
-  }
+  return status === FieldStatus.ACTIVE ? 'status-active' : 'status-closed';
 }
 
 // Front-end mapped type
