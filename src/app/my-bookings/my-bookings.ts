@@ -19,16 +19,16 @@ export class MyBookingsComponent implements OnInit {
   loading = false;
   error: string | null = null;
   successMessage: string | null = null;
-  
+
   // Pagination
   currentPage = 1;
   totalPages = 1;
   totalItems = 0;
   limit = 10;
-  
+
   // Filters
   statusFilter: string = '';
-  
+
   // Cancel confirmation
   cancelingBookingId: string | null = null;
   showCancelModal = false;
@@ -39,7 +39,7 @@ export class MyBookingsComponent implements OnInit {
     private authState: AuthStateService,
     private router: Router,
     private idEncoder: IdEncoderService
-  ) {}
+  ) { }
 
   ngOnInit() {
     // Only load bookings after auth state is ready and user has a valid id
@@ -75,30 +75,30 @@ export class MyBookingsComponent implements OnInit {
   async loadBookings() {
     this.loading = true;
     this.error = null;
-    
+
     // Debug auth state
     const user = this.authState.getCurrentUser();
     console.log('[MyBookings] Current user:', user);
     console.log('[MyBookings] Is logged in:', this.authState.isLoggedIn());
-    
+
     try {
       const filters: any = {};
       if (this.statusFilter && this.statusFilter.trim()) {
         filters.status = this.statusFilter;
       }
-      
+
       // Only pass filters if it has properties
       const hasFilters = Object.keys(filters).length > 0;
       const response = await this.bookingsService.getMyBookings(
-        this.currentPage, 
-        this.limit, 
+        this.currentPage,
+        this.limit,
         hasFilters ? filters : undefined
       );
-      
+
       // Map bookings with status normalization and enhanced data
       this.bookings = (response.data || []).map((b: any) => {
         let rawStatus = this.resolveStatus(b);
-        
+
         console.log('[MyBookings] Booking raw data:', {
           id: b.id?.substring(0, 8),
           status_from_api: b.status,
@@ -106,7 +106,7 @@ export class MyBookingsComponent implements OnInit {
           rawStatus: rawStatus,
           entire_booking: b
         });
-        
+
         // Fallback: infer status from timestamps if status is empty
         if (!rawStatus || rawStatus.trim() === '') {
           if (b.check_in_at || b.checkInAt || b.checkedInAt) {
@@ -122,11 +122,11 @@ export class MyBookingsComponent implements OnInit {
             rawStatus = 'pending';
           }
         }
-        
+
         const normalizedStatus = this.normalizeStatus(rawStatus);
-        
+
         console.log('[MyBookings] ✅ Final:', `ID: ${b.id?.substring(0, 8)}, rawStatus: "${rawStatus}", normalized: "${normalizedStatus}", canReview: ${normalizedStatus === 'checked_in' || normalizedStatus === 'completed'}`);
-        
+
         // Calculate duration if not provided
         let duration = b.duration_minutes || b.duration || 0;
         if (!duration && b.start_time && b.end_time) {
@@ -134,7 +134,7 @@ export class MyBookingsComponent implements OnInit {
           const end = new Date(b.end_time);
           duration = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
         }
-        
+
         return {
           ...b,
           status: normalizedStatus,
@@ -147,7 +147,7 @@ export class MyBookingsComponent implements OnInit {
           }
         };
       });
-      
+
       this.totalPages = response.meta?.totalPages || 1;
       this.totalItems = response.meta?.totalItems || 0;
     } catch (e: any) {
@@ -161,11 +161,11 @@ export class MyBookingsComponent implements OnInit {
       });
       const statusCode = e?.status || e?.error?.status || null;
       const errMsg = e?.error?.message || e?.message || '';
-      
+
       // Only clear auth on explicit 401 Unauthorized
       if (statusCode === 401 || /unauthor/i.test(String(errMsg))) {
         this.error = 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.';
-        try { this.authState.setUser(null); } catch (_) {}
+        try { this.authState.setUser(null); } catch (_) { }
       } else if (statusCode === 400) {
         // 400 is validation error - don't logout, just show error
         this.error = 'Không thể tải danh sách. Vui lòng thử lại sau.';
@@ -207,11 +207,11 @@ export class MyBookingsComponent implements OnInit {
     const maxVisible = 5;
     let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
     let end = Math.min(this.totalPages, start + maxVisible - 1);
-    
+
     if (end - start < maxVisible - 1) {
       start = Math.max(1, end - maxVisible + 1);
     }
-    
+
     for (let i = start; i <= end; i++) {
       pages.push(i);
     }
@@ -230,13 +230,13 @@ export class MyBookingsComponent implements OnInit {
 
   async confirmCancel() {
     if (!this.cancelingBookingId) return;
-    
+
     try {
       const response = await this.bookingsService.cancel(this.cancelingBookingId);
       this.successMessage = response.message || 'Hủy đặt sân thành công';
       this.closeCancelModal();
       this.loadBookings();
-      
+
       // Clear success message after 5s
       setTimeout(() => {
         this.successMessage = null;
@@ -244,7 +244,7 @@ export class MyBookingsComponent implements OnInit {
     } catch (e: any) {
       this.error = e?.error?.message || e?.message || 'Không thể hủy đặt sân';
       this.closeCancelModal();
-      
+
       // Clear error after 5s
       setTimeout(() => {
         this.error = null;
@@ -294,7 +294,7 @@ export class MyBookingsComponent implements OnInit {
 
   canCancel(booking: any): boolean {
     // Can only cancel if status is pending or confirmed
-    const cancelableStatuses = ['pending', 'confirmed'];
+    const cancelableStatuses = ['pending', 'confirmed', 'completed'];
     return cancelableStatuses.includes(booking.status);
   }
 
@@ -323,7 +323,7 @@ export class MyBookingsComponent implements OnInit {
   normalizeStatus(status: string): string {
     if (!status) return 'pending';
     const s = status.toString().trim().toLowerCase();
-    
+
     // Map various status formats to normalized values
     const statusMap: Record<string, string> = {
       'pending_payment': 'pending',
@@ -338,13 +338,13 @@ export class MyBookingsComponent implements OnInit {
       'finished': 'finished',
       'expired': 'expired'
     };
-    
+
     return statusMap[s] || s;
   }
 
   resolveStatus(booking: any): string {
     if (!booking) return '';
-    
+
     const candidates = [
       booking.status,
       booking.bookingStatus,
@@ -353,7 +353,7 @@ export class MyBookingsComponent implements OnInit {
       booking.status_code,
       booking.state
     ];
-    
+
     for (const candidate of candidates) {
       if (candidate && typeof candidate === 'string' && candidate.trim()) {
         return candidate.trim();
@@ -364,7 +364,7 @@ export class MyBookingsComponent implements OnInit {
         if (candidate.code) return String(candidate.code);
       }
     }
-    
+
     return '';
   }
 

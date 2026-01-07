@@ -106,6 +106,14 @@
                 <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-code-branch"></i></div>
                 Quản lý chi nhánh
               </a>
+              <a [routerLink]="['/admin/field-types']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+                <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-layer-group"></i></div>
+                Quản lý loại sân
+              </a>
+              <a [routerLink]="['/admin/field-types']" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+                <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-layer-group"></i></div>
+                Quản lý loại sân
+              </a>
             </ng-container>
             
             <!-- Reviews & Feedbacks - All roles -->
@@ -292,6 +300,10 @@
         <a [routerLink]="['/admin/branches']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
           <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-code-branch"></i></div>
           Quản lý chi nhánh
+        </a>
+        <a [routerLink]="['/admin/field-types']" (click)="closeMobileMenu()" class="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-700 hover:bg-brand/5 hover:text-brand transition-colors">
+          <div class="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand"><i class="fa-solid fa-layer-group"></i></div>
+          Quản lý loại sân
         </a>
       </div>
 

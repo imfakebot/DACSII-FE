@@ -74,7 +74,7 @@ export interface Field {
   createdAt: string;
   avgRating?: number;
   pricePerHour?: number;
-  utilities?: Array<{id: number; name: string; price?: number; description?: string}>;
+  utilities?: Array<{ id: number; name: string; price?: number; description?: string }>;
   branchPhone?: string;
   managerName?: string;
   branchId?: string; // ID chi nhánh
@@ -86,20 +86,20 @@ export interface Field {
 function mapField(raw: FieldBackend): Field {
   const normalizeImageUrl = (u?: string) => {
     if (!u) return '';
-    
+
     // Skip invalid URLs containing 'undefined'
     if (u.includes('undefined')) {
       console.warn('[FieldsService] Skipping invalid image URL:', u);
       return '';
     }
-    
+
     // Convert full backend URL to relative path for proxy
     // e.g., "http://localhost:3000/uploads/abc.jpg" -> "/uploads/abc.jpg"
     if (u.includes('/uploads/')) {
       const uploadsIndex = u.indexOf('/uploads/');
       return u.substring(uploadsIndex); // returns '/uploads/xxx'
     }
-    
+
     // Convert backslashes to forward slashes
     let s = u.replace(/\\/g, '/');
     // If path contains 'src/assets', collapse everything before to '/assets/'
@@ -149,7 +149,7 @@ function mapField(raw: FieldBackend): Field {
 
 @Injectable({ providedIn: 'root' })
 export class FieldsService {
-  constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
+  constructor(private http: HttpClient, private baseUrl: BaseUrlService) { }
 
   async getFields(): Promise<Field[]> {
     const url = `${this.baseUrl.getApiBaseUrl()}/fields`;
@@ -203,6 +203,18 @@ export class FieldsService {
       console.error('[FieldsService] Failed to load field types:', err);
       return [];
     }
+  }
+
+  async createFieldType(payload: { name: string; description?: string }): Promise<any> {
+    const url = `${this.baseUrl.getApiBaseUrl()}/field-types`;
+    return firstValueFrom(this.http.post(url, payload, this.authHeaders()));
+  }
+
+
+
+  async deleteFieldType(id: string): Promise<any> {
+    const url = `${this.baseUrl.getApiBaseUrl()}/field-types/${id}`;
+    return firstValueFrom(this.http.delete(url, this.authHeaders()));
   }
 
   /**

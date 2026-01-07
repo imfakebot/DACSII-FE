@@ -1,0 +1,49 @@
+<div class="container mx-auto px-4 py-8">
+  <h1 class="text-3xl font-bold mb-6">Quản lý loại sân</h1>
+
+  <!-- Form thêm loại sân mới -->
+  <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+    <h2 class="text-2xl font-semibold mb-4">Thêm loại sân mới</h2>
+    <form (ngSubmit)="onAdd()">
+      <div class="mb-4">
+        <label for="name" class="block text-gray-700 font-medium mb-2">Tên loại sân</label>
+        <input type="text" id="name" name="name" [(ngModel)]="newFieldType.name" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+      </div>
+      <div class="mb-4">
+        <label for="description" class="block text-gray-700 font-medium mb-2">Mô tả</label>
+        <textarea id="description" name="description" [(ngModel)]="newFieldType.description" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+      </div>
+      <button type="submit" [disabled]="adding" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:bg-gray-400">
+        {{ adding ? 'Đang thêm...' : 'Thêm loại sân' }}
+      </button>
+    </form>
+  </div>
+
+  <!-- Danh sách các loại sân hiện có -->
+  <div class="bg-white p-6 rounded-lg shadow-md">
+    <h2 class="text-2xl font-semibold mb-4">Danh sách loại sân</h2>
+    <div *ngIf="loading" class="text-center">Đang tải...</div>
+    <div *ngIf="error" class="text-red-500 text-center">{{ error }}</div>
+    <table *ngIf="!loading && fieldTypes.length > 0" class="min-w-full bg-white">
+      <thead>
+        <tr>
+          <th class="py-2 px-4 border-b">Tên</th>
+          <th class="py-2 px-4 border-b">Mô tả</th>
+          <th class="py-2 px-4 border-b">Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let ft of fieldTypes">
+          <td class="py-2 px-4 border-b">{{ ft.name }}</td>
+          <td class="py-2 px-4 border-b">{{ ft.description }}</td>
+          <td class="py-2 px-4 border-b text-center">
+            <button (click)="onDelete(ft.id)" [disabled]="deleting[ft.id]" class="text-red-600 hover:text-red-800 disabled:text-gray-400">
+              {{ deleting[ft.id] ? 'Đang xóa...' : 'Xóa' }}
+            </button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <p *ngIf="!loading && fieldTypes.length === 0" class="text-center text-gray-500">Chưa có loại sân nào.</p>
+  </div>
+</div>

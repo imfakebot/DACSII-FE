@@ -39,6 +39,8 @@ export const routes: Routes = [
 	{ path: 'admin/reviews', loadComponent: () => import('./review/admin-review').then(m => m.AdminReviewComponent) },
 	{ path: 'admin/utilities', loadComponent: () => import('./utility/admin-utilities').then(m => m.AdminUtilitiesComponent) },
 	{ path: 'admin/branches', loadComponent: () => import('./admin/admin-branches').then(m => m.AdminBranchesComponent) },
+	{ path: 'admin/field-types', loadComponent: () => import('./admin/admin-field-types').then(m => m.AdminFieldTypesComponent) },
+	{ path: 'admin/field-types', loadComponent: () => import('./admin/admin-field-types').then(m => m.AdminFieldTypesComponent) },
 	// Static pages
 	{ path: 'about', loadComponent: () => import('./pages/about/about').then(m => m.AboutComponent) },
 	{ path: 'contact', loadComponent: () => import('./pages/contact/contact').then(m => m.ContactComponent) },
