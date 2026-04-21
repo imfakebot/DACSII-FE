@@ -27,46 +27,30 @@ export class VnpayReturnComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private paymentService: PaymentService
-  ) {}
+  ) { }
 
   async ngOnInit() {
-    // Get VNPay return params
     this.route.queryParams.subscribe(async params => {
       const responseCode = params['vnp_ResponseCode'];
       const transactionStatus = params['vnp_TransactionStatus'];
-      const bookingId = params['vnp_TxnRef'];
+      const bookingId = params['vnp_TxnRef']; // Lấy mã đơn hàng từ VNPAY
 
-      console.log('[VNPay Return] Response Code:', responseCode);
-      console.log('[VNPay Return] Transaction Status:', transactionStatus);
-      console.log('[VNPay Return] Booking ID:', bookingId);
-        if (params['vnp_PayDate']) {
-          try {
-            console.log('[VNPay Return] Pay Date (VNPay format):', params['vnp_PayDate']);
-            console.log('[VNPay Return] Pay Date (formatted):', formatVnpDate(params['vnp_PayDate']));
-          } catch {};
-        }
+      console.log('[VNPay Return] Đã nhận tín hiệu. Response Code:', responseCode);
 
-      // Check if payment successful (VNPay returns 00 for success)
+      // KHÔNG GỌI BACKEND XÁC THỰC NỮA! (Backend đã tự xử lý qua IPN rồi)
+      // Chỉ kiểm tra mã 00 trên URL để chuyển hướng giao diện thôi.
+
       if (responseCode === '00' || transactionStatus === '00') {
-        try {
-          // Call backend to verify payment and update booking status
-          console.log('[VNPay Return] Calling backend to verify payment...');
-          await this.paymentService.verifyVnpayReturn(params);
-          console.log('[VNPay Return] Payment verified successfully, booking status updated');
-          
-          // Redirect to success page
-          this.router.navigate(['/payment-success'], {
-            queryParams: { bookingId }
-          });
-        } catch (error: any) {
-          console.error('[VNPay Return] Payment verification failed:', error);
-          alert('Xác thực thanh toán thất bại. Vui lòng liên hệ hỗ trợ.');
-          this.router.navigate(['/']);
-        }
+        console.log('[VNPay Return] Thanh toán thành công, đang chuyển qua trang Success...');
+
+        // Đá thẳng qua trang thành công kèm theo cái ID
+        this.router.navigate(['/payment-success'], {
+          queryParams: { bookingId }
+        });
       } else {
-        // Redirect to failure page (or back to booking with error)
-        alert('Thanh toán không thành công. Vui lòng thử lại.');
-        this.router.navigate(['/']);
+        // Khách hủy giao dịch hoặc thẻ hết tiền
+        alert('Thanh toán không thành công hoặc đã bị hủy. Vui lòng thử lại.');
+        this.router.navigate(['/']); // Đá về trang chủ hoặc trang đặt sân
       }
     });
   }

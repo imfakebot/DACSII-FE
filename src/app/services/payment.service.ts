@@ -7,7 +7,7 @@ export interface CreatePaymentUrlResponse { url: string }
 
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
-  constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
+  constructor(private http: HttpClient, private baseUrl: BaseUrlService) { }
 
   private authHeaders(): { headers: HttpHeaders } {
     const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
@@ -22,26 +22,26 @@ export class PaymentService {
    * Verify payment result từ VNPAY return URL
    * @param queryParams - Query parameters từ VNPAY callback
    */
-  async verifyVnpayReturn(queryParams: Record<string, any>): Promise<any> {
-    const params = new HttpParams({ fromObject: queryParams });
-    const url = `${this.baseUrl.getApiBaseUrl()}/payment/vnpay_return`;
-    console.log('[PaymentService] Verifying VNPAY return with params:', queryParams);
+  // async verifyVnpayReturn(queryParams: Record<string, any>): Promise<any> {
+  //   const params = new HttpParams({ fromObject: queryParams });
+  //   const url = `${this.baseUrl.getApiBaseUrl()}/payment/vnpay_return`;
+  //   console.log('[PaymentService] Verifying VNPAY return with params:', queryParams);
 
-    try {
-      const res = await firstValueFrom(
-        this.http.get<any>(url, { params })
-      );
-      console.log('[PaymentService] VNPAY verification result:', res);
-      return res;
-    } catch (err: any) {
-      console.error('[PaymentService] VNPAY verification failed:', err);
-      throw {
-        status: err?.status ?? 0,
-        message: err?.error?.message || err?.message || 'Lỗi xác thực thanh toán',
-        error: err?.error ?? null,
-      };
-    }
-  }
+  //   try {
+  //     const res = await firstValueFrom(
+  //       this.http.get<any>(url, { params })
+  //     );
+  //     console.log('[PaymentService] VNPAY verification result:', res);
+  //     return res;
+  //   } catch (err: any) {
+  //     console.error('[PaymentService] VNPAY verification failed:', err);
+  //     throw {
+  //       status: err?.status ?? 0,
+  //       message: err?.error?.message || err?.message || 'Lỗi xác thực thanh toán',
+  //       error: err?.error ?? null,
+  //     };
+  //   }
+  // }
 
   // Admin endpoints
   // Backend exposes stats at /payment/stats/overview
