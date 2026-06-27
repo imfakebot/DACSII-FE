@@ -1,11 +1,77 @@
 {
-  "/api": {
+  "/auth": {
     "target": "http://localhost:3000",
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
   },
-  "/auth": {
+  "/fields": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/field-types": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/locations": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/pricing": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/bookings": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/users": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/utilities": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/review": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/voucher": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/feedbacks": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/branches": {
+    "target": "http://localhost:3000",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
+  },
+  "/payment": {
     "target": "http://localhost:3000",
     "secure": false,
     "changeOrigin": true,

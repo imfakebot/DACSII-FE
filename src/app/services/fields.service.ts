@@ -122,8 +122,8 @@ function mapField(raw: FieldBackend): Field {
     type: raw.fieldType?.name,
     fieldTypeId: raw.fieldType?.id ?? raw.field_type_id,
     street: address?.street,
-    ward: address?.ward?.name as any,
-    city: address?.city?.name,
+    ward: address?.ward?.name || (address as any)?.ward_name,
+    city: address?.city?.name || (address as any)?.city_name,
     ownerName: raw.owner?.full_name,
     images: (raw.images || [])
       .map(i => normalizeImageUrl(i.image_url))
@@ -153,8 +153,10 @@ export class FieldsService {
 
   async getFields(): Promise<Field[]> {
     const url = `${this.baseUrl.getApiBaseUrl()}/fields`;
-    const data = await firstValueFrom(this.http.get<FieldBackend[]>(url));
-    return data.map(mapField);
+    const res: any = await firstValueFrom(this.http.get(url));
+    // Support both plain array and paginated { data: [...] } format
+    const dataArray = Array.isArray(res) ? res : (res.data || []);
+    return dataArray.map(mapField);
   }
 
   async getFieldById(id: string): Promise<Field> {

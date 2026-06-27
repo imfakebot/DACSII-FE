@@ -445,6 +445,15 @@
       box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
     }
   }
+
+  &--time {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    color: #92400e;
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+    }
+  }
   
   &--delete {
     background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);

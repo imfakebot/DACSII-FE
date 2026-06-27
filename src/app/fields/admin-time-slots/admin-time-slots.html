@@ -1,0 +1,101 @@
+<div class="admin-time-slots-page">
+  <header class="page-header">
+    <div class="header-content">
+      <button class="btn-back" (click)="goBack()">
+        <i class="fa-solid fa-arrow-left"></i> Quay lại
+      </button>
+      <div class="header-title">
+        <h1>🕒 Quản lý Khung Giờ & Giá</h1>
+        <p class="subtitle" *ngIf="fieldName">Đang cấu hình cho sân: <strong>{{ fieldName }}</strong></p>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-refresh" (click)="load()" [disabled]="loading">
+          <span class="icon">↻</span> Tải lại
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div *ngIf="error" class="alert alert-error">⚠️ {{ error }}</div>
+  <div *ngIf="successMsg" class="alert alert-success">✅ {{ successMsg }}</div>
+
+  <!-- Thêm khung giờ mới -->
+  <section class="card add-slot-card">
+    <div class="card-header">
+      <h2 class="card-title">Thêm Khung Giờ Mới</h2>
+    </div>
+    <div class="card-body">
+      <form class="slot-form" (ngSubmit)="onCreate()">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Giờ bắt đầu (HH:mm)</label>
+            <input type="time" [(ngModel)]="newSlot.startTime" name="startTime" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>Giờ kết thúc (HH:mm)</label>
+            <input type="time" [(ngModel)]="newSlot.endTime" name="endTime" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label>Giá (VNĐ)</label>
+            <input type="number" [(ngModel)]="newSlot.price" name="price" class="form-control" required min="0" />
+          </div>
+          <div class="form-group checkbox-group">
+            <label>
+              <input type="checkbox" [(ngModel)]="newSlot.isPeakHour" name="isPeakHour" />
+              Giờ cao điểm
+            </label>
+          </div>
+          <div class="form-group action-group">
+            <button type="submit" class="btn btn-primary" [disabled]="saving">
+              <span class="icon">+</span> {{ saving ? 'Đang lưu...' : 'Thêm' }}
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- Danh sách khung giờ -->
+  <section class="card">
+    <div class="card-header">
+      <h2 class="card-title">Danh Sách Khung Giờ ({{ filteredSlots.length }})</h2>
+    </div>
+    <div class="card-body" *ngIf="!loading; else loadingTpl">
+      <div class="slots-grid" *ngIf="filteredSlots.length > 0; else noSlots">
+        <div class="slot-card" *ngFor="let slot of filteredSlots">
+          <div class="slot-card-header">
+            <span class="time">{{ formatTime(slot.startTime) }} - {{ formatTime(slot.endTime) }}</span>
+            <span class="badge" [class.badge-peak]="slot.isPeakHour" [class.badge-normal]="!slot.isPeakHour">
+              {{ slot.isPeakHour ? 'Cao điểm' : 'Thường' }}
+            </span>
+          </div>
+          <div class="slot-card-body">
+            <div class="form-group">
+              <label>Giá mới (VNĐ)</label>
+              <input type="number" [(ngModel)]="slot._editPrice" class="form-control input-sm" />
+            </div>
+            <div class="form-group checkbox-group">
+              <label>
+                <input type="checkbox" [(ngModel)]="slot._editIsPeak" />
+                Giờ cao điểm
+              </label>
+            </div>
+          </div>
+          <div class="slot-card-footer">
+            <button class="btn btn-secondary btn-sm" (click)="onUpdate(slot)">
+              💾 Cập nhật
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <ng-template #loadingTpl>
+    <div class="loading">Đang tải danh sách khung giờ...</div>
+  </ng-template>
+
+  <ng-template #noSlots>
+    <div class="alert alert-warning">🚧 Sân này chưa có khung giờ nào được thiết lập.</div>
+  </ng-template>
+</div>

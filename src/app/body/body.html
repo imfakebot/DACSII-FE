@@ -1,25 +1,25 @@
-﻿  <!-- Banner -->
-  <section class="relative bg-gradient-to-br from-brand-dark via-brand to-brand-light text-white py-20 lg:py-32 overflow-hidden">
-    <div class="absolute inset-0 bg-[url('/assets/pattern.png')] opacity-10"></div>
+  <!-- Banner -->
+  <section class="relative bg-transparent text-text-primary py-16 lg:py-24 border-b border-gray-200">
+    <!-- Clean background, no pattern or heavy gradient -->
     <div class="container mx-auto px-4 flex flex-col lg:flex-row items-center justify-between relative z-10">
       <div class="lg:w-1/2 text-center lg:text-left mb-10 lg:mb-0 animate-fade-in">
-        <h1 class="text-4xl lg:text-6xl font-bold mb-6 leading-tight">
+        <h1 class="text-4xl lg:text-5xl font-bold mb-4 text-text-primary tracking-tighter">
           <span class="text-secondary">Sport</span> - Đặt sân thể thao <br>nhanh chóng & tiện lợi
         </h1>
-        <p class="text-lg lg:text-xl text-blue-50 mb-8 max-w-lg mx-auto lg:mx-0">
+        <p class="text-lg text-text-secondary mb-8 leading-relaxed max-w-lg mx-auto lg:mx-0 font-normal">
           Trải nghiệm đặt sân trực tuyến dễ dàng, linh hoạt. Tìm sân, đặt lịch và thanh toán chỉ trong vài cú chạm.
         </p>
       </div>
       <div class="lg:w-1/2 flex justify-center animate-slide-up">
         <!-- <img class="w-64 h-64  drop-shadow-2xl animate-bounce-slow rounded-full" src="/assets/logoHaiAnhEm.png" alt="Phone App"> -->
-        <img class="w-64 h-64 rounded-full animate-bounce-slow object-cover shadow-md border-2 border-white ring-2 ring-brand/20" src="/assets/logoHaiAnhEm.png" alt="Phone App">
+        <img class="w-64 h-64 lg:w-72 lg:h-72 rounded-3xl object-cover shadow-elevation-3 hover:scale-105 transition-transform duration-fast" src="/assets/logoHaiAnhEm.png" alt="Phone App">
       </div>
     </div>
   </section>
 
   <!-- Khung tìm kiếm -->
   <section class="relative z-20 -mt-10 px-4">
-    <div class="container mx-auto max-w-5xl bg-white rounded-2xl shadow-2xl p-4 lg:p-6 flex flex-col lg:flex-row gap-4 items-center border border-gray-100">
+    <div class="container mx-auto max-w-4xl glass-panel rounded-[2rem] p-3 flex flex-col lg:flex-row gap-2 items-center relative -top-12 z-20">
       <div class="flex-1 w-full relative">
         <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"></i>
         <input 
@@ -27,12 +27,12 @@
           [(ngModel)]="searchQuery"
           (keyup.enter)="onSearch()"
           placeholder="Tìm kiếm sân thể thao, tên địa điểm, khu vực..." 
-          class="w-full pl-12 pr-4 py-3 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand/50 outline-none transition-all">
+          class="w-full pl-12 pr-4 py-3 rounded-full bg-transparent border-none focus:ring-0 outline-none transition-all placeholder-gray-400 text-gray-800">
       </div>
       <div class="w-full lg:w-auto flex gap-4">
         <select 
           [(ngModel)]="searchSport"
-          class="flex-1 lg:w-48 py-3 px-4 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand/50 outline-none cursor-pointer">
+          class="flex-1 lg:w-48 py-3 px-4 rounded-xl bg-surface-container border-none focus:ring-2 focus:ring-brand/50 outline-none cursor-pointer">
           <option value="">Môn thể thao</option>
           <option value="football">Bóng đá</option>
           <option value="tennis">Tennis</option>
@@ -41,16 +41,14 @@
         </select>
         <select 
           [(ngModel)]="searchLocation"
-          class="flex-1 lg:w-48 py-3 px-4 rounded-xl bg-gray-50 border-none focus:ring-2 focus:ring-brand/50 outline-none cursor-pointer">
+          class="flex-1 lg:w-48 py-3 px-4 rounded-xl bg-surface-container border-none focus:ring-2 focus:ring-brand/50 outline-none cursor-pointer">
           <option value="">Khu vực</option>
-          <option value="hanoi">Hà Nội</option>
-          <option value="danang">Đà Nẵng</option>
-          <option value="hcm">TP. Hồ Chí Minh</option>
+          <option *ngFor="let city of apiCities" [value]="city.name">{{ city.name }}</option>
         </select>
       </div>
       <button 
         (click)="onSearch()"
-        class="w-full lg:w-auto px-8 py-3 bg-brand hover:bg-brand-dark text-white font-bold rounded-xl shadow-lg shadow-brand/30 transition-all duration-300 transform hover:-translate-y-1">
+        class="w-full lg:w-auto px-8 py-3 bg-brand hover:bg-brand-light text-white font-semibold rounded-full shadow-elevation-1 hover:shadow-elevation-2 active:scale-[0.98] transition-all duration-fast">
         Tìm kiếm
       </button>
     </div>
@@ -66,7 +64,7 @@
       <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-8">
         <h3 class="text-3xl font-bold text-white mb-2">Tặng 1 giờ đá free</h3>
         <p class="text-gray-200 mb-6 max-w-xl">Áp dụng cho khách hàng mới khi đặt sân lần đầu tiên tại hệ thống.</p>
-        <a class="inline-block w-fit px-6 py-2 bg-secondary hover:bg-secondary-light text-brand-dark font-bold rounded-full transition-colors" href="search-section">
+        <a class="inline-block w-fit px-6 py-2 bg-secondary hover:bg-secondary-light text-secondary-dark font-bold rounded-full transition-colors" href="search-section">
           Đặt ngay
         </a>
       </div>
@@ -74,15 +72,16 @@
   </section>
 
   <!-- Sân tập gần bạn -->
-  <section class="py-12 bg-gray-50">
+  <section class="py-12 bg-surface-container">
     <div class="container mx-auto px-4">
       <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <div>
           <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-brand pl-3 mb-2">Sân tập gần bạn</h2>
+          <span class="text-xs text-red-500">DEBUG: Tổng số sân = {{ fields.length }} | Số sân bóng đá = {{ footballFields.length }} | Sân gần bạn = {{ nearFields.length }}</span>
           <!-- Location selector -->
           <div class="pl-4 flex items-center gap-3 flex-wrap">
             <div class="flex items-center gap-2">
-              <i class="fa-solid fa-location-dot text-brand"></i>
+              <i class="fa-solid fa-location-dot text-secondary"></i>
               <!-- <select 
                 [ngModel]="selectedCityManual"
                 (ngModelChange)="onCityChange($event)"
@@ -105,29 +104,29 @@
           </div>
         </div>
         <div class="flex flex-wrap gap-2">
-          <span (click)="setNearSport('football')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Bóng đá</span>
-          <span (click)="setNearSport('tennis')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Tennis</span>
-          <span (click)="setNearSport('badminton')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Cầu lông</span>
-          <span (click)="setNearSport('tabletennis')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Bóng bàn</span>
+          <span (click)="setNearSport('football')" class="px-4 py-2 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-elevation-1 active:scale-[0.98] transition-all duration-fast bg-white border border-gray-100">Bóng đá</span>
+          <span (click)="setNearSport('tennis')" class="px-4 py-2 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-elevation-1 active:scale-[0.98] transition-all duration-fast bg-white border border-gray-100">Tennis</span>
+          <span (click)="setNearSport('badminton')" class="px-4 py-2 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-elevation-1 active:scale-[0.98] transition-all duration-fast bg-white border border-gray-100">Cầu lông</span>
+          <span (click)="setNearSport('tabletennis')" class="px-4 py-2 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-elevation-1 active:scale-[0.98] transition-all duration-fast bg-white border border-gray-100">Bóng bàn</span>
         </div>
       </div>
       
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div *ngFor="let f of nearFields" class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100">
-          <a [routerLink]="getDetailLink(f.id)" class="block relative overflow-hidden h-48">
+        <div *ngFor="let f of nearFields" class="material-card group overflow-hidden">
+          <a [routerLink]="getDetailLink(f.id)" class="block relative overflow-hidden h-56">
             <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
             <div class="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
             <!-- Distance badge -->
             <div *ngIf="userLocation && getDistanceToField(f) !== null" 
-                 class="absolute top-2 left-2 bg-brand text-white text-xs font-bold px-2 py-1 rounded shadow-md flex items-center gap-1">
+                 class="absolute top-2 left-2 bg-surface-container/90 backdrop-blur-md text-text-primary border border-white/20 text-xs font-bold px-3 py-1 rounded-full shadow-sm flex items-center gap-1">
               <i class="fa-solid fa-route"></i>
               {{ formatDistance(getDistanceToField(f)) }}
             </div>
           </a>
           <div class="p-4">
-            <h3 class="font-bold text-lg text-gray-800 mb-2 truncate group-hover:text-brand transition-colors">{{ f.name }}</h3>
+            <h3 class="font-bold text-lg text-gray-800 mb-2 truncate group-hover:text-secondary transition-colors">{{ f.name }}</h3>
             <p class="text-gray-500 text-sm flex items-center gap-2">
-              <i class="fa-solid fa-location-dot text-brand"></i> {{ f.city || 'Địa điểm chưa rõ' }}
+              <i class="fa-solid fa-location-dot text-secondary"></i> {{ f.city || 'Địa điểm chưa rõ' }}
             </p>
           </div>
         </div>
@@ -153,19 +152,19 @@
       </div>
       
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div *ngFor="let f of recommendedFields" class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100">
-          <a [routerLink]="getDetailLink(f.id)" class="block relative overflow-hidden h-48">
+        <div *ngFor="let f of recommendedFields" class="material-card group overflow-hidden">
+          <a [routerLink]="getDetailLink(f.id)" class="block relative overflow-hidden h-56">
             <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-            <div class="absolute top-2 right-2 bg-secondary text-brand-dark text-xs font-bold px-2 py-1 rounded shadow-sm">Đề xuất</div>
+            <div class="absolute top-2 right-2 bg-secondary text-secondary-dark text-xs font-bold px-2 py-1 rounded shadow-sm">Đề xuất</div>
           </a>
           <div class="p-4">
-            <h3 class="font-bold text-lg text-gray-800 mb-2 truncate group-hover:text-brand transition-colors">{{ f.name }}</h3>
+            <h3 class="font-bold text-lg text-gray-800 mb-2 truncate group-hover:text-secondary transition-colors">{{ f.name }}</h3>
             <p class="text-gray-500 text-sm flex items-center gap-2">
-              <i class="fa-solid fa-location-dot text-brand"></i> {{ f.city || 'Địa điểm chưa rõ' }}
+              <i class="fa-solid fa-location-dot text-secondary"></i> {{ f.city || 'Địa điểm chưa rõ' }}
             </p>
           </div>
         </div>
-        <div *ngIf="recommendedFields.length === 0" class="col-span-full text-center py-10 text-gray-500 bg-gray-50 rounded-xl">
+        <div *ngIf="recommendedFields.length === 0" class="col-span-full text-center py-10 text-gray-500 bg-surface-container rounded-xl">
           Không có đề xuất phù hợp với bộ lọc.
         </div>
       </div>
@@ -173,30 +172,30 @@
   </section>
 
   <!-- Sân hàng đầu -->
-  <section class="py-12 bg-gray-50 mb-12">
+  <section class="py-12 bg-surface-container mb-12">
     <div class="container mx-auto px-4">
       <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
-        <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-yellow-500 pl-3">Sân hàng đầu</h2>
+        <h2 class="text-2xl font-bold text-gray-800 border-l-4 border-text-primary pl-3">Sân hàng đầu</h2>
         <div class="flex flex-wrap gap-2">
-          <span (click)="setTopSport('football')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Bóng đá</span>
-          <span (click)="setTopSport('tennis')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Tennis</span>
-          <span (click)="setTopSport('badminton')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Cầu lông</span>
-          <span (click)="setTopSport('tabletennis')" class="px-4 py-1.5 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-md transition-all">Bóng bàn</span>
+          <span (click)="setTopSport('football')" class="px-4 py-2 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-elevation-1 active:scale-[0.98] transition-all duration-fast bg-white border border-gray-100">Bóng đá</span>
+          <span (click)="setTopSport('tennis')" class="px-4 py-2 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-elevation-1 active:scale-[0.98] transition-all duration-fast bg-white border border-gray-100">Tennis</span>
+          <span (click)="setTopSport('badminton')" class="px-4 py-2 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-elevation-1 active:scale-[0.98] transition-all duration-fast bg-white border border-gray-100">Cầu lông</span>
+          <span (click)="setTopSport('tabletennis')" class="px-4 py-2 rounded-full text-sm font-medium cursor-pointer shadow-sm hover:shadow-elevation-1 active:scale-[0.98] transition-all duration-fast bg-white border border-gray-100">Bóng bàn</span>
         </div>
       </div>
       
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div *ngFor="let f of topFields; let i = index" class="bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 group overflow-hidden border border-gray-100 relative">
-          <div class="absolute top-0 left-0 z-10 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded-br-xl shadow-md">Top {{ i + 1 }}</div>
-          <a [routerLink]="getDetailLink(f.id)" class="block relative overflow-hidden h-48">
+        <div *ngFor="let f of topFields; let i = index" class="material-card group overflow-hidden relative">
+          <div class="absolute top-0 left-0 z-10 bg-text-primary/90 backdrop-blur-md text-white text-xs font-bold px-4 py-1.5 rounded-br-2xl shadow-sm tracking-wider uppercase">Top {{ i + 1 }}</div>
+          <a [routerLink]="getDetailLink(f.id)" class="block relative overflow-hidden h-56">
             <img [src]="(f.images && f.images.length>0) ? f.images[0] : 'https://images.unsplash.com/photo-1521412644187-c49fa049e84d?w=1200&auto=format&fit=crop&q=60'" alt="{{f.name}}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
           </a>
           <div class="p-4">
-            <h3 class="font-bold text-lg text-gray-800 mb-2 truncate group-hover:text-brand transition-colors">{{ f.name }}</h3>
+            <h3 class="font-bold text-lg text-gray-800 mb-2 truncate group-hover:text-secondary transition-colors">{{ f.name }}</h3>
             <p class="text-gray-500 text-sm flex items-center gap-2">
-              <i class="fa-solid fa-location-dot text-brand"></i> {{ f.city || 'Địa điểm chưa rõ' }}
+              <i class="fa-solid fa-location-dot text-secondary"></i> {{ f.city || 'Địa điểm chưa rõ' }}
             </p>
-            <div class="mt-3 flex items-center gap-1 text-yellow-500 text-sm">
+            <div class="mt-3 flex items-center gap-1 text-warning text-sm">
               <i class="fa-solid fa-star"></i>
               <i class="fa-solid fa-star"></i>
               <i class="fa-solid fa-star"></i>

@@ -145,6 +145,11 @@ export class AdminFieldsComponent implements OnInit, OnDestroy {
     this.router.navigate([`/admin/fields/${encodedId}/edit`]);
   }
 
+  onTimeSlots(id: string) {
+    const encodedId = this.idEncoder.encode(id);
+    this.router.navigate([`/admin/fields/${encodedId}/time-slots`]);
+  }
+
   async onDelete(id: string) {
     if (!confirm('Xác nhận xóa sân?')) return;
     try {

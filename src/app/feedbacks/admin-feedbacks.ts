@@ -130,6 +130,24 @@ export class AdminFeedbacksComponent implements OnInit {
     }
   }
 
+  async updateStatus(id: string, newStatus: string): Promise<void> {
+    if (!confirm('Bạn có chắc muốn cập nhật trạng thái này?')) return;
+    try {
+      this.loading = true;
+      await this.svc.updateStatus(id, newStatus);
+      // Thay vì load lại toàn bộ dữ liệu, cập nhật local state để UI phản hồi nhanh
+      const idx = this.feedbacks.findIndex(f => f.id === id);
+      if (idx !== -1) {
+        this.feedbacks[idx].status = newStatus as any;
+      }
+      this.applyFilters();
+    } catch (err: any) {
+      this.error = err?.error?.message || err?.message || 'Lỗi cập nhật trạng thái';
+    } finally {
+      this.loading = false;
+    }
+  }
+
   getStatusLabel(status: string): string {
     const labels: { [key: string]: string } = {
       'open': 'Mới',

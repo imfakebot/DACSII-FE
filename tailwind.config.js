@@ -7,34 +7,47 @@ module.exports = {
     extend: {
       colors: {
         brand: {
-          DEFAULT: '#1089D3',
-          light: '#12B1D1',
-          dark: '#005F9E',
+          DEFAULT: '#0F172A', // Slate 900
+          light: '#334155',
+          dark: '#020617',
+          soft: '#F8FAFC', 
         },
         secondary: {
-          DEFAULT: '#FFD700', // Gold for accents
-          light: '#FFE44D',
+          DEFAULT: '#3B82F6', // Crisp elegant blue
+          light: '#EFF6FF',
         },
-        surface: '#F3F4F6',
+        danger: {
+          DEFAULT: '#EF4444', 
+          light: '#FEF2F2',
+        },
+        warning: {
+          DEFAULT: '#F59E0B', 
+          light: '#FFFBEB',
+        },
+        surface: {
+          DEFAULT: '#FFFFFF',
+          container: '#FBFBFC', // Very slight off-white
+          hover: '#F1F5F9',
+        },
+        text: {
+          primary: '#0F172A', // Slate 900
+          secondary: '#64748B', // Slate 500
+        }
       },
       fontFamily: {
-        sans: ['Poppins', 'sans-serif'],
+        sans: ['Outfit', 'sans-serif'],
       },
-      animation: {
-        'fade-in': 'fadeIn 0.5s ease-out',
-        'slide-up': 'slideUp 0.5s ease-out',
-        'bounce-slow': 'bounce 3s infinite',
+      boxShadow: {
+        'elevation-1': '0 2px 10px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02)',
+        'elevation-2': '0 10px 30px -5px rgba(15, 23, 42, 0.06), 0 4px 10px -2px rgba(15, 23, 42, 0.03)',
+        'elevation-3': '0 20px 40px -10px rgba(15, 23, 42, 0.08), 0 10px 20px -5px rgba(15, 23, 42, 0.04)',
       },
-      keyframes: {
-        fadeIn: {
-          '0%': { opacity: '0' },
-          '100%': { opacity: '1' },
-        },
-        slideUp: {
-          '0%': { transform: 'translateY(20px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
+      transitionDuration: {
+        'fast': '250ms', // Premium speed
       },
+      transitionTimingFunction: {
+        'spring': 'cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+      }
     }
   },
   plugins: []

@@ -61,9 +61,16 @@
       <div class="feedback-header">
       <div class="feedback-title-section">
         <h3 class="feedback-title">{{ feedback.title || feedback.subject || 'Phản hồi' }}</h3>
-        <span class="status-badge" [ngClass]="getStatusClass(feedback.status)">
-            {{ getStatusLabel(feedback.status) }}
-          </span>
+        <div class="flex items-center gap-2" style="display: flex; align-items: center; gap: 8px;">
+          <span class="text-sm font-semibold" style="font-size: 13px; color: #64748b;">Trạng thái:</span>
+          <select [ngModel]="feedback.status" (ngModelChange)="updateStatus(feedback.id, $event)"
+                  style="border: 1px solid #cbd5e1; border-radius: 6px; background: white; outline: none; cursor: pointer; padding: 4px 8px; font-weight: 600; font-size: 13px;">
+            <option value="open">Mới</option>
+            <option value="in_progress">Đang xử lý</option>
+            <option value="resolved">Đã giải quyết</option>
+            <option value="closed">Đã đóng</option>
+          </select>
+        </div>
           <span *ngIf="hasUnreadResponses(feedback)" class="unread-badge">Mới</span>
         </div>
         <button class="view-detail-btn" (click)="viewDetail(feedback.id)">

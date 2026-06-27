@@ -50,9 +50,9 @@ export class FeedbackDetailComponent implements OnInit {
       return;
     }
 
-    // Determine whether current user is admin to toggle admin-only UI
+    // Determine whether current user is admin/manager to toggle admin-only UI
     try {
-      this.isAdmin = this.authState.isAdmin();
+      this.isAdmin = this.authState.canManage();
     } catch (err) {
       this.isAdmin = false;
     }
@@ -100,6 +100,18 @@ export class FeedbackDetailComponent implements OnInit {
     }
   }
 
+  async updateStatus(newStatus: string): Promise<void> {
+    if (!confirm('Bạn có chắc muốn cập nhật trạng thái này?')) return;
+    try {
+      this.loading = true;
+      await this.svc.updateStatus(this.feedbackId, newStatus);
+      await this.loadDetail();
+    } catch (err: any) {
+      this.error = err?.error?.message || err?.message || 'Lỗi cập nhật trạng thái';
+      this.loading = false;
+    }
+  }
+
   goBack(): void {
     if (this.isAdmin) {
       this.router.navigate(['/admin/feedbacks']);
@@ -139,6 +151,6 @@ export class FeedbackDetailComponent implements OnInit {
   }
 
   getSenderLabel(senderType: string): string {
-    return senderType === 'admin' ? 'Quản trị viên' : 'Khách hàng';
+    return senderType === 'admin' ? 'Quản trị viên' : 'Người gửi';
   }
 }

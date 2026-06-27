@@ -4,6 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { FieldsService, Field } from '../services/fields.service';
 import { IdEncoderService } from '../services/id-encoder.service';
+import { LocationsService, City } from '../services/locations.service';
 
 interface UserLocation {
   latitude: number;
@@ -23,6 +24,8 @@ export class BodyComponent implements OnInit {
   selectedNear: 'football' | 'tennis' | 'badminton' | 'tabletennis' | 'all' = 'football';
   selectedRecommend: 'football' | 'tennis' | 'badminton' | 'tabletennis' | 'all' = 'football';
   selectedTop: 'football' | 'tennis' | 'badminton' | 'tabletennis' | 'all' = 'football';
+  
+  apiCities: City[] = [];
   
   // Tìm kiếm
   searchQuery: string = '';
@@ -54,6 +57,7 @@ export class BodyComponent implements OnInit {
 
   constructor(
     private fieldsService: FieldsService, 
+    private locationsService: LocationsService,
     private router: Router,
     private idEncoder: IdEncoderService,
     @Inject(PLATFORM_ID) platformId: object
@@ -62,8 +66,20 @@ export class BodyComponent implements OnInit {
   }
 
   async ngOnInit() {
-    // Lấy dữ liệu sân từ service (gọi backend /api/fields qua proxy)
-    this.fields = await this.fieldsService.getFields();
+    // Lấy dữ liệu sân từ service
+    try {
+      this.fields = await this.fieldsService.getFields();
+    } catch (e) {
+      console.error('Failed to load fields:', e);
+      this.fields = [];
+    }
+    
+    // Fetch danh sách tỉnh thành từ API
+    try {
+      this.apiCities = await this.locationsService.getCities();
+    } catch (e) {
+      console.error('Failed to load cities from API:', e);
+    }
     
     // Kiểm tra xem user đã chọn thành phố thủ công trước đó chưa
     if (this.isBrowser) {
@@ -300,15 +316,17 @@ export class BodyComponent implements OnInit {
       // Filter sân cùng thành phố sử dụng aliases
       const sameCityFields = filtered.filter(f => {
         if (!f.city) return false;
-        const fieldCityLower = f.city.toLowerCase();
+        const fieldCityLower = this.normalizeText(f.city);
+        const locCityLower = this.normalizeText(this.locationCity);
         
         // Check exact match hoặc aliases
-        if (fieldCityLower.includes(this.locationCity.toLowerCase())) return true;
-        if (this.locationCity.toLowerCase().includes(fieldCityLower)) return true;
+        if (fieldCityLower.includes(locCityLower)) return true;
+        if (locCityLower.includes(fieldCityLower)) return true;
         
         // Check aliases
         for (const alias of this.cityAliases) {
-          if (fieldCityLower.includes(alias) || alias.includes(fieldCityLower)) {
+          const aliasLower = this.normalizeText(alias);
+          if (fieldCityLower.includes(aliasLower) || aliasLower.includes(fieldCityLower)) {
             return true;
           }
         }

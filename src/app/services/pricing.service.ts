@@ -38,11 +38,50 @@ export interface CheckPriceResponseDto {
   message: string;
 }
 
+export interface TimeSlotDto {
+  id: number;
+  startTime: string;
+  endTime: string;
+  price: number;
+  isPeakHour: boolean;
+  field?: { id: string; name: string };
+}
+
+export interface CreateTimeSlotDto {
+  fieldId: string;
+  startTime: string; // HH:mm:ss
+  endTime: string; // HH:mm:ss
+  price: number;
+  isPeakHour?: boolean;
+}
+
+export interface UpdateTimeSlotDto {
+  price?: number;
+  isPeakHour?: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class PricingService {
   constructor(private http: HttpClient, private baseUrl: BaseUrlService) {}
 
   async checkAvailability(payload: CheckPriceDto): Promise<CheckPriceResponseDto> {
     return firstValueFrom(this.http.post<CheckPriceResponseDto>(`${this.baseUrl.getApiBaseUrl()}/pricing/check-availability`, payload));
+  }
+
+  // Admin methods
+  async getTimeSlots(): Promise<TimeSlotDto[]> {
+    return firstValueFrom(this.http.get<TimeSlotDto[]>(`${this.baseUrl.getApiBaseUrl()}/pricing/time-slots`));
+  }
+
+  async createTimeSlot(payload: CreateTimeSlotDto): Promise<TimeSlotDto> {
+    return firstValueFrom(this.http.post<TimeSlotDto>(`${this.baseUrl.getApiBaseUrl()}/pricing/time-slots`, payload));
+  }
+
+  async updateTimeSlot(id: number, payload: UpdateTimeSlotDto): Promise<TimeSlotDto> {
+    return firstValueFrom(this.http.patch<TimeSlotDto>(`${this.baseUrl.getApiBaseUrl()}/pricing/time-slot/${id}`, payload));
+  }
+
+  async deleteTimeSlot(id: number): Promise<void> {
+    return firstValueFrom(this.http.delete<void>(`${this.baseUrl.getApiBaseUrl()}/pricing/time-slot/${id}`));
   }
 }

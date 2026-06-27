@@ -37,6 +37,8 @@ export interface FeedbackDto {
   title?: string;
   subject?: string;
   category?: string;
+  content?: string;
+  message?: string;
   status: 'open' | 'in_progress' | 'resolved' | 'closed';
   created_at: string;
   updated_at?: string;
@@ -124,5 +126,9 @@ export class FeedbacksService {
 
   async reply(id: string, dto: ReplyFeedbackDto): Promise<FeedbackResponseDto> {
     return firstValueFrom(this.http.post<FeedbackResponseDto>(`${this.baseUrl.getApiBaseUrl()}/feedbacks/${id}/reply`, dto, this.authHeaders()));
+  }
+
+  async updateStatus(id: string, status: string): Promise<FeedbackDto> {
+    return firstValueFrom(this.http.patch<FeedbackDto>(`${this.baseUrl.getApiBaseUrl()}/feedbacks/${id}/status`, { status }, this.authHeaders()));
   }
 }

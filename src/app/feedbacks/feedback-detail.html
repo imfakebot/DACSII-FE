@@ -16,16 +16,28 @@
         </svg>
         Quay lại
       </button>
-      <span class="px-4 py-2 rounded-full text-sm font-bold" [ngClass]="getStatusClass(feedback.status)">
-        {{ getStatusLabel(feedback.status) }}
-      </span>
+      <div class="flex items-center gap-3 bg-slate-50 px-4 py-2 rounded-xl border border-slate-200">
+        <span *ngIf="isAdmin" class="text-sm font-semibold text-slate-600">Trạng thái:</span>
+        <select *ngIf="isAdmin" [ngModel]="feedback.status" (ngModelChange)="updateStatus($event)"
+                class="px-3 py-1.5 rounded-lg text-sm font-bold border border-slate-300 bg-white cursor-pointer hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-brand/50 transition-all shadow-sm"
+                [ngClass]="'text-' + getStatusClass(feedback.status)">
+          <option value="open">Mới</option>
+          <option value="in_progress">Đang xử lý</option>
+          <option value="resolved">Đã giải quyết</option>
+          <option value="closed">Đã đóng</option>
+        </select>
+        
+        <span *ngIf="!isAdmin" class="px-4 py-1.5 rounded-full text-sm font-bold shadow-sm" [ngClass]="getStatusClass(feedback.status)">
+          {{ getStatusLabel(feedback.status) }}
+        </span>
+      </div>
     </div>
 
     <!-- Ticket Information -->
     <div class="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-200">
       <h1 class="text-3xl font-bold text-slate-900 mb-6">{{ feedback.title || feedback.subject || 'Phản hồi' }}</h1>
       
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div class="flex items-center gap-3 p-4 bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl">
           <div class="w-10 h-10 bg-brand/10 rounded-full flex items-center justify-center">
             <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16" class="text-brand">
@@ -67,6 +79,11 @@
             <div class="font-semibold text-slate-900">{{ formatDateTime(feedback.created_at) }}</div>
           </div>
         </div>
+      </div>
+
+      <div class="bg-slate-50 rounded-xl p-5 border border-slate-200">
+        <h3 class="text-sm font-semibold text-slate-500 mb-3 uppercase tracking-wider">Nội dung phản hồi</h3>
+        <p class="text-slate-800 leading-relaxed whitespace-pre-wrap">{{ feedback.content || feedback.message || 'Không có nội dung chi tiết.' }}</p>
       </div>
     </div>
 

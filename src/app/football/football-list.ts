@@ -61,10 +61,16 @@ export class FieldsListComponent implements OnInit {
 
   async ngOnInit(){
     // load fields and cities in parallel
-    [this.fields, this.citiesApi] = await Promise.all([
-      this.fieldsService.getFields(),
-      this.locationsService.getCities().catch(()=>[])
-    ]);
+    try {
+      [this.fields, this.citiesApi] = await Promise.all([
+        this.fieldsService.getFields(),
+        this.locationsService.getCities().catch(()=>[])
+      ]);
+    } catch (e) {
+      console.error('Failed to load fields:', e);
+      this.fields = [];
+      this.citiesApi = [];
+    }
     // Nếu presetType được truyền vào thì ưu tiên dùng để nhận dạng sân bóng đá theo type cụ thể
     if (this.presetType) {
       this.footballKeywords.unshift(this.presetType.toLowerCase());

@@ -32,6 +32,7 @@ export const routes: Routes = [
 	{ path: 'admin/fields', loadComponent: () => import('./fields/admin-fields').then(m => m.AdminFieldsComponent) },
 	{ path: 'admin/fields/create', loadComponent: () => import('./fields/admin-field-form').then(m => m.AdminFieldFormComponent) },
 	{ path: 'admin/fields/:id/edit', loadComponent: () => import('./fields/admin-field-form').then(m => m.AdminFieldFormComponent) },
+	{ path: 'admin/fields/:id/time-slots', loadComponent: () => import('./fields/admin-time-slots/admin-time-slots').then(m => m.AdminTimeSlotsComponent) },
 	{ path: 'admin/feedbacks', loadComponent: () => import('./feedbacks/admin-feedbacks').then(m => m.AdminFeedbacksComponent) },
 	{ path: 'admin/feedback/:id', loadComponent: () => import('./feedbacks/feedback-detail').then(m => m.FeedbackDetailComponent) },
 	{ path: 'admin/bookings', loadComponent: () => import('./booking-management/admin-bookings').then(m => m.AdminBookingsComponent) },
