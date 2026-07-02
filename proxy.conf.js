@@ -13,6 +13,6 @@ export default {
   "/voucher": { target, secure: false, changeOrigin: true },
   "/feedbacks": { target, secure: false, changeOrigin: true },
   "/branches": { target, secure: false, changeOrigin: true },
-  "/payment": { target, secure: false, changeOrigin: true },
+  "/payment/": { target, secure: false, changeOrigin: true },
   "/uploads": { target, secure: false, changeOrigin: true }
 };

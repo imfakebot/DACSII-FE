@@ -71,7 +71,7 @@
     "changeOrigin": true,
     "logLevel": "debug"
   },
-  "/payment": {
+  "/payment/": {
     "target": "http://localhost:3000",
     "secure": false,
     "changeOrigin": true,

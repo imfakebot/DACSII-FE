@@ -140,7 +140,7 @@ export class AuthService {
     // We'll add the message listener first, then navigate the popup to backend auth URL.
     // This avoids a race where the backend callback posts a message before the listener is registered.
 
-    const backendOrigin = new URL(this.baseUrl.getAuthBaseUrl()).origin;
+    const backendOrigin = new URL(this.baseUrl.getAuthBaseUrl(), window.location.origin).origin;
 
     await new Promise<void>((resolve, reject) => {
       const timeoutId = window.setTimeout(() => {
